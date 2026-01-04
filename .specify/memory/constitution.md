@@ -1,10 +1,10 @@
 <!--
 SYNC IMPACT REPORT
-Version change: 3.0.0 → 3.1.0 (MINOR version bump)
-- Modified principles: Updated frontend framework from Angular to React
+Version change: 3.1.0 → 3.1.1 (PATCH version bump)
+- Modified principles: Added ratification date, clarified technology stack consistency
 - Added sections: None
 - Removed sections: None
-- Templates requiring updates: ✅ .specify/templates/plan-template.md, ✅ .specify/templates/tasks-template.md
+- Templates requiring updates: ✅ .specify/templates/plan-template.md, ✅ .specify/templates/spec-template.md, ✅ .specify/templates/tasks-template.md
 - Follow-up TODOs: None
 -->
 
@@ -52,7 +52,7 @@ Domain First: The **domain model** is the primary source of truth.
 
 - Python 3.12+ backend with FastAPI
 - React 18+ frontend with TypeScript
-- PostgreSQL database with proper indexing
+- SQLite database
 - Redis for caching and session management
 - Docker containers for development and deployment
 
@@ -62,6 +62,7 @@ Domain First: The **domain model** is the primary source of truth.
 - MUST implement proper separation of concerns
 - MUST use dependency injection for testability
 - MUST implement API versioning strategy
+- MUST implement RESTful-API
 - MUST use environment-based configuration management
 
 ## Development Workflow
@@ -69,7 +70,6 @@ Domain First: The **domain model** is the primary source of truth.
 ### Process Requirements
 
 - MUST use feature branches with clear naming convention (###-feature-name)
-- MUST implement code reviews with at least 2 approvers
 - MUST maintain comprehensive documentation
 - MUST implement automated deployment pipelines
 - MUST conduct regular architecture reviews
@@ -89,4 +89,4 @@ All PRs and code reviews must verify compliance with constitution principles
 Complexity must be justified and documented
 Use constitution as primary guidance for all technical decisions
 
-**Version**: 3.1.0 | **Ratified**: TODO(RATIFICATION_DATE): Original adoption date unknown | **Last Amended**: 2025-12-16
+**Version**: 3.1.1 | **Ratified**: 2026-01-04 | **Last Amended**: 2026-01-04
