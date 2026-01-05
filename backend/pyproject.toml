@@ -1,0 +1,49 @@
+[tool.poetry]
+name = "furniture-shop-support-refund"
+version = "0.1.0"
+description = "Customer Support and Refund Service for Furniture Shop"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.109.0"
+uvicorn = "^0.27.0"
+pydantic = "^2.5.0"
+pydantic-settings = "^2.1.0"
+sqlalchemy = "^2.0.23"
+redis = "^5.0.1"
+python-jose = "^3.3.0"
+passlib = "^1.7.4"
+bcrypt = "^4.1.2"
+python-multipart = "^0.0.6"
+python-dotenv = "^1.0.0"
+alembic = "^1.13.0"
+psycopg2-binary = "^2.9.9"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.6"
+black = "^23.12.0"
+mypy = "^1.8.0"
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+httpx = "^0.26.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+no_implicit_optional = true

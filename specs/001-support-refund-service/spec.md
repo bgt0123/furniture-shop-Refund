@@ -74,7 +74,7 @@ From an open support case, customers can request refunds for specific products. 
 
 Support agents can view refund cases, review eligibility, and approve or reject refund requests. Approved refunds are executed and marked as completed.
 
-**Why this priority**: This completes the refund workflow by enabling support agents to process requests, ensuring customers receive their refunds in a timely manner.
+**Why this priority**: This completes the refund process by enabling support agents to process requests, ensuring customers receive their refunds promptly.
 
 **Independent Test**: Can be fully tested by creating a refund case, having an agent approve it, and verifying the refund is processed and status updated.
 
@@ -104,11 +104,15 @@ Customers can view overview pages showing all their support cases and refund cas
 
 ### Edge Cases
 
-- What happens when customer requests refund for products that are partially eligible (some within 14 days, some outside)?
-- How does system handle support cases for orders with multiple shipping dates (products delivered at different times)?
-- What happens when customer attempts to close a support case that has pending refund requests?
-- How does system handle refund requests for products that have already been partially refunded?
-- What happens when support agent tries to approve a refund that exceeds the original payment amount?
+- What happens when customer requests refund for products that are partially eligible (some within 14 days, some outside)? → System should allow refund only for eligible products and provide clear explanation for ineligible ones
+- How does system handle support requests for orders with multiple shipping dates (products delivered at different times)? → System should track eligibility separately for each product based on its individual delivery date
+- What happens when customer attempts to close a support request that has pending refund requests? → System should prevent closing and explain that pending refunds must be resolved first
+- How does system handle refund requests for products that have already been partially refunded? → System should allow additional refunds only if the total doesn't exceed the original amount, with clear tracking of partial refunds
+- What happens when support agent tries to approve a refund that exceeds the original payment amount? → System should prevent approval and provide clear error message explaining the issue
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
 
 ## Requirements *(mandatory)*
 
