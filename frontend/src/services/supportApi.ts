@@ -1,20 +1,48 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 
-export const supportApi = createApi({
-  reducerPath: 'supportApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1' }),
-  endpoints: (builder) => ({
-    getSupportCases: builder.query({
-      query: () => '/support/cases',
-    }),
-    createSupportCase: builder.mutation({
-      query: (caseData) => ({
-        url: '/support/cases',
-        method: 'POST',
-        body: caseData,
-      }),
-    }),
-  }),
-})
+class SupportApiClient {
+  private instance: AxiosInstance
+  
+  constructor(baseURL: string, token?: string) {
+    this.instance = axios.create({
+      baseURL: `${baseURL}/support`,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    
+    if (token) {
+      this.setAuthToken(token)
+    }
+  }
+  
+  setAuthToken(token: string): void {
+    this.instance.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  }
+  
+  clearAuthToken(): void {
+    delete this.instance.defaults.headers.common['Authorization']
+  }
+  
+  async getSupportCases(token: string, params?: any): Promise<AxiosResponse> {
+    return this.instance.get('/cases', { params })
+  }
+  
+  async getSupportCase(token: string, caseId: string): Promise<AxiosResponse> {
+    return this.instance.get(`/cases/${caseId}`)
+  }
+  
+  async createSupportCase(token: string, caseData: any): Promise<AxiosResponse> {
+    return this.instance.post('/cases', caseData)
+  }
+  
+  async updateSupportCase(token: string, caseId: string, updateData: any): Promise<AxiosResponse> {
+    return this.instance.patch(`/cases/${caseId}`, updateData)
+  }
+  
+  async closeSupportCase(token: string, caseId: string): Promise<AxiosResponse> {
+    return this.instance.patch(`/cases/${caseId}`, { status: 'Closed' })
+  }
+}
 
-export const { useGetSupportCasesQuery, useCreateSupportCaseMutation } = supportApi
+export const supportApi = new SupportApiClient('/api/v1')

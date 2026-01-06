@@ -1,33 +1,44 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import axios, { AxiosInstance, AxiosResponse } from 'axios'
 
-export const adminApi = createApi({
-  reducerPath: 'adminApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1' }),
-  endpoints: (builder) => ({
-    getAllRefundCases: builder.query({
-      query: (params) => ({
-        url: '/admin/refunds/cases',
-        params,
-      }),
-    }),
-    approveRefund: builder.mutation({
-      query: (refundId) => ({
-        url: `/admin/refunds/cases/${refundId}/approve`,
-        method: 'POST',
-      }),
-    }),
-    rejectRefund: builder.mutation({
-      query: ({ refundId, reason }) => ({
-        url: `/admin/refunds/cases/${refundId}/reject`,
-        method: 'POST',
-        body: { reason },
-      }),
-    }),
-  }),
-})
+class AdminApiClient {
+  private instance: AxiosInstance
+  
+  constructor(baseURL: string, token?: string) {
+    this.instance = axios.create({
+      baseURL: `${baseURL}/admin`,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    
+    if (token) {
+      this.setAuthToken(token)
+    }
+  }
+  
+  setAuthToken(token: string): void {
+    this.instance.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  }
+  
+  clearAuthToken(): void {
+    delete this.instance.defaults.headers.common['Authorization']
+  }
+  
+  async getAllRefundCases(token: string, params?: any): Promise<AxiosResponse> {
+    return this.instance.get('/refunds/cases', { params })
+  }
+  
+  async getRefundCaseDetails(token: string, refundId: string): Promise<AxiosResponse> {
+    return this.instance.get(`/refunds/cases/${refundId}`)
+  }
+  
+  async approveRefund(token: string, refundId: string): Promise<AxiosResponse> {
+    return this.instance.post(`/refunds/cases/${refundId}/approve`)
+  }
+  
+  async rejectRefund(token: string, refundId: string, reason: string): Promise<AxiosResponse> {
+    return this.instance.post(`/refunds/cases/${refundId}/reject`, { reason })
+  }
+}
 
-export const { 
-  useGetAllRefundCasesQuery, 
-  useApproveRefundMutation, 
-  useRejectRefundMutation 
-} = adminApi
+export const adminApi = new AdminApiClient('/api/v1')
