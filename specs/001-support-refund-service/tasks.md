@@ -125,18 +125,18 @@
 
 ### Implementation for User Story 3
 
-- [ ] T046 [P] [US3] [DDD] Create SupportAgent domain model in backend/src/models/support_agent.py
-- [ ] T047 [P] [US3] [DDD] Extend RefundCase service with approval/rejection logic in backend/src/services/refund_service.py
-- [ ] T048 [US3] Implement GET /admin/refunds/cases endpoint in backend/src/api/admin_endpoints.py
-- [ ] T049 [US3] Implement GET /admin/refunds/cases/{refundId} endpoint in backend/src/api/admin_endpoints.py
-- [ ] T050 [US3] Implement POST /admin/refunds/cases/{refundId}/approve endpoint in backend/src/api/admin_endpoints.py
-- [ ] T051 [US3] Implement POST /admin/refunds/cases/{refundId}/reject endpoint in backend/src/api/admin_endpoints.py
-- [ ] T052 [P] [US3] Create AdminRefundList component in frontend/src/components/AdminRefundList.tsx
-- [ ] T053 [P] [US3] Create AdminRefundDetail component in frontend/src/components/AdminRefundDetail.tsx
-- [ ] T054 [US3] Create AdminDashboard page in frontend/src/pages/AdminDashboard.tsx
-- [ ] T055 [US3] Implement admin API service in frontend/src/services/adminApi.ts
-- [ ] T056 [US3] Implement role-based authorization for admin endpoints
-- [ ] T057 [US3] Add logging for admin operations
+- [x] T046 [P] [US3] [DDD] Create SupportAgent domain model in backend/src/models/support_agent.py
+- [x] T047 [P] [US3] [DDD] Extend RefundCase service with approval/rejection logic in backend/src/services/refund_service.py
+- [x] T048 [US3] Implement GET /admin/refunds/cases endpoint in backend/src/api/admin_endpoints.py
+- [x] T049 [US3] Implement GET /admin/refunds/cases/{refundId} endpoint in backend/src/api/admin_endpoints.py
+- [x] T050 [US3] Implement POST /admin/refunds/cases/{refundId}/approve endpoint in backend/src/api/admin_endpoints.py
+- [x] T051 [US3] Implement POST /admin/refunds/cases/{refundId}/reject endpoint in backend/src/api/admin_endpoints.py
+- [x] T052 [P] [US3] Create AdminRefundList component in frontend/src/components/AdminRefundList.tsx
+- [x] T053 [P] [US3] Create AdminRefundDetail component in frontend/src/components/AdminRefundDetail.tsx
+- [x] T054 [US3] Create AdminDashboard page in frontend/src/pages/AdminDashboard.tsx
+- [x] T055 [US3] Implement admin API service in frontend/src/services/adminApi.ts
+- [x] T056 [US3] Implement role-based authorization for admin endpoints
+- [x] T057 [US3] Add logging for admin operations
 
 **Checkpoint**: All user stories should now be independently functional. The complete workflow from support case creation to refund processing is available.
 

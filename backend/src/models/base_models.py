@@ -1,8 +1,9 @@
-from sqlalchemy import Column, String, JSON, DateTime, Boolean, Float, Enum
+from sqlalchemy import Column, String, JSON, DateTime, Boolean, Float, Enum, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import enum
 import uuid
+from typing import Optional, List, Dict, Any
 
 Base = declarative_base()
 
@@ -94,6 +95,12 @@ class Order(Base):
         return f"<Order {self.id} - {self.status}>"
 
 
+class AgentRole(str, enum.Enum):
+    SUPPORT_AGENT = "SupportAgent"
+    SUPERVISOR = "Supervisor"
+    ADMIN = "Admin"
+
+
 class SupportAgent(Base):
     __tablename__ = "support_agents"
 
@@ -102,13 +109,34 @@ class SupportAgent(Base):
     email = Column(String, unique=True, index=True)
     full_name = Column(String)
     hashed_password = Column(String)
+    role = Column(Enum(AgentRole), default=AgentRole.SUPPORT_AGENT)
     permissions = Column(JSON)  # Array of permission strings
     status = Column(String, default="active")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
 
     def __repr__(self):
-        return f"<SupportAgent {self.username} ({self.email})>"
+        return f"<SupportAgent {self.username} ({self.email}) - {self.role.value}>"
+
+    def has_permission(self, permission: str) -> bool:
+        """Check if agent has a specific permission"""
+        if not self.permissions:
+            return False
+        return permission in self.permissions
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for API responses"""
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "full_name": self.full_name,
+            "role": self.role.value,
+            "permissions": self.permissions or [],
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
 
 
 # Initialize database

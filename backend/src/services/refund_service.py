@@ -144,114 +144,106 @@ class RefundCaseService:
             )
             raise
 
-    def validate_refund_eligibility(
+    def get_all_refund_cases_admin(
         self,
-        support_case_id: str,
-        customer_id: str,
-        product_ids: List[str],
-        delivery_dates: Dict[str, str],
-    ) -> Dict[str, Any]:
-        """Validate refund eligibility based on 14-day window"""
+        status: Optional[str] = None,
+        customer_id: Optional[str] = None,
+    ) -> List[RefundCase]:
+        """Get all refund cases for admin view"""
         try:
-            # Verify customer has access to the support case
-            support_case = self.support_repository.find_by_id(support_case_id)
-            if not support_case or support_case.customer_id != customer_id:
+            cases = self.repository.find_all()
+
+            # Filter by status if provided
+            if status:
+                cases = [case for case in cases if case.status == status]
+
+            # Filter by customer if provided
+            if customer_id:
+                cases = [case for case in cases if case.customer_id == customer_id]
+
+            return cases
+        except Exception as e:
+            logger.error(f"Error getting all refund cases for admin: {str(e)}")
+            raise
+
+    def get_refund_case_admin(self, refund_id: str) -> RefundCase:
+        """Get refund case by ID for admin (no customer access control)"""
+        try:
+            refund_case = self.repository.find_by_id(refund_id)
+            if not refund_case:
+                raise NotFoundException("RefundCase", f"ID {refund_id}")
+
+            return refund_case
+        except Exception as e:
+            logger.error(f"Error getting refund case {refund_id} for admin: {str(e)}")
+            raise
+
+    def approve_refund_case(self, refund_id: str, agent_id: str) -> RefundCase:
+        """Approve a refund case"""
+        try:
+            refund_case = self.repository.find_by_id(refund_id)
+            if not refund_case:
+                raise NotFoundException("RefundCase", f"ID {refund_id}")
+
+            # Validate that the refund case is pending
+            if refund_case.status != "Pending":
                 raise BusinessRuleException(
-                    "Access denied: Customer does not own this support case"
+                    f"Refund case {refund_id} is not in Pending status (current: {refund_case.status})"
                 )
 
-            # Get products from support case
-            support_case_products = {p["product_id"]: p for p in support_case.products}
+            # Validate that the refund case is eligible
+            if refund_case.eligibility_status != "Eligible":
+                raise BusinessRuleException(
+                    f"Refund case {refund_id} is not eligible for approval (status: {refund_case.eligibility_status})"
+                )
 
-            # Validate requested products
-            eligible_products = []
-            ineligible_products = []
-            today = datetime.utcnow().date()
+            # Approve the refund
+            refund_case.approve_refund(agent_id)
 
-            for product_id in product_ids:
-                if product_id not in support_case_products:
-                    ineligible_products.append(
-                        {
-                            "product_id": product_id,
-                            "eligible": False,
-                            "reason": "Product not found in support case",
-                        }
-                    )
-                    continue
+            # Update in repository
+            updated_case = self.repository.update(refund_case)
 
-                product = support_case_products[product_id]
-                delivery_date_str = delivery_dates.get(product_id)
+            # Clear cache
+            cache.delete(f"refund_case:{refund_id}")
+            cache.delete(f"refund_cases:{refund_case.customer_id}")
 
-                if not delivery_date_str:
-                    ineligible_products.append(
-                        {
-                            "product_id": product_id,
-                            "eligible": False,
-                            "reason": "No delivery date available for product",
-                        }
-                    )
-                    continue
-
-                try:
-                    delivery_date = datetime.fromisoformat(delivery_date_str).date()
-                    days_since_delivery = (today - delivery_date).days
-
-                    if days_since_delivery <= 14:
-                        eligible_products.append(
-                            {
-                                "product_id": product_id,
-                                "quantity": product["quantity"],
-                                "price": product.get("price", 0),
-                                "delivery_date": delivery_date_str,
-                                "days_since_delivery": days_since_delivery,
-                                "eligible": True,
-                                "reason": "Within 14-day refund window",
-                            }
-                        )
-                    else:
-                        ineligible_products.append(
-                            {
-                                "product_id": product_id,
-                                "quantity": product["quantity"],
-                                "price": product.get("price", 0),
-                                "delivery_date": delivery_date_str,
-                                "days_since_delivery": days_since_delivery,
-                                "eligible": False,
-                                "reason": f"Exceeds 14-day refund window by {days_since_delivery - 14} days",
-                            }
-                        )
-                except Exception:
-                    ineligible_products.append(
-                        {
-                            "product_id": product_id,
-                            "eligible": False,
-                            "reason": "Invalid delivery date format",
-                        }
-                    )
-
-            # Determine overall eligibility
-            eligibility_status = (
-                "Eligible"
-                if len(ineligible_products) == 0
-                else "Partially Eligible"
-                if len(eligible_products) > 0
-                else "Ineligible"
-            )
-
-            return {
-                "eligibility_status": eligibility_status,
-                "eligible_products": eligible_products,
-                "ineligible_products": ineligible_products,
-                "all_eligible": len(ineligible_products) == 0,
-                "total_eligible_amount": sum(
-                    p["price"] * p["quantity"] for p in eligible_products
-                ),
-                "total_ineligible_amount": sum(
-                    p["price"] * p["quantity"] for p in ineligible_products
-                ),
-            }
+            logger.info(f"Refund case {refund_id} approved by agent {agent_id}")
+            return updated_case
         except Exception as e:
-            logger.error(f"Error validating refund eligibility: {str(e)}")
+            logger.error(f"Error approving refund case {refund_id}: {str(e)}")
+            raise
+
+    def reject_refund_case(
+        self, refund_id: str, agent_id: str, reason: str
+    ) -> RefundCase:
+        """Reject a refund case"""
+        try:
+            refund_case = self.repository.find_by_id(refund_id)
+            if not refund_case:
+                raise NotFoundException("RefundCase", f"ID {refund_id}")
+
+            # Validate that the refund case is pending
+            if refund_case.status != "Pending":
+                raise BusinessRuleException(
+                    f"Refund case {refund_id} is not in Pending status (current: {refund_case.status})"
+                )
+
+            # Reject the refund
+            refund_case.reject_refund(agent_id, reason)
+
+            # Update in repository
+            updated_case = self.repository.update(refund_case)
+
+            # Clear cache
+            cache.delete(f"refund_case:{refund_id}")
+            cache.delete(f"refund_cases:{refund_case.customer_id}")
+
+            logger.info(
+                f"Refund case {refund_id} rejected by agent {agent_id}: {reason}"
+            )
+            return updated_case
+        except Exception as e:
+            logger.error(f"Error rejecting refund case {refund_id}: {str(e)}")
             raise
 
 
