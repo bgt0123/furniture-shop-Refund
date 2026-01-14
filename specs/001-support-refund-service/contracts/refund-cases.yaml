@@ -1,0 +1,652 @@
+openapi: 3.0.3
+info:
+  title: Refund Case API
+  description: API for managing refund cases and processing
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
+  - url: https://api.furnitureshop.com/api/v1
+    description: Production server
+
+paths:
+  /support-cases/{support_case_id}/refund-cases:
+    post:
+      summary: Request a refund
+      description: Create a refund case from an existing support case
+      operationId: createRefundCase
+      tags:
+        - Refund Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/supportCaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundCaseCreate'
+      responses:
+        '201':
+          description: Refund case created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCaseRead'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - not your support case or invalid status
+        '404':
+          description: Support case not found
+
+  /refund-cases:
+    get:
+      summary: List refund cases
+      description: Returns a list of refund cases for the authenticated user
+      operationId: listRefundCases
+      tags:
+        - Refund Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/customerId'
+        - $ref: '#/components/parameters/supportCaseIdQuery'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/eligibilityStatus'
+        - $ref: '#/components/parameters/createdAfter'
+        - $ref: '#/components/parameters/createdBefore'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of refund cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RefundCaseSummary'
+        '401':
+          description: Unauthorized
+
+  /refund-cases/{refund_case_id}:
+    get:
+      summary: Get refund case details
+      description: Returns detailed information about a specific refund case
+      operationId: getRefundCase
+      tags:
+        - Refund Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/refundCaseId'
+      responses:
+        '200':
+          description: Refund case details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCaseDetail'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - access to other users' refund cases not allowed
+        '404':
+          description: Refund case not found
+
+  /refund-cases/{refund_case_id}/approve:
+    put:
+      summary: Approve refund case
+      description: Approve a refund case (support agent only)
+      operationId: approveRefundCase
+      tags:
+        - Refund Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/refundCaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+      responses:
+        '200':
+          description: Refund case approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCaseRead'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - support agent role required
+        '404':
+          description: Refund case not found
+        '409':
+          description: Conflict - invalid state transition
+
+  /refund-cases/{refund_case_id}/reject:
+    put:
+      summary: Reject refund case
+      description: Reject a refund case with reason (support agent only)
+      operationId: rejectRefundCase
+      tags:
+        - Refund Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/refundCaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectionRequest'
+      responses:
+        '200':
+          description: Refund case rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCaseRead'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - support agent role required
+        '404':
+          description: Refund case not found
+        '409':
+          description: Conflict - invalid state transition
+
+components:
+  schemas:
+    RefundCaseCreate:
+      type: object
+      required:
+        - product_refunds
+      properties:
+        product_refunds:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRefundRequest'
+          minItems: 1
+          description: Products to be refunded
+        notes:
+          type: string
+          maxLength: 1000
+          description: Additional notes about the refund request
+      example:
+        product_refunds:
+          - product_id: "987e6543-e21b-98d3-c456-426614174001"
+            quantity: 1
+            reason: "Item arrived damaged"
+        notes: "Customer provided photos of damage"
+
+    ProductRefundRequest:
+      type: object
+      required:
+        - product_id
+        - quantity
+      properties:
+        product_id:
+          type: string
+          format: uuid
+          description: ID of the product to refund
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity to refund
+        reason:
+          type: string
+          maxLength: 500
+          description: Reason for refund request
+      example:
+        product_id: "987e6543-e21b-98d3-c456-426614174001"
+        quantity: 1
+        reason: "Item arrived damaged"
+
+    RefundCaseRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        support_case_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        product_refunds:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRefundDetail'
+        total_refund_amount:
+          type: number
+          format: float
+        status:
+          $ref: '#/components/schemas/RefundCaseStatus'
+        eligibility_status:
+          $ref: '#/components/schemas/RefundEligibilityStatus'
+        eligibility_notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+        processed_by:
+          type: string
+          format: uuid
+          nullable: true
+        rejection_reason:
+          type: string
+          nullable: true
+      example:
+        id: "661e8400-e29b-41d4-a716-446655440002"
+        support_case_id: "550e8400-e29b-41d4-a716-446655440000"
+        customer_id: "777e8400-e29b-41d4-a716-446655440001"
+        order_id: "123e4567-e89b-12d3-a456-426614174000"
+        product_refunds:
+          - product_id: "987e6543-e21b-98d3-c456-426614174001"
+            name: "Designer Chair"
+            quantity: 1
+            original_price: 299.99
+            refund_amount: 299.99
+            delivery_date: "2026-01-01"
+            is_eligible: true
+            eligibility_reason: "Within 14-day window"
+        total_refund_amount: 299.99
+        status: "Pending"
+        eligibility_status: "Eligible"
+        created_at: "2026-01-14T12:05:00Z"
+        updated_at: "2026-01-14T12:05:00Z"
+        processed_at: null
+        processed_by: null
+        rejection_reason: null
+
+    RefundCaseSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        support_case_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        total_refund_amount:
+          type: number
+          format: float
+        status:
+          $ref: '#/components/schemas/RefundCaseStatus'
+        eligibility_status:
+          $ref: '#/components/schemas/RefundEligibilityStatus'
+        created_at:
+          type: string
+          format: date-time
+      example:
+        id: "661e8400-e29b-41d4-a716-446655440002"
+        support_case_id: "550e8400-e29b-41d4-a716-446655440000"
+        customer_id: "777e8400-e29b-41d4-a716-446655440001"
+        order_id: "123e4567-e89b-12d3-a456-426614174000"
+        total_refund_amount: 299.99
+        status: "Pending"
+        eligibility_status: "Eligible"
+        created_at: "2026-01-14T12:05:00Z"
+
+    RefundCaseDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        support_case_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        product_refunds:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRefundDetail'
+        total_refund_amount:
+          type: number
+          format: float
+        status:
+          $ref: '#/components/schemas/RefundCaseStatus'
+        eligibility_status:
+          $ref: '#/components/schemas/RefundEligibilityStatus'
+        eligibility_notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+        processed_by:
+          type: string
+          format: uuid
+          nullable: true
+        rejection_reason:
+          type: string
+          nullable: true
+        support_case:
+          $ref: '#/components/schemas/SupportCaseSummary'
+        order_details:
+          $ref: '#/components/schemas/OrderSummary'
+        customer_details:
+          $ref: '#/components/schemas/CustomerSummary'
+      example:
+        id: "661e8400-e29b-41d4-a716-446655440002"
+        support_case_id: "550e8400-e29b-41d4-a716-446655440000"
+        customer_id: "777e8400-e29b-41d4-a716-446655440001"
+        order_id: "123e4567-e89b-12d3-a456-426614174000"
+        product_refunds:
+          - product_id: "987e6543-e21b-98d3-c456-426614174001"
+            name: "Designer Chair"
+            quantity: 1
+            original_price: 299.99
+            refund_amount: 299.99
+            delivery_date: "2026-01-01"
+            is_eligible: true
+            eligibility_reason: "Within 14-day window"
+        total_refund_amount: 299.99
+        status: "Pending"
+        eligibility_status: "Eligible"
+        created_at: "2026-01-14T12:05:00Z"
+        updated_at: "2026-01-14T12:05:00Z"
+        processed_at: null
+        processed_by: null
+        rejection_reason: null
+        support_case:
+          id: "550e8400-e29b-41d4-a716-446655440000"
+          status: "Open"
+          issue_description: "Received damaged items in my order"
+        order_details:
+          id: "123e4567-e89b-12d3-a456-426614174000"
+          total_amount: 599.98
+          status: "Delivered"
+        customer_details:
+          id: "777e8400-e29b-41d4-a716-446655440001"
+          name: "John Doe"
+          email: "john@example.com"
+
+    ProductRefundDetail:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        quantity:
+          type: integer
+        original_price:
+          type: number
+          format: float
+        refund_amount:
+          type: number
+          format: float
+        delivery_date:
+          type: string
+          format: date
+        is_eligible:
+          type: boolean
+        eligibility_reason:
+          type: string
+      example:
+        product_id: "987e6543-e21b-98d3-c456-426614174001"
+        name: "Designer Chair"
+        quantity: 1
+        original_price: 299.99
+        refund_amount: 299.99
+        delivery_date: "2026-01-01"
+        is_eligible: true
+        eligibility_reason: "Within 14-day window"
+
+    ApprovalRequest:
+      type: object
+      properties:
+        notes:
+          type: string
+          maxLength: 1000
+          description: Agent notes about the approval
+        payment_method:
+          type: string
+          description: Preferred payment method for refund
+      example:
+        notes: "Refund approved - customer provided proof of damage"
+        payment_method: "original_payment_method"
+
+    RejectionRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 2000
+          description: Reason for rejection
+        notes:
+          type: string
+          maxLength: 1000
+          description: Additional notes
+      example:
+        reason: "Product damage appears to be due to customer misuse, not shipping."
+        notes: "Customer acknowledged the damage occurred after delivery"
+
+    SupportCaseSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/SupportCaseStatus'
+        issue_description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        status: "Open"
+        issue_description: "Received damaged items in my order"
+        created_at: "2026-01-14T12:00:00Z"
+
+    OrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        total_amount:
+          type: number
+          format: float
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        total_amount: 599.98
+        status: "Delivered"
+        created_at: "2025-12-20T10:30:00Z"
+
+    CustomerSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+      example:
+        id: "777e8400-e29b-41d4-a716-446655440001"
+        name: "John Doe"
+        email: "john@example.com"
+
+    RefundCaseStatus:
+      type: string
+      enum: [Pending, Approved, Rejected, Completed]
+      description: Current status of the refund case
+
+    RefundEligibilityStatus:
+      type: string
+      enum: [Eligible, Partially Eligible, Not Eligible]
+      description: Eligibility status for refund
+
+    SupportCaseStatus:
+      type: string
+      enum: [Open, Closed]
+      description: Status of the related support case
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        error_description:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      example:
+        error: "validation_error"
+        error_description: "Invalid refund request"
+        details:
+          product_refunds:
+            - "product_id must be from the support case order"
+
+  parameters:
+    refundCaseId:
+      name: refund_case_id
+      in: path
+      required: true
+      description: ID of the refund case
+      schema:
+        type: string
+        format: uuid
+    
+    supportCaseId:
+      name: support_case_id
+      in: path
+      required: true
+      description: ID of the support case
+      schema:
+        type: string
+        format: uuid
+    
+    supportCaseIdQuery:
+      name: support_case_id
+      in: query
+      description: Filter by support case ID
+      schema:
+        type: string
+        format: uuid
+    
+    customerId:
+      name: customer_id
+      in: query
+      description: Filter by customer ID
+      schema:
+        type: string
+        format: uuid
+    
+    status:
+      name: status
+      in: query
+      description: Filter by refund case status
+      schema:
+        $ref: '#/components/schemas/RefundCaseStatus'
+    
+    eligibilityStatus:
+      name: eligibility_status
+      in: query
+      description: Filter by eligibility status
+      schema:
+        $ref: '#/components/schemas/RefundEligibilityStatus'
+    
+    createdAfter:
+      name: created_after
+      in: query
+      description: Filter by creation date (after)
+      schema:
+        type: string
+        format: date-time
+    
+    createdBefore:
+      name: created_before
+      in: query
+      description: Filter by creation date (before)
+      schema:
+        type: string
+        format: date-time
+    
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of results to return
+      schema:
+        type: integer
+        default: 50
+        maximum: 100
+    
+    offset:
+      name: offset
+      in: query
+      description: Pagination offset
+      schema:
+        type: integer
+        default: 0
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication using Bearer token

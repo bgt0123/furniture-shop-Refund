@@ -1,8 +1,17 @@
 # Quickstart Guide: Customer Support and Refund Service
 
+**Date**: 2026-01-14 | **Feature**: 001-support-refund-service
+
 ## Overview
 
-This guide provides step-by-step instructions for integrating and using the Customer Support and Refund Service API.
+This guide provides step-by-step instructions for integrating and using the Customer Support and Refund Service API. The service enables customers to create support cases, request refunds, and allows support agents to process refund requests with proper eligibility validation.
+
+**Key Features:**
+- Support case management with attachments
+- Refund request processing with 14-day eligibility validation
+- Role-based access control (Customer vs Support Agent)
+- Comprehensive API documentation and SDK examples
+- Email notification integration
 
 ## Prerequisites
 

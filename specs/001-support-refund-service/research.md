@@ -1,5 +1,7 @@
 # Research Findings: Customer Support and Refund Service
 
+**Date**: 2026-01-14 | **Feature**: 001-support-refund-service
+
 ## Domain Analysis
 
 ### Decision: Domain-Driven Design Approach
@@ -76,3 +78,44 @@
 ### Decision: Test Data Strategy
 - **Rationale**: Need realistic test data for validation scenarios.
 - **Implementation**: Factory pattern for creating test entities with various statuses and dates.
+
+## Security and Authentication
+
+### Decision: JWT with Role-Based Access Control
+- **Rationale**: Constitution specifies JWT-based authentication with role-based access control (Customer vs Support Agent roles).
+- **Implementation**: FastAPI OAuth2PasswordBearer with JWT token validation, role-based endpoint authorization.
+- **Alternatives considered**: Session-based auth (stateful, doesn't scale horizontally), API keys (less secure).
+
+### Decision: Rate Limiting Implementation
+- **Rationale**: NFR-004 requires rate limiting (100 req/min for customers, 500 for agents).
+- **Implementation**: Redis-based rate limiting middleware with configurable limits per role.
+
+## Deployment and Operations
+
+### Decision: Docker Containerization
+- **Rationale**: Constitution specifies Docker containers for consistent environments.
+- **Implementation**: Separate containers for backend, frontend, Redis, with docker-compose for local development.
+
+### Decision: Monitoring and Logging Strategy
+- **Rationale**: NFR-005 requires comprehensive logging for audit and debugging.
+- **Implementation**: Structured logging with correlation IDs, performance metrics, error tracking.
+
+## Open Questions and Risks
+
+### Resolved Questions
+1. **Technology Stack**: All decisions align with constitution requirements
+2. **Authentication**: JWT with role-based access control implemented
+3. **State Management**: Explicit state transitions with validation
+4. **Performance**: Caching and database optimization strategies defined
+
+### Potential Risks
+1. **SQLite Scalability**: May need PostgreSQL migration for high-scale production
+2. **Complex State Transitions**: Requires careful implementation and testing
+3. **Concurrent Operations**: NFR-017 requires optimistic locking implementation
+4. **Integration Points**: Dependencies on existing order and notification systems
+
+### Mitigation Strategies
+1. **Database Abstraction**: Design data access layer for future PostgreSQL support
+2. **Comprehensive Testing**: Focus on state transition edge cases and validation
+3. **Optimistic Locking**: Implement versioning for concurrent operation prevention
+4. **Integration Testing**: Early testing with existing systems to identify issues

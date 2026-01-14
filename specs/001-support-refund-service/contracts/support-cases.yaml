@@ -1,0 +1,618 @@
+openapi: 3.0.3
+info:
+  title: Support Case API
+  description: API for managing customer support cases
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
+  - url: https://api.furnitureshop.com/api/v1
+    description: Production server
+
+paths:
+  /support-cases:
+    post:
+      summary: Create a new support case
+      description: Allows customers to create support cases for their orders
+      operationId: createSupportCase
+      tags:
+        - Support Cases
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportCaseCreate'
+      responses:
+        '201':
+          description: Support case created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCaseRead'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - insufficient permissions
+    
+    get:
+      summary: List support cases
+      description: Returns a list of support cases for the authenticated user
+      operationId: listSupportCases
+      tags:
+        - Support Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/customerId'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/createdAfter'
+        - $ref: '#/components/parameters/createdBefore'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of support cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupportCaseSummary'
+        '401':
+          description: Unauthorized
+
+  /support-cases/{support_case_id}:
+    get:
+      summary: Get support case details
+      description: Returns detailed information about a specific support case
+      operationId: getSupportCase
+      tags:
+        - Support Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/supportCaseId'
+      responses:
+        '200':
+          description: Support case details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCaseDetail'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - access to other users' cases not allowed
+        '404':
+          description: Support case not found
+    
+    put:
+      summary: Update support case
+      description: Update support case details (limited to certain fields)
+      operationId: updateSupportCase
+      tags:
+        - Support Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/supportCaseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportCaseUpdate'
+      responses:
+        '200':
+          description: Support case updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCaseRead'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Support case not found
+
+  /support-cases/{support_case_id}/close:
+    put:
+      summary: Close support case
+      description: Close a support case if no pending refunds exist
+      operationId: closeSupportCase
+      tags:
+        - Support Cases
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/supportCaseId'
+      responses:
+        '200':
+          description: Support case closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCaseRead'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Support case not found
+        '409':
+          description: Conflict - cannot close with pending refunds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloseConflictError'
+
+components:
+  schemas:
+    SupportCaseCreate:
+      type: object
+      required:
+        - order_id
+        - product_ids
+        - issue_description
+      properties:
+        order_id:
+          type: string
+          format: uuid
+          description: The order ID this support case relates to
+        product_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          description: List of product IDs affected by this issue
+        issue_description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+          description: Description of the issue
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentCreate'
+          description: Supporting documents or images
+      example:
+        order_id: "123e4567-e89b-12d3-a456-426614174000"
+        product_ids:
+          - "987e6543-e21b-98d3-c456-426614174001"
+          - "876e5432-f10a-87c2-b543-335522110000"
+        issue_description: "Received damaged items in my order"
+        attachments:
+          - file_id: "attachment-uuid-1"
+            description: "Photo of damaged chair"
+
+    SupportCaseUpdate:
+      type: object
+      properties:
+        issue_description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+          description: Updated description of the issue
+        additional_notes:
+          type: string
+          maxLength: 1000
+          description: Additional notes or updates
+      example:
+        issue_description: "Updated issue description with more details"
+        additional_notes: "Spoke with customer service representative"
+
+    SupportCaseRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        product_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSummary'
+        issue_description:
+          type: string
+        status:
+          $ref: '#/components/schemas/SupportCaseStatus'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentRead'
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        customer_id: "777e8400-e29b-41d4-a716-446655440001"
+        order_id: "123e4567-e89b-12d3-a456-426614174000"
+        product_ids:
+          - "987e6543-e21b-98d3-c456-426614174001"
+        products:
+          - id: "987e6543-e21b-98d3-c456-426614174001"
+            name: "Designer Chair"
+            price: 299.99
+        issue_description: "Received damaged items in my order"
+        status: "Open"
+        created_at: "2026-01-14T12:00:00Z"
+        updated_at: "2026-01-14T12:00:00Z"
+        closed_at: null
+        attachments:
+          - id: "attachment-uuid-1"
+            name: "damaged-chair.jpg"
+            url: "/api/v1/attachments/attachment-uuid-1"
+
+    SupportCaseSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        issue_description:
+          type: string
+        status:
+          $ref: '#/components/schemas/SupportCaseStatus'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        customer_id: "777e8400-e29b-41d4-a716-446655440001"
+        order_id: "123e4567-e89b-12d3-a456-426614174000"
+        issue_description: "Received damaged items in my order"
+        status: "Open"
+        created_at: "2026-01-14T12:00:00Z"
+        updated_at: "2026-01-14T12:00:00Z"
+
+    SupportCaseDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        product_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductDetail'
+        issue_description:
+          type: string
+        status:
+          $ref: '#/components/schemas/SupportCaseStatus'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentRead'
+        refund_cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/RefundCaseSummary'
+        order_details:
+          $ref: '#/components/schemas/OrderSummary'
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        customer_id: "777e8400-e29b-41d4-a716-446655440001"
+        order_id: "123e4567-e89b-12d3-a456-426614174000"
+        product_ids:
+          - "987e6543-e21b-98d3-c456-426614174001"
+        products:
+          - id: "987e6543-e21b-98d3-c456-426614174001"
+            name: "Designer Chair"
+            price: 299.99
+            quantity: 1
+        issue_description: "Received damaged items in my order"
+        status: "Open"
+        created_at: "2026-01-14T12:00:00Z"
+        updated_at: "2026-01-14T12:00:00Z"
+        closed_at: null
+        attachments:
+          - id: "attachment-uuid-1"
+            name: "damaged-chair.jpg"
+            url: "/api/v1/attachments/attachment-uuid-1"
+        refund_cases:
+          - id: "661e8400-e29b-41d4-a716-446655440002"
+            status: "Pending"
+            amount: 299.99
+        order_details:
+          id: "123e4567-e89b-12d3-a456-426614174000"
+          total_amount: 599.98
+          status: "Delivered"
+
+    ProductSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+      example:
+        id: "987e6543-e21b-98d3-c456-426614174001"
+        name: "Designer Chair"
+        price: 299.99
+
+    ProductDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        quantity:
+          type: integer
+        delivery_date:
+          type: string
+          format: date
+      example:
+        id: "987e6543-e21b-98d3-c456-426614174001"
+        name: "Designer Chair"
+        price: 299.99
+        quantity: 1
+        delivery_date: "2026-01-01"
+
+    AttachmentCreate:
+      type: object
+      required:
+        - file_id
+      properties:
+        file_id:
+          type: string
+          format: uuid
+          description: Reference to uploaded file
+        description:
+          type: string
+          maxLength: 255
+          description: Description of the attachment
+      example:
+        file_id: "attachment-uuid-1"
+        description: "Photo of damaged chair"
+
+    AttachmentRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        file_type:
+          type: string
+        file_size:
+          type: integer
+        upload_date:
+          type: string
+          format: date-time
+        description:
+          type: string
+          nullable: true
+      example:
+        id: "attachment-uuid-1"
+        name: "damaged-chair.jpg"
+        url: "/api/v1/attachments/attachment-uuid-1"
+        file_type: "image/jpeg"
+        file_size: 1523456
+        upload_date: "2026-01-14T12:01:00Z"
+        description: "Photo of damaged chair"
+
+    OrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        total_amount:
+          type: number
+          format: float
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        total_amount: 599.98
+        status: "Delivered"
+        created_at: "2025-12-20T10:30:00Z"
+
+    RefundCaseSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/RefundCaseStatus'
+        amount:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+      example:
+        id: "661e8400-e29b-41d4-a716-446655440002"
+        status: "Pending"
+        amount: 299.99
+        created_at: "2026-01-14T12:05:00Z"
+
+    SupportCaseStatus:
+      type: string
+      enum: [Open, Closed]
+      description: Current status of the support case
+
+    RefundCaseStatus:
+      type: string
+      enum: [Pending, Approved, Rejected, Completed]
+      description: Current status of the refund case
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        error_description:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      example:
+        error: "validation_error"
+        error_description: "Invalid request data"
+        details:
+          issue_description:
+            - "must be at least 10 characters"
+
+    CloseConflictError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "conflict"
+        error_description:
+          type: string
+          example: "Cannot close support case with pending refunds"
+        pending_refunds:
+          type: array
+          items:
+            type: string
+            format: uuid
+      example:
+        error: "conflict"
+        error_description: "Cannot close support case with pending refunds"
+        pending_refunds:
+          - "661e8400-e29b-41d4-a716-446655440002"
+          - "772e8400-e29b-41d4-a716-446655440003"
+
+  parameters:
+    supportCaseId:
+      name: support_case_id
+      in: path
+      required: true
+      description: ID of the support case
+      schema:
+        type: string
+        format: uuid
+    
+    customerId:
+      name: customer_id
+      in: query
+      description: Filter by customer ID
+      schema:
+        type: string
+        format: uuid
+    
+    status:
+      name: status
+      in: query
+      description: Filter by support case status
+      schema:
+        $ref: '#/components/schemas/SupportCaseStatus'
+    
+    createdAfter:
+      name: created_after
+      in: query
+      description: Filter by creation date (after)
+      schema:
+        type: string
+        format: date-time
+    
+    createdBefore:
+      name: created_before
+      in: query
+      description: Filter by creation date (before)
+      schema:
+        type: string
+        format: date-time
+    
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of results to return
+      schema:
+        type: integer
+        default: 50
+        maximum: 100
+    
+    offset:
+      name: offset
+      in: query
+      description: Pagination offset
+      schema:
+        type: integer
+        default: 0
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication using Bearer token
