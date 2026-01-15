@@ -1,31 +1,25 @@
 # Implementation Plan: Customer Support and Refund Service
 
-**Branch**: `001-support-refund-service` | **Date**: 2026-01-05 | **Spec**: D:/Dev/Master/Furniture-Shop/specs/001-support-refund-service/spec.md
+**Branch**: `001-support-refund-service` | **Date**: 2026-01-14 | **Spec**: specs/001-support-refund-service/spec.md
 **Input**: Feature specification from `/specs/001-support-refund-service/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-This feature implements a comprehensive customer support and refund service for the furniture web shop. It enables customers to open support cases, request refunds for products within a 14-day window from delivery, and provides support agents with tools to process refund requests. The system includes overview pages for tracking case status and history, with proper validation, notifications, and data integrity controls.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: Python 3.12, TypeScript 5.4 (from constitution)  
-**Primary Dependencies**: FastAPI (backend), React 18 (frontend), SQLite, Redis (from constitution)  
-**Storage**: SQLite for main data storage, Redis for caching and session management (from constitution)  
-**Testing**: pytest (backend), Jest (frontend), comprehensive unit/integration/e2e testing (from constitution)  
-**Target Platform**: Web application with backend API and frontend UI  
-**Project Type**: Web application (backend + frontend)  
-**Performance Goals**: <2s page load for overview pages, <500ms API response times, handle 100+ concurrent support agents  
-**Constraints**: Domain-Driven Design patterns, Clean Architecture principles, RESTful API design  
-**Scale/Scope**: Support for thousands of customers, orders, and cases with proper validation and data integrity
+**Language/Version**: Python 3.12, TypeScript 5.4
+**Primary Dependencies**: FastAPI (backend), React 18 (frontend), SQLite, Redis
+**Storage**: SQLite for data storage, Redis for caching and session management
+**Testing**: pytest (backend), Jest (frontend), Playwright (e2e)
+**Target Platform**: Web application (backend + frontend)
+**Project Type**: Web application
+**Performance Goals**: <500ms API response times, support 100+ concurrent support agents, scale horizontally
+**Constraints**: Domain-Driven Design patterns, Clean Architecture principles, JWT-based authentication
+**Scale/Scope**: Support 10k+ customers, 50k+ orders, handle 100+ concurrent support agents
 
 ## Constitution Check
 
@@ -44,24 +38,13 @@ This feature implements a comprehensive customer support and refund service for 
 - ✅ Proper separation of concerns maintained
 - ✅ Feature branch naming convention followed
 - ✅ Code review process implemented
-- ✅ RESTful API design implemented
-- ✅ Environment-based configuration management
-- ✅ Feature branch naming convention (001-support-refund-service)
-- ✅ Email notification service integrated
-- ✅ Data validation and integrity constraints implemented
-- ✅ State machine patterns for business workflows
-- ✅ Comprehensive error handling and user feedback
-- ✅ Horizontal scaling with stateless services supported
-- ✅ JWT-based authentication with RBAC implemented
-- ✅ Rate limiting and security hardening included
-- ✅ All edge cases and failure scenarios addressed
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
+specs/001-support-refund-service/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)
@@ -71,62 +54,93 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
-```text
-# Web application structure (backend + frontend)
-
+```
 backend/
 ├── src/
 │   ├── models/
 │   │   ├── support_case.py
 │   │   ├── refund_case.py
-│   │   └── ...
+│   │   ├── refund_eligibility.py
+│   │   └── __init__.py
 │   ├── services/
-│   │   ├── support_service.py
-│   │   ├── refund_service.py
-│   │   └── ...
+│   │   ├── support_case_service.py
+│   │   ├── refund_case_service.py
+│   │   ├── agent_service.py
+│   │   └── __init__.py
+│   ├── repositories/
+│   │   ├── support_repository.py
+│   │   ├── refund_repository.py
+│   │   └── __init__.py
 │   ├── api/
 │   │   ├── support_endpoints.py
 │   │   ├── refund_endpoints.py
-│   │   └── ...
-│   └── repositories/
-│       ├── support_repository.py
-│       └── refund_repository.py
-└── tests/
-    ├── unit/
-    ├── integration/
-    └── contract/
+│   │   ├── admin_endpoints.py
+│   │   ├── router.py
+│   │   └── __init__.py
+│   ├── database/
+│   │   ├── base.py
+│   │   ├── session.py
+│   │   └── __init__.py
+│   ├── schemas/
+│   │   ├── support_case.py
+│   │   ├── refund_case.py
+│   │   └── __init__.py
+│   ├── utils/
+│   │   ├── auth.py
+│   │   ├── cache.py
+│   │   ├── logging.py
+│   │   └── __init__.py
+│   ├── config/
+│   │   ├── settings.py
+│   │   ├── logging.py
+│   │   └── __init__.py
+│   └── main.py
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── contract/
+│   └── __init__.py
+└── pyproject.toml
+
 
 frontend/
 ├── src/
 │   ├── components/
 │   │   ├── SupportCaseForm.tsx
-│   │   ├── RefundRequest.tsx
-│   │   ├── CaseOverview.tsx
-│   │   └── ...
+│   │   ├── SupportCaseList.tsx
+│   │   ├── SupportCaseDetail.tsx
+│   │   ├── RefundRequestForm.tsx
+│   │   ├── RefundCaseList.tsx
+│   │   ├── RefundCaseDetail.tsx
+│   │   └── index.ts
 │   ├── pages/
 │   │   ├── SupportDashboard.tsx
 │   │   ├── RefundDashboard.tsx
-│   │   └── ...
+│   │   ├── AgentPortal.tsx
+│   │   └── index.ts
 │   ├── services/
-│   │   ├── supportApi.ts
-│   │   ├── refundApi.ts
-│   │   └── ...
-│   └── types/
-│       ├── supportTypes.ts
-│       └── refundTypes.ts
-└── tests/
-    ├── unit/
-    └── integration/
+│   │   ├── api.ts
+│   │   ├── agent_api.ts
+│   │   ├── auth.ts
+│   │   └── index.ts
+│   ├── types/
+│   │   ├── models.ts
+│   │   └── index.ts
+│   ├── styles/
+│   │   └── main.css
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.html
+├── tests/
+│   ├── unit/
+│   └── integration/
+├── package.json
+└── tsconfig.json
+
 ```
 
-**Structure Decision**: Web application structure with clear separation between backend (FastAPI) and frontend (React). Backend follows Clean Architecture with models, services, API endpoints, and repositories. Frontend organized by components, pages, services, and TypeScript types.
+**Structure Decision**: Web application structure with separate backend (FastAPI) and frontend (React) directories. This follows Clean Architecture principles with clear separation of concerns between domain models, services, and API endpoints. The backend uses SQLite for data storage and Redis for caching/session management as specified in the constitution.
 
 ## Complexity Tracking
 
