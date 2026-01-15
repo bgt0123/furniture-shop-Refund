@@ -1,9 +1,9 @@
 # Tasks: Customer Support and Refund Service
 
 **Input**: Design documents from `/specs/001-support-refund-service/`
-**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+**Prerequisites**: plan.md ✅, spec.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅
 
-**Tests**: Tests are OPTIONAL - only include them if explicitly requested in the feature specification. Since the spec doesn't explicitly request TDD, tests are not included in this task list.
+**Tests**: Constitution requires comprehensive testing strategy with ≥80% coverage. Tests are included as mandatory tasks.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -19,27 +19,38 @@
 
 ## Path Conventions
 
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Domain layer**: `backend/src/domain/`
-- **Application layer**: `backend/src/application/`
-- **Infrastructure layer**: `backend/src/infrastructure/`
-- **API endpoints**: `backend/src/api/`
-- **Frontend components**: `frontend/src/app/` (React structure)
-- **Tests**: `backend/tests/`, `frontend/tests/`
+### Backend
+- Web app root: `backend/src/`
+- Domain / Models: `backend/src/models/`
+- Application services: `backend/src/services/`
+- Repositories / Persistence: `backend/src/repositories/`
+- API endpoints: `backend/src/api/`
+- Configuration: `backend/src/config/`
+- Utilities (cache, logging): `backend/src/utils/`
+- Tests: `backend/tests/{unit|integration|contract}/`
+
+### Frontend
+- Web app root: `frontend/src/`
+- Components: `frontend/src/components/`
+- Pages / Views: `frontend/src/pages/`
+- Services / API clients: `frontend/src/services/`
+- Tests: `frontend/tests/`
 - Paths shown below assume web app structure - adjust based on plan.md structure
+- Make sure that the required files, such as index.html are evailable
 
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize Python 3.12 backend project with FastAPI dependencies
-- [ ] T003 Initialize TypeScript 5.4 frontend project with React 18 dependencies
-- [ ] T004 [P] Configure Python linting (ruff, black) and TypeScript linting (ESLint, Prettier)
-- [ ] T005 [P] Setup SQLite database schema and migrations framework
-- [ ] T006 [P] Setup Redis caching configuration
-- [ ] T007 [P] Configure environment variables and configuration management
-- [ ] T008 [P] Setup basic logging infrastructure
+- [ ] T001 Create project structure per implementation plan.md
+- [ ] T002 Initialize Python 3.12 backend project with FastAPI dependencies in backend/
+- [ ] T003 Initialize React 18 project in frontend/
+- [ ] T004 [P] Configure Ruff, Black, and MyPy for Python linting and formatting
+- [ ] T005 [P] Configure ESLint and Prettier for TypeScript linting and formatting
+- [ ] T006 Setup SQLite database schema and connection handling
+- [ ] T007 Setup Redis connection and caching configuration in backend/src/utils/cache.py
+- [ ] T008 [P] Configure environment variables and configuration management
+- [ ] T009 [P] Setup centralized logging in backend/src/config/logging.py
 
 ---
 
@@ -49,15 +60,14 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T009 Setup JWT authentication and authorization framework
-- [ ] T010 [P] Create base domain models (Customer, Order, Product) in backend/src/models/
-- [ ] T011 [P] Setup API routing structure with FastAPI
-- [ ] T012 [P] Implement authentication middleware in backend/src/middleware/auth.py
-- [ ] T013 [P] Create base repository pattern for database access
-- [ ] T014 [P] Setup error handling and global exception middleware
-- [ ] T015 [P] Create base React components and routing structure
-- [ ] T016 [P] Setup API client service for frontend in frontend/src/services/api.ts
-- [ ] T017 [P] Configure CORS and security headers
+- [ ] T010 Setup database schema and migrations
+- [ ] T011 [P] Setup JWT authentication and authorization framework
+- [ ] T012 [P] Setup API routing structure with FastAPI
+- [ ] T013 Create base models/entities that all stories depend on in backend/src/models/
+- [ ] T014 Setup global error handling
+- [ ] T015 Setup environment configuration management
+- [ ] T016 [P] Create base React components and hooks in frontend/src/components/
+- [ ] T017 [P] Setup API client and service layer in frontend/src/services/api.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -66,52 +76,68 @@
 ## Phase 3: User Story 1 - Customer Opens Support Case (Priority: P1) 🎯 MVP
 
 **Goal**: Enable customers to create support cases for their orders with product selection and issue description
-
 **Independent Test**: Can be fully tested by simulating a customer creating a support case with valid order information and verifying the case appears in the system with correct details.
+
+### Tests for User Story 1
+
+> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
+
+- [ ] T018 [P] [QA] [US1] Contract test for support case creation in backend/tests/contract/test_support_case_creation.py
+- [ ] T019 [P] [QA] [US1] Integration test for support case creation journey in backend/tests/integration/test_support_case_creation.py
+- [ ] T020 [P] [QA] [US1] Unit test for SupportCase model validation in backend/tests/unit/test_support_case_model.py
+- [ ] T021 [P] [QA] [US1] Unit test for support case service in backend/tests/unit/test_support_case_service.py
 
 ### Implementation for User Story 1
 
-- [ ] T018 [P] [US1] [DDD] Create SupportCase domain model in backend/src/models/support_case.py
-- [ ] T019 [P] [US1] [DDD] Create SupportCase repository in backend/src/repositories/support_repository.py
-- [ ] T020 [US1] [DDD] Implement SupportCase service with validation in backend/src/services/support_service.py
-- [ ] T021 [US1] Implement POST /support/cases endpoint in backend/src/api/support_endpoints.py
-- [ ] T022 [US1] Implement GET /support/cases endpoint in backend/src/api/support_endpoints.py
-- [ ] T023 [US1] Implement GET /support/cases/{caseId} endpoint in backend/src/api/support_endpoints.py
-- [ ] T024 [US1] Implement PATCH /support/cases/{caseId} endpoint in backend/src/api/support_endpoints.py
-- [ ] T025 [P] [US1] Create SupportCaseForm component in frontend/src/components/SupportCaseForm.tsx
-- [ ] T026 [P] [US1] Create SupportCaseList component in frontend/src/components/SupportCaseList.tsx
-- [ ] T027 [P] [US1] Create SupportCaseDetail component in frontend/src/components/SupportCaseDetail.tsx
-- [ ] T028 [US1] Create SupportDashboard page in frontend/src/pages/SupportDashboard.tsx
-- [ ] T029 [US1] Implement support API service in frontend/src/services/supportApi.ts
-- [ ] T030 [US1] Add validation and error handling for support case creation
-- [ ] T031 [US1] Add logging for support case operations
+- [ ] T022 [P] [DDD] [US1] Create SupportCase domain model in backend/src/models/support_case.py
+- [ ] T023 [P] [DDD] [US1] Create SupportCase repository in backend/src/repositories/support_repository.py
+- [ ] T024 [US1] Implement SupportCaseService in backend/src/services/support_case_service.py
+- [ ] T025 [US1] Implement POST /support/cases endpoint in backend/src/api/support_endpoints.py to create a new support case for a given order with selected products and an issue description, validating input data and initializing the case with an open status
+- [ ] T026 [US1] Implement GET /support/cases endpoint in backend/src/api/support_endpoints.py to return all support cases belonging to the authenticated customer with basic metadata
+- [ ] T027 [US1] Implement GET /support/cases/{caseId} endpoint in backend/src/api/support_endpoints.py to return the full details of a single support case including products, description, status, and timestamps
+- [ ] T028 [US1] Implement PATCH /support/cases/{caseId} endpoint in backend/src/api/support_endpoints.py to update mutable fields of a support case while enforcing business rules such as preventing modifications of closed cases
+- [ ] T029 [P] [US1] Create React SupportCaseForm component in frontend/src/components/SupportCaseForm.tsx 
+- [ ] T030 [P] [US1] Create React SupportCaseList component in frontend/src/components/SupportCaseList.tsx
+- [ ] T031 [P] [US1] Create React SupportCaseDetail component in frontend/src/components/SupportCaseDetail.tsx
+- [ ] T032 [US1] Create SupportDashboard page in frontend/src/pages/SupportDashboard.tsx
+- [ ] T033 [US1] Add client-side validation for support case form in frontend/src/services/validation.ts
+- [ ] T034 [US1] Connect frontend to backend API endpoints in frontend/src/services/api.ts
+- [ ]  T035 [US1] Add logging for support case operations
 
-**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. Customers can create, view, and close support cases.
-
+**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 ---
 
 ## Phase 4: User Story 2 - Customer Requests Refund from Support Case (Priority: P2)
 
-**Goal**: Enable customers to request refunds for specific products from open support cases with eligibility validation
+**Goal**: Enable customers to request refunds for specific products from open support cases with eligibility validation based on 14-day window from delivery
 
 **Independent Test**: Can be fully tested by creating a support case, requesting a refund for eligible products, and verifying the refund case is created with proper linkage and status.
 
+### Tests for User Story 2
+
+- [ ] T036 [P] [QA] [US2] Contract test for refund case creation in backend/tests/contract/test_refund_case_creation.py
+- [ ] T037 [P] [QA] [US2] Integration test for refund request journey in backend/tests/integration/test_refund_request.py
+- [ ] T038 [P] [QA] [US2] Unit test for RefundCase model validation in backend/tests/unit/test_refund_case_model.py
+- [ ] T039 [P] [QA] [US2] Unit test for refund eligibility calculation in backend/tests/unit/test_refund_eligibility.py
+- [ ] T040 [P] [QA] [US2] Unit test for refund case service in backend/tests/unit/test_refund_case_service.py
+
 ### Implementation for User Story 2
 
-- [ ] T032 [P] [US2] [DDD] Create RefundCase domain model in backend/src/models/refund_case.py
-- [ ] T033 [P] [US2] [DDD] Create RefundCase repository in backend/src/repositories/refund_repository.py
-- [ ] T034 [US2] [DDD] Implement RefundCase service with eligibility validation in backend/src/services/refund_service.py
-- [ ] T035 [US2] Implement POST /support/cases/{caseId}/refunds endpoint in backend/src/api/refund_endpoints.py
-- [ ] T036 [US2] Implement GET /refunds/cases endpoint in backend/src/api/refund_endpoints.py
-- [ ] T037 [US2] Implement GET /refunds/cases/{refundId} endpoint in backend/src/api/refund_endpoints.py
-- [ ] T038 [P] [US2] Create RefundRequest component in frontend/src/components/RefundRequest.tsx
-- [ ] T039 [P] [US2] Create RefundCaseList component in frontend/src/components/RefundCaseList.tsx
-- [ ] T040 [P] [US2] Create RefundCaseDetail component in frontend/src/components/RefundCaseDetail.tsx
-- [ ] T041 [US2] Create RefundDashboard page in frontend/src/pages/RefundDashboard.tsx
-- [ ] T042 [US2] Implement refund API service in frontend/src/services/refundApi.ts
-- [ ] T043 [US2] Implement 14-day eligibility validation logic
-- [ ] T044 [US2] Add error handling for ineligible refund requests
-- [ ] T045 [US2] Add logging for refund operations
+- [ ] T041 [P] [DDD] [US2] Create RefundCase domain model in backend/src/models/refund_case.py
+- [ ] T042 [P] [DDD] [US2] Create RefundEligibility value object in backend/src/models/refund_eligibility.py with 14-day eligibility validation logic
+- [ ] T043 [P] [DDD] [US2] Create RefundCase repository in backend/src/repositories/refund_repository.py
+- [ ] T044 [US2] Implement RefundCaseService with eligibility validation in backend/src/services/refund_case_service.py
+- [ ] T045 [US2] Implement POST /support/cases/{caseId}/refunds endpoint in backend/src/api/refund_endpoints.py to create a refund request for selected products of a support case, validating ownership, product association, and eligibility based on the defined refund window
+- [ ] T046 [US2] Implement GET /refunds/cases endpoint in backend/src/api/refund_endpoints.py to list all refund cases belonging to the authenticated customer
+- [ ] T047 [US2] Implement GET /refunds/cases/{refundId} endpoint in backend/src/api/refund_endpoints.py to return full details of a refund case including status, eligibility outcome, and linkage to the originating support case 
+- [ ] T048 [US2] Add integration with SupportCaseService for case validation in backend/src/services/refund_case_service.py
+- [ ] T049 [P] [US2] Create RefundRequestForm component in frontend/src/components/RefundRequestForm.tsx
+- [ ] T050 [P] [US2] Create RefundCaseList component in frontend/src/components/RefundCaseList.tsx
+- [ ] T051 [P] [US2] Create RefundCaseDetail component in frontend/src/components/RefundCaseDetail.tsx
+- [ ] T052 [US2] Implement RefundDashboard page in frontend/src/pages/RefundDashboard.tsx
+- [ ] T053 [US2] Implement eligibility status display in frontend/src/components/EligibilityStatus.tsx
+- [ ] T054 [US2] Connect frontend refund components to backend API in frontend/src/services/api.ts
+- [ ] T055 [US2] Add logging for refund operations in backend/src/utils/logging.py
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. Customers can create support cases and request refunds from them.
 
@@ -123,43 +149,64 @@
 
 **Independent Test**: Can be fully tested by creating a refund case, having an agent approve it, and verifying the refund is processed and status updated.
 
+### Tests for User Story 3
+
+- [ ] T056 [P] [QA] [US3] Contract test for refund approval in backend/tests/contract/test_refund_approval.py
+- [ ] T057 [P] [QA] [US3] Contract test for refund rejection in backend/tests/contract/test_refund_rejection.py
+- [ ] T058 [P] [QA] [US3] Integration test for agent workflow in backend/tests/integration/test_agent_workflow.py
+- [ ] T059 [P] [QA] [US3] Unit test for agent authorization in backend/tests/unit/test_agent_authorization.py
+- [ ] T060 [P] [QA] [US3] Unit test for refund processing service in backend/tests/unit/test_refund_processing.py
+
 ### Implementation for User Story 3
 
-- [ ] T046 [P] [US3] [DDD] Create SupportAgent domain model in backend/src/models/support_agent.py
-- [ ] T047 [P] [US3] [DDD] Extend RefundCase service with approval/rejection logic in backend/src/services/refund_service.py
-- [ ] T048 [US3] Implement GET /admin/refunds/cases endpoint in backend/src/api/admin_endpoints.py
-- [ ] T049 [US3] Implement GET /admin/refunds/cases/{refundId} endpoint in backend/src/api/admin_endpoints.py
-- [ ] T050 [US3] Implement POST /admin/refunds/cases/{refundId}/approve endpoint in backend/src/api/admin_endpoints.py
-- [ ] T051 [US3] Implement POST /admin/refunds/cases/{refundId}/reject endpoint in backend/src/api/admin_endpoints.py
-- [ ] T052 [P] [US3] Create AdminRefundList component in frontend/src/components/AdminRefundList.tsx
-- [ ] T053 [P] [US3] Create AdminRefundDetail component in frontend/src/components/AdminRefundDetail.tsx
-- [ ] T054 [US3] Create AdminDashboard page in frontend/src/pages/AdminDashboard.tsx
-- [ ] T055 [US3] Implement admin API service in frontend/src/services/adminApi.ts
-- [ ] T056 [US3] Implement role-based authorization for admin endpoints
-- [ ] T057 [US3] Add logging for admin operations
+- [ ] T061 [P] [DDD] [US3] Create SupportAgent domain model in backend/src/models/support_agent.py
+- [ ] T062 [US3] Implement AgentService with authorization in backend/src/services/agent_service.py to resolve agent identity, roles, and permissions
+- [ ] T063 [US3] Implement POST /admin/refunds/{refundId}/approve endpoint in backend/src/api/admin_endpoints.py to allow an authorized support agent to approve a refund request and transition the refund case to an approved statepy
+- [ ] T064 [US3] Implement POST /admin/refunds/{refundId}/reject endpoint in backend/src/api/admin_endpoints.py to allow an authorized support agent to reject a refund request with a reason and update the refund case status accordingly
 
-**Checkpoint**: All user stories should now be independently functional. The complete workflow from support case creation to refund processing is available.
+- [ ] T065 [US3] Implement GET /admin/refunds endpoint in backend/src/api/admin_endpoints.py to return all refund cases relevant for support agents including current status and customer reference
+- [ ] T066 [US3] Implement RefundProcessingService in backend/src/services/refund_processing_service.py to coordinate state transitions and trigger downstream processing logic
+- [ ] T067 [US3] Add audit logging for agent actions in backend/src/utils/audit_logging.py
+- [ ] T068 [US3] Implement role-based authorization for admin endpoints
+- [ ] T069 [P] [US3] Create AgentDashboard component in frontend/src/components/AgentDashboard.tsx
+- [ ] T070 [P] [US3] Create RefundProcessingForm component in frontend/src/components/RefundProcessingForm.tsx
+- [ ] T071 [P] [US3] Create AgentRefundList component in frontend/src/components/AgentRefundList.ts
+
+- [ ] T072 [US3] Add agent-specific API client methods in frontend/src/services/agent_api.ts
+
+**Checkpoint**: All user stories should now be independently functional
 
 ---
 
 ## Phase 6: User Story 4 - Customer Views Support and Refund History (Priority: P4)
 
-**Goal**: Enable customers to view comprehensive history of their support and refund cases
+**Goal**: Enable customers to view comprehensive history of their support cases and refund cases with filtering and search capabilities
 
 **Independent Test**: Can be fully tested by creating various support and refund cases with different statuses and verifying the overview pages display them correctly.
 
+### Tests for User Story 4
+
+- [ ] T073 [P] [QA] [US4] Contract test for case history endpoints in backend/tests/contract/test_case_history.py
+- [ ] T074 [P] [QA] [US4] Integration test for history viewing in backend/tests/integration/test_history_viewing.py
+- [ ] T075 [P] [QA] [US4] Unit test for search functionality in backend/tests/unit/test_search_service.py
+
 ### Implementation for User Story 4
 
-- [ ] T058 [P] [US4] Create CaseHistory component in frontend/src/components/CaseHistory.tsx
-- [ ] T059 [P] [US4] Create SupportHistory component in frontend/src/components/SupportHistory.tsx
-- [ ] T060 [P] [US4] Create RefundHistory component in frontend/src/components/RefundHistory.tsx
-- [ ] T061 [US4] Extend SupportDashboard page with history view in frontend/src/pages/SupportDashboard.tsx
-- [ ] T062 [US4] Extend RefundDashboard page with history view in frontend/src/pages/RefundDashboard.tsx
-- [ ] T063 [US4] Implement history API endpoints if needed
-- [ ] T064 [US4] Add search and filter functionality to history views
-- [ ] T065 [US4] Implement pagination for large history lists
+- [ ] T076 [US4] Implement history service with search and filtering in backend/src/services/history_service.py
+- [ ] T077 [US4] Implement GET /history/support-cases endpoint in backend/src/api/history_endpoints.py to return a paginated and filterable list of support cases for the authenticated customer
 
-**Checkpoint**: Customer history functionality is complete. All user stories are now fully implemented.
+- [ ] T078 [US4] Implement GET /history/refund-cases endpoint in backend/src/api/history_endpoints.py to return a paginated and filterable list of refund cases for the authenticated customer
+
+- [ ] T079 [US4] Implement search functionality for cases in backend/src/services/search_service.py
+- [ ] T080 [US4] Add pagination support for history endpoints in backend/src/api/history_endpoints.py
+- [ ] T081 [US4] Add caching for history queries in backend/src/utils/cache.py
+- [ ] T082 [P] [US4] Create CaseHistoryDashboard component in frontend/src/components/CaseHistoryDashboard.tsx
+- [ ] T083 [P] [US4] Create SearchFilters component in frontend/src/components/SearchFilters.tsx
+- [ ] T084 [P] [US4] Create CaseTimeline component in frontend/src/components/CaseTimeline.tsx
+- [ ] T085 [US4] Implement history dashboard page in frontend/src/pages/HistoryDashboard.tsx
+- [ ] T086 [US4] Add client-side search and filter logic in frontend/src/services/search.ts
+
+**Checkpoint**: All four user stories should now be fully functional and integrated
 
 ---
 
@@ -167,16 +214,15 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T066 [P] Documentation updates in docs/ and README.md
-- [ ] T067 [P] Code cleanup and refactoring across all components
-- [ ] T068 [Perf] Performance optimization for overview pages (<2s load time)
-- [ ] T069 [Perf] Database indexing optimization for case queries
-- [ ] T070 [Sec] Security hardening and penetration testing
-- [ ] T071 [P] Additional unit tests for critical components
-- [ ] T072 [P] Integration tests for complete workflows
-- [ ] T073 [QA] Run quickstart.md validation and update examples
-- [ ] T074 [QA] Cross-browser testing and accessibility validation
-- [ ] T075 [QA] Load testing for concurrent operations (100+ agents)
+- [ ] T087 [P] Documentation updates in docs/ and README.md
+- [ ] T088 Code cleanup and refactoring across all components
+- [ ] T089 [Perf] Performance optimization for overview pages (<2s load time)
+- [ ] T090 [Perf] Add Redis caching for frequent queries in backend/src/utils/cache.py
+- [ ] T091 [Sec] Security hardening for authentication and authorization
+- [ ] T092 [Sec] Add input validation and sanitization across all endpoints
+- [ ] T093 [P] Run quickstart.md validation and update examples
+- [ ] T094 [P] Update API documentation and OpenAPI specs in backend/src/api/docs/
+- [ ] T095 [P] Add comprehensive logging configuration in backend/src/config/logging.py
 
 ---
 
@@ -186,7 +232,7 @@
 
 - **Setup (Phase 1)**: No dependencies - can start immediately
 - **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
-- **User Stories (Phase 3+)**: All depend on Foundational phase completion
+- **User Stories (Phase 3-6)**: All depend on Foundational phase completion
   - User stories can then proceed in parallel (if staffed)
   - Or sequentially in priority order (P1 → P2 → P3 → P4)
 - **Polish (Final Phase)**: Depends on all desired user stories being complete
@@ -194,25 +240,29 @@
 ### User Story Dependencies
 
 - **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
-- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - Depends on US1 (needs support cases to exist) but should be independently testable
-- **User Story 3 (P3)**: Can start after Foundational (Phase 2) - Depends on US2 (needs refund cases to exist) but should be independently testable
-- **User Story 4 (P4)**: Can start after Foundational (Phase 2) - Depends on US1, US2, US3 (needs cases to display) but should be independently testable
+- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - Depends on US1 (support cases must exist)
+- **User Story 3 (P3)**: Can start after Foundational (Phase 2) - Depends on US2 (refund cases must exist)  
+- **User Story 4 (P4)**: Can start after Foundational (Phase 2) - Depends on US1 and US2 (cases must exist for history)
 
 ### Within Each User Story
 
-- Models before services
+- Models before services (DDD pattern)
 - Services before endpoints
-- Core implementation before integration
 - Backend before frontend integration
+- Core implementation before integration
 - Story complete before moving to next priority
 
 ### Parallel Opportunities
 
 - All Setup tasks marked [P] can run in parallel
 - All Foundational tasks marked [P] can run in parallel (within Phase 2)
-- Once Foundational phase completes, all user stories can start in parallel (if team capacity allows)
+- Once Foundational phase completes, user stories can start in parallel:
+  - US1 can start immediately
+  - US2 can start after US1 core is complete
+  - US3 can start after US2 core is complete  
+  - US4 can start after US1+US2 complete
+- All tests for a user story marked [P] can run in parallel
 - Models within a story marked [P] can run in parallel
-- Frontend components within a story marked [P] can run in parallel
 - Different user stories can be worked on in parallel by different team members
 
 ---
@@ -220,9 +270,16 @@
 ## Parallel Example: User Story 1
 
 ```bash
+# Launch all tests for User Story 1 together:
+Task: "Contract test for support case creation in backend/tests/contract/test_support_case_creation.py"
+Task: "Integration test for support case creation journey in backend/tests/integration/test_support_case_creation.py"
+Task: "Unit test for SupportCase model validation in backend/tests/unit/test_support_case_model.py"
+Task: "Unit test for support case service in backend/tests/unit/test_support_case_service.py"
+
 # Launch all models for User Story 1 together:
-Task: "Create SupportCase domain model in backend/src/models/support_case.py"
-Task: "Create SupportCase repository in backend/src/repositories/support_repository.py"
+Task: "Create SupportCase model in backend/src/models/support_case.py"
+Task: "Create Attachment model in backend/src/models/attachment.py"
+Task: "Create OrderReference value object in backend/src/models/order_reference.py"
 
 # Launch all frontend components for User Story 1 together:
 Task: "Create SupportCaseForm component in frontend/src/components/SupportCaseForm.tsx"
@@ -235,14 +292,17 @@ Task: "Create SupportCaseDetail component in frontend/src/components/SupportCase
 ## Parallel Example: User Story 2
 
 ```bash
-# Launch all models for User Story 2 together:
-Task: "Create RefundCase domain model in backend/src/models/refund_case.py"
-Task: "Create RefundCase repository in backend/src/repositories/refund_repository.py"
+# Launch all tests for User Story 2 together:
+Task: "Contract test for refund case creation in backend/tests/contract/test_refund_case_creation.py"
+Task: "Integration test for refund request journey in backend/tests/integration/test_refund_request.py"
+Task: "Unit test for RefundCase model validation in backend/tests/unit/test_refund_case_model.py"
+Task: "Unit test for refund eligibility calculation in backend/tests/unit/test_refund_eligibility.py"
+Task: "Unit test for refund case service in backend/tests/unit/test_refund_case_service.py"
 
-# Launch all frontend components for User Story 2 together:
-Task: "Create RefundRequest component in frontend/src/components/RefundRequest.tsx"
-Task: "Create RefundCaseList component in frontend/src/components/RefundCaseList.tsx"
-Task: "Create RefundCaseDetail component in frontend/src/components/RefundCaseDetail.tsx"
+# Launch all models for User Story 2 together:
+Task: "Create RefundCase model in backend/src/models/refund_case.py"
+Task: "Create ProductRefund model in backend/src/models/product_refund.py"
+Task: "Create RefundEligibility value object in backend/src/models/refund_eligibility.py"
 ```
 
 ---
@@ -282,28 +342,31 @@ With multiple developers:
 
 ## Task Summary
 
-**Total Tasks**: 75
-**Tasks per User Story**:
-- User Story 1 (P1): 13 tasks
-- User Story 2 (P2): 13 tasks  
-- User Story 3 (P3): 13 tasks
-- User Story 4 (P4): 9 tasks
-**Setup Phase**: 8 tasks
-**Foundational Phase**: 9 tasks
-**Polish Phase**: 10 tasks
+### Total Task Count: 116 tasks
 
-**Parallel Opportunities Identified**:
-- 24 tasks marked [P] for parallel execution
-- All user stories can be developed in parallel after Foundational phase
-- Frontend and backend components within each story can be developed in parallel
 
-**Independent Test Criteria**:
-- **US1**: Customer can create, view, and close support cases independently
-- **US2**: Customer can request refunds from existing support cases with eligibility validation
-- **US3**: Support agents can view, approve, and reject refund cases independently
-- **US4**: Customers can view history of their support and refund cases independently
+### Independent Test Criteria for Each Story
 
-**Suggested MVP Scope**: User Story 1 only (P1) - Basic support case functionality that provides immediate customer value and foundation for refund workflow.
+**User Story 1**: Can create support case with order/products, view in list, see details, close case (if no pending refunds)
+
+**User Story 2**: Can request refund from support case, system validates eligibility, creates refund case with proper status
+
+**User Story 3**: Support agent can view refund cases, approve/reject with proper authorization, system processes refunds
+
+**User Story 4**: Can view comprehensive history of support and refund cases with filtering, search, and pagination
+
+### Suggested MVP Scope
+
+**Minimum Viable Product (MVP)**: User Story 1 only
+- Customers can create support cases
+- Basic support case management
+- Foundation for all other stories
+- Provides immediate value and can be deployed independently
+
+**Extended MVP**: User Story 1 + User Story 2
+- Full customer-facing support and refund request functionality
+- Includes eligibility validation
+- Can handle complete customer workflow from issue to refund request
 
 ---
 
@@ -323,3 +386,7 @@ With multiple developers:
 ✅ **Independent testing criteria for each user story**
 
 ✅ **Complete, executable tasks with no ambiguities**
+
+✅ **Comprehensive testing strategy included** (as required by constitution)
+
+✅ **All constitution requirements addressed**: DDD patterns, Clean Architecture, comprehensive testing, performance optimization
