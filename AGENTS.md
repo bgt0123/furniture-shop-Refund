@@ -3,10 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-01-05
 
 ## Active Technologies
-- Python 3.12, TypeScript 5.4 + FastAPI (backend), React 18 (frontend), SQLite, Redis (001-support-refund-service)
-- SQLite for data storage, Redis for caching and session management (001-support-refund-service)
-
-- Python 3.12, TypeScript 5.4 (from constitution) + FastAPI (backend), React 18 (frontend), SQLite, Redis (from constitution) (001-support-refund-service)
+- Python 3.12, TypeScript 5.4 + FastAPI (backend), React 18 (frontend), SQLite, Redis
+- SQLite for data storage, Redis for caching and session management
 
 ## Project Structure
 
