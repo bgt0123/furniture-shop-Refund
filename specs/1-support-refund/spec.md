@@ -72,19 +72,21 @@ System provides overview pages showing all support and refund cases with their c
 - What occurs when delivery date information is missing or incomplete?
 - How are refund cases handled when the original payment method is no longer available?
 - Multiple refund cases can be created for the same support case to handle different product issues
+- If payment gateway refund execution fails: system performs full rollback, reverts support case status, and notifies customer
+- If payment gateway failure occurs during refund execution, system performs full rollback and notifies customer
 
 ## Requirements
 
 ### Functional Requirements
 
 - **FR-001**: Customers MUST be able to create support cases linked to their orders
-- **FR-002**: Support cases MUST track current status (open, in-progress, closed, etc.)
+- **FR-002**: Support cases MUST track current status following lifecycle: open → in-progress → resolved → closed
 - **FR-003**: Customers MUST be able to request refunds for specific products and quantities from open support cases
 - **FR-004**: System MUST create refund cases automatically when refund requests are submitted
 - **FR-005**: Refund cases MUST be linked to the originating support case
 - **FR-006**: Support agents MUST be able to approve refund cases within 14 days of delivery date
 - **FR-007**: System MUST prevent refund approvals beyond the 14-day delivery window
-- **FR-008**: Refund cases MUST support partial refunds by individual product and quantity
+- **FR-008**: Refund cases MUST support partial refunds by individual product and quantity using original purchase price regardless of discounts
 - **FR-009**: Support agents MUST be able to execute refunds through payment systems
 - **FR-010**: Support agents MUST be able to record settlement references for completed refunds
 - **FR-011**: System MUST provide overview pages showing support cases with status, customer, order, products
@@ -110,6 +112,9 @@ System provides overview pages showing all support and refund cases with their c
 - Q: Refund execution method integration → A: Payment gateway API integration
 - Q: Customer refund request modification policy → A: Allow until refund case approval
 - Q: Multiple refund cases handling for same support case → A: Allow multiple distinct refund cases
+- Q: Refund failure handling strategy → A: Full rollback with user notification
+- Q: Support case status lifecycle → A: open → in-progress → resolved → closed
+- Q: Partial refund calculation for discounted products → A: Use original purchase price
 
 ## Success Criteria
 
@@ -117,7 +122,7 @@ System provides overview pages showing all support and refund cases with their c
 
 - **SC-001**: Customers can create support cases for their orders in under 2 minutes
 - **SC-002**: Refund processing from request to completion completes within 48 business hours for eligible cases
-- **SC-003**: 95% of valid refund requests within the 14-day window are successfully processed
+- **SC-003**: 95% of valid refund requests within the 14-day window are successfully processed on first attempt
 - **SC-004**: Support agents can process refund requests with 100% accuracy in product/quantity matching
 - **SC-005**: System prevents 100% of refund approvals outside the 14-day delivery window
 - **SC-006**: Users can view complete case history and status information in under 5 seconds
