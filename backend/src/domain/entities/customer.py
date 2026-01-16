@@ -1,9 +1,9 @@
 """Customer entity."""
 
 from sqlalchemy import UUID, Column, DateTime, String
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+from . import Base
 
 
 class Customer(Base):

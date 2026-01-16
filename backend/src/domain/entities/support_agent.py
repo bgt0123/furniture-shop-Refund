@@ -1,9 +1,9 @@
 """SupportAgent entity."""
 
 from sqlalchemy import UUID, Column, DateTime, Enum, String
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+from . import Base
 
 
 class SupportAgent(Base):

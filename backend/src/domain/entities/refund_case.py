@@ -1,9 +1,9 @@
 """RefundCase entity."""
 
 from sqlalchemy import DECIMAL, UUID, Column, DateTime, Enum, ForeignKey, String
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+from . import Base
 
 
 class RefundCase(Base):
@@ -30,6 +30,8 @@ class RefundCase(Base):
     refund_executed_at = Column(DateTime)
     settlement_reference = Column(String(255))
     failure_reason = Column(String)
-    approved_by = Column(UUID)
+    approved_by = Column(UUID, ForeignKey("support_agents.agent_id"))
 
     support_case = relationship("SupportCase", back_populates="refund_cases")
+    refund_items = relationship("RefundItem", back_populates="refund_case")
+    approved_by_agent = relationship("SupportAgent", back_populates="approved_refunds")
