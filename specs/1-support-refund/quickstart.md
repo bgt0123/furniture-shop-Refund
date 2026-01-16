@@ -1,169 +1,249 @@
-# Quick Start Guide: Customer Support and Refund Microservice
+# Quickstart Guide: Customer Support and Refund Microservice
+
+**Date**: January 16, 2026
+**Version**: 1.0.0
 
 ## Prerequisites
 
 - Python 3.12+
 - Node.js 18+
-- SQLite 3
-- Redis 7+
-- Git
+- Docker and Docker Compose
+- Redis 6+
 
-## Setup Instructions
+## Quick Installation
 
-### 1. Clone and Initialize
+### Option 1: Docker (Recommended)
+
+1. **Clone and setup**:
+   ```bash
+   git clone <repository>
+   cd furniture-shop-Refund
+   git checkout 1-support-refund
+   ```
+
+2. **Environment setup**:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   ```
+
+3. **Start services**:
+   ```bash
+   docker-compose up --build
+   ```
+
+### Option 2: Manual Installation
+
+1. **Backend setup**:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   python main.py
+   ```
+
+2. **Frontend setup**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+3. **Start Redis**:
+   ```bash
+   redis-server
+   ```
+
+## Initial Setup
+
+### Database Setup
+
 ```bash
-git clone <repository-url>
-cd furniture-shop-Refund
-git checkout 1-support-refund
-```
-
-### 2. Backend Setup
-```bash
+# Create and migrate database
 cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\\Scripts\\activate
-pip install -r requirements.txt
-
-# Initialize database
-python -m alembic upgrade head
-
-# Run tests
-pytest tests/ --cov=src --cov-report=html
-
-# Start development server
-uvicorn src.main:app --reload --port 8000
+python scripts/init_db.py
+python scripts/migrate.py
 ```
 
-### 3. Frontend Setup
+### Create First Support Agent
+
 ```bash
-cd frontend
-npm install
-
-# Run tests
-npm test
-
-# Start development server
-npm run dev
+python scripts/create_agent.py --email admin@support.com --role admin
 ```
 
-### 4. Environment Configuration
-
-Create `.env` file in backend directory:
-```env
-DATABASE_URL=sqlite:///./support_refund.db
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=your-secret-key
-ORDER_API_BASE_URL=http://localhost:8080
-PAYMENT_API_BASE_URL=http://localhost:8081
-```
-
-## API Endpoints
-
-### Support Cases
-- `GET /api/v1/support-cases` - List support cases
-- `POST /api/v1/support-cases` - Create support case
-- `GET /api/v1/support-cases/{case_id}` - Get case details
-- `PATCH /api/v1/support-cases/{case_id}` - Update case
-- `PUT /api/v1/support-cases/{case_id}/status` - Update status
-
-### Refund Cases
-- `GET /api/v1/support-cases/{case_id}/refund-cases` - List refund cases
-- `POST /api/v1/support-cases/{case_id}/refund-cases` - Create refund case
-- `POST /api/v1/refund-cases/{refund_case_id}/approve` - Approve refund
-- `POST /api/v1/refund-cases/{refund_case_id}/process` - Process refund
-
-### Authentication
-- `POST /api/v1/auth/login` - Customer login
-- `POST /api/v1/auth/support-login` - Support agent login
-
-## Testing Strategy
+## Testing
 
 ### Backend Tests
+
 ```bash
-# Unit tests
-pytest tests/unit/
-
-# Integration tests
-pytest tests/integration/
-
-# End-to-end tests
-pytest tests/e2e/
-
-# Coverage report
-pytest tests/ --cov=src --cov-report=term-missing
+cd backend
+pytest tests/ --cov=src --cov-report=html
 ```
 
 ### Frontend Tests
+
 ```bash
-# Unit tests
-npm run test:unit
-
-# Integration tests  
-npm run test:integration
-
-# End-to-end tests
+cd frontend
+npm test
 npm run test:e2e
+```
 
-# Coverage report
-npm run test:coverage
+## API Usage Examples
+
+### Create Support Case
+
+```bash
+curl -X POST http://localhost:8000/api/v1/support-cases \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <customer_token>" \
+  -d '{
+    "customer_id": "uuid",
+    "order_id": "uuid", 
+    "title": "Damaged Furniture",
+    "description": "Chair arrived with broken legs"
+  }'
+```
+
+### Create Refund Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/support-cases/{case_id}/refund-cases \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <customer_token>" \
+  -d '{
+    "refund_items": [
+      {
+        "product_id": "uuid",
+        "product_name": "Designer Chair",
+        "requested_quantity": 1,
+        "original_unit_price": 299.99
+      }
+    ]
+  }'
+```
+
+### Approve and Process Refund
+
+```bash
+# Approve refund (support agent)
+curl -X POST http://localhost:8000/api/v1/refund-cases/{refund_id}/approve \
+  -H "Authorization: Bearer <agent_token>"
+
+# Process refund
+curl -X POST http://localhost:8000/api/v1/refund-cases/{refund_id}/process \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <agent_token>" \
+  -d '{
+    "settlement_reference": "REF-12345",
+    "approved_by": "agent_uuid"
+  }'
 ```
 
 ## Development Workflow
 
-1. **Feature Development**: Work on feature branch following DDD patterns
-2. **Testing**: Implement tests before code following TDD approach
-3. **Code Review**: Submit PR with ≥80% test coverage
-4. **Integration**: Merge after CI/CD pipeline passes
+### Code Structure
 
-## Domain-Driven Design Structure
+```
+backend/
+├── src/
+│   ├── domain/          # DDD entities and value objects
+│   ├── application/     # Use cases and services
+│   ├── infrastructure/  # Database and external integrations
+│   └── api/             # FastAPI endpoints
+└── tests/
 
-### Domain Layer
-- **Entities**: SupportCase, RefundCase, RefundLineItem
-- **Value Objects**: MonetaryAmount, DeliveryWindowValidation
-- **Aggregates**: SupportCase Aggregate
-- **Domain Services**: RefundEligibilityService, PaymentProcessingService
+frontend/
+├── src/
+│   ├── components/      # React components
+│   ├── pages/           # Page components
+│   ├── services/        # API services
+│   └── hooks/           # Custom React hooks
+└── tests/
+```
 
-### Application Layer
-- **Use Cases**: CreateSupportCase, RequestRefund, ApproveRefund
-- **Services**: Application services orchestrating domain logic
+### Adding New Features
 
-### Infrastructure Layer
-- **Database**: SQLAlchemy models and repositories
-- **External APIs**: Order system integration, Payment gateway
-- **Authentication**: JWT-based RBAC implementation
+1. **Domain Layer**: Add entities/value objects in `src/domain/`
+2. **Application Layer**: Add use cases in `src/application/use_cases/`
+3. **Infrastructure**: Add database models in `src/infrastructure/database/`
+4. **API Layer**: Add endpoints in `src/api/endpoints/`
+5. **Testing**: Add corresponding tests
 
-### API Layer
-- **Endpoints**: RESTful API with OpenAPI documentation
-- **Middleware**: Authentication, rate limiting, error handling
+## Configuration
 
-## Key Business Rules
+### Environment Variables
 
-### Support Cases
-- Cases must be linked to valid customer orders
-- Status transitions follow logical workflow
-- History tracking for all actions and state changes
+**Backend (.env)**:
+```
+DATABASE_URL=sqlite:///./support_refund.db
+REDIS_URL=redis://localhost:6379
+JWT_SECRET_KEY=your-secret-key
+PAYMENT_GATEWAY_URL=https://api.payment-gateway.com
+ORDER_SERVICE_URL=https://api.order-service.com
+```
 
-### Refund Cases
-- Can only be created from open support cases
-- Must be processed within 14 days of delivery
-- Support partial refunds by product and quantity
-- Single-level approval workflow
+**Frontend (.env)**:
+```
+VITE_API_URL=http://localhost:8000/api/v1
+VITE_AUTH_URL=http://localhost:8000/auth
+```
 
-### Delivery Validation
-- Delivery dates sourced from external order system
-- Real-time validation of 14-day window
-- Automatic rejection of expired refund requests
+## Monitoring and Debugging
 
-## Performance Considerations
+### Logs
 
-- API response time <500ms
-- Redis caching for frequent queries
-- Database indexing on critical fields
-- Async processing for external API calls
+```bash
+# Backend logs
+docker-compose logs backend
 
-## Monitoring and Observability
+# Frontend logs
+docker-compose logs frontend
 
-- Structured logging for all operations
-- Performance metrics collection
-- Error tracking and alerting
-- Audit trail for all financial transactions
+# Redis logs
+docker-compose logs redis
+```
+
+### Health Checks
+
+```bash
+# API health
+curl http://localhost:8000/health
+
+# Database health
+curl http://localhost:8000/db-health
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Database connection errors**:
+- Check database URL in `.env`
+- Ensure SQLite file exists and is accessible
+
+**Redis connection errors**:
+- Verify Redis is running
+- Check Redis URL configuration
+
+**JWT authentication issues**:
+- Verify JWT_SECRET_KEY is set
+- Check token expiration
+
+**Payment gateway integration**:
+- Test with mock implementation first
+- Check API credentials
+
+## Next Steps
+
+1. Set up monitoring (Prometheus + Grafana)
+2. Configure CI/CD pipeline
+3. Set up production deployment
+4. Configure SSL certificates
+5. Set up backup strategy
+
+## Support
+
+- API Documentation: http://localhost:8000/docs
+- Frontend Application: http://localhost:3000
+- Test Coverage Reports: `backend/htmlcov/index.html`

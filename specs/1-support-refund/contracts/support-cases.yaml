@@ -132,28 +132,29 @@ components:
     SupportCase:
       type: object
       properties:
-        id:
+        case_id:
           type: string
           format: uuid
         customer_id:
           type: string
           format: uuid
-        order_reference:
+        order_id:
           type: string
-        subject:
+          format: uuid
+        title:
           type: string
         description:
           type: string
         status:
           type: string
-          enum: [OPEN, IN_PROGRESS, CLOSED, ESCALATED]
-        priority:
-          type: string
-          enum: [LOW, MEDIUM, HIGH, URGENT]
+          enum: [open, in-progress, resolved, closed]
         created_at:
           type: string
           format: date-time
         updated_at:
+          type: string
+          format: date-time
+        closed_at:
           type: string
           format: date-time
 
@@ -161,16 +162,17 @@ components:
       type: object
       required:
         - customer_id
-        - order_reference
-        - subject
+        - order_id
+        - title
         - description
       properties:
         customer_id:
           type: string
           format: uuid
-        order_reference:
+        order_id:
           type: string
-        subject:
+          format: uuid
+        title:
           type: string
           minLength: 1
           maxLength: 200
@@ -194,7 +196,7 @@ components:
       properties:
         status:
           type: string
-          enum: [OPEN, IN_PROGRESS, CLOSED, ESCALATED]
+          enum: [open, in-progress, resolved, closed]
 
     SupportCaseWithHistory:
       allOf:

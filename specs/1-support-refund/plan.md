@@ -13,12 +13,14 @@ Implement a comprehensive customer support and refund microservice that manages 
 
 **Language/Version**: Python 3.12+, TypeScript 5.0+  
 **Primary Dependencies**: FastAPI, React 18+, SQLAlchemy, Pydantic, SQLite, Redis  
-**Storage**: SQLite (primary), Redis (caching/sessions)  
-**Testing**: pytest, unittest.mock, React Testing Library, Playwright  
+**Storage**: SQLite (primary with proper indexing and relationships), Redis (caching, session management, rate limiting)  
+**Authentication**: JWT-based authentication with role-based authorization  
+**Testing**: pytest, unittest.mock (backend), React Testing Library (frontend) with ≥80% coverage targets  
+**Deployment**: Docker containerization for production-ready execution  
 **Target Platform**: Web application with API backend  
-**Project Type**: web (backend + frontend)  
+**Project Type**: microservice (backend + frontend)  
 **Performance Goals**: <500ms API response, handle 1k+ concurrent support cases  
-**Constraints**: Domain-Driven Design, Clean Architecture, RBAC with JWT authentication  
+**Constraints**: Domain-Driven Design patterns, Clean Architecture, RBAC with JWT  
 **Scale/Scope**: Support 10k+ customers, 5k+ monthly support cases
 
 ## Constitution Check

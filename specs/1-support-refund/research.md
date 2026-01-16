@@ -1,72 +1,128 @@
-# Research Document: Customer Support and Refund Microservice
+# Technical Research: Customer Support and Refund Microservice
 
-## Technical Architecture Decisions
+**Date**: January 16, 2026
+**Source**: User specifications and technical requirements
 
-### Domain-Driven Design Implementation
-**Decision**: Implement DDD with Clean Architecture layers
-**Rationale**: Aligns with constitution requirements, ensures proper separation of concerns, maintains domain logic integrity
-**Alternatives considered**: 
-- Traditional MVC pattern - insufficient separation of domain logic
-- Simple CRUD approach - doesn't support complex business rules
+## Technology Decisions
 
-### Authentication Strategy
-**Decision**: JWT-based authentication with RBAC (Role-Based Access Control)
-**Rationale**: Stateless authentication suitable for microservices, fine-grained authorization for customer/support agent roles
-**Alternatives considered**:
-- Session-based auth - requires state management, less scalable
-- OAuth2/OIDC - overkill for internal application
+### Backend Framework: FastAPI with SQLAlchemy
+**Decision**: Use FastAPI with SQLAlchemy ORM for Python backend
+**Rationale**:
+- FastAPI provides excellent type safety with Pydantic models
+- Automatic OpenAPI documentation generation
+- High performance for API endpoints
+- SQLAlchemy offers robust ORM capabilities with proper relationship handling
+**Alternatives considered**: Django REST Framework (more opinionated, heavier), Flask (less feature-rich)
 
-### Database Design
-**Decision**: SQLite with proper indexing for development, PostgreSQL for production
-**Rationale**: SQLite provides rapid prototyping while PostgreSQL offers production scalability
-**Implement**: Use SQLAlchemy ORM with migration support
+### Frontend Framework: React 18+ with TypeScript
+**Decision**: React 18+ with TypeScript for responsive frontend
+**Rationale**:
+- Strong typing ensures code quality
+- React ecosystem provides excellent component libraries
+- Support for concurrent features in React 18
+- Excellent state management capabilities
+**Alternatives considered**: Vue.js (less TypeScript native support), Angular (heavier framework)
 
-### Caching Strategy  
-**Decision**: Redis for session management, rate limiting, and caching
-**Rationale**: High-performance in-memory data store ideal for session data and rate limiting
+### Database: SQLite with Proper Indexing
+**Decision**: Use SQLite with careful indexing strategy
+**Rationale**:
+- Lightweight and easy to deploy
+- Suitable for microservice architecture
+- Excellent for prototyping and small-to-medium workloads
+- Proper indexing will ensure performance requirements are met
+**Indexing Strategy**:
+- Composite indexes on frequently queried fields (customer_id + status)
+- Foreign key indexes for relationship performance
+- Delivery date indexes for 14-day window validations
 
-## Integration Patterns
+### Caching & Session Management: Redis
+**Decision**: Redis for caching, session management, and rate limiting
+**Rationale**:
+- High-performance in-memory data store
+- Native support for TTL (time-to-live) for session management
+- Excellent rate limiting capabilities
+- Pub/sub support for potential future event-based features
 
-### Payment Gateway Integration
-**Decision**: Abstract payment gateway interface with mock implementation first
-**Rationale**: Allows testing refund workflow without actual payment integration initially
-**Pattern**: Adapter pattern for easy gateway switching
-
-### Order System Integration
-**Decision**: Event-driven integration with order service via webhooks/API
-**Rationale**: Maintains loose coupling, supports real-time order status updates
-**Consideration**: Need reliable delivery date validation from order system
-
-## Framework Choices
-
-### Backend Framework
-**Decision**: FastAPI with Pydantic models
-**Rationale**: Type-safe APIs, automatic OpenAPI generation, async support
-
-### Frontend Framework  
-**Decision**: React + TypeScript + Vite
-**Rationale**: Type safety, component reusability, excellent development experience
+### Authentication: JWT with Role-Based Authorization
+**Decision**: JWT-based authentication with RBAC
+**Rationale**:
+- Stateless authentication suitable for microservices
+- Standard implementation with FastAPI support
+- Role-based access control supports customer/support agent roles
+- Secure token-based authentication
 
 ### Testing Strategy
-**Decision**: pytest for backend, React Testing Library + Playwright for frontend
-**Rationale**: Comprehensive coverage, good developer experience, industry standards
+**Decision**: Comprehensive testing with ≥80% coverage
+**Backend**: pytest + unittest.mock
+- Unit tests for domain logic
+- Integration tests for API endpoints
+- Mock external dependencies (payment gateway, order system)
+
+**Frontend**: React Testing Library
+- Component testing
+- Integration testing
+- E2E testing for critical user journeys
+
+### Docker Deployment
+**Decision**: Containerized deployment with Docker
+**Rationale**:
+- Consistent development and production environments
+- Easy scaling and deployment
+- Standard microservice deployment pattern
+
+## Architecture Patterns
+
+### Domain-Driven Design Implementation
+**Decision**: Implement DDD patterns with clear separation
+**Structure**:
+- Domain layer: Entities, Value Objects, Aggregates
+- Application layer: Use Cases, Services
+- Infrastructure layer: Database, External APIs
+- API layer: Endpoints, Middleware
+
+**Aggregate Boundaries**:
+- SupportCase Aggregate: Manages support case lifecycle
+- RefundCase Aggregate: Manages refund processing with 14-day validation
+
+### Clean Architecture Principles
+**Decision**: Follow Clean Architecture with dependency inversion
+- Business logic independent of frameworks
+- Dependencies point inward (domain → application → infrastructure)
+- Testable at all layers
 
 ## Performance Considerations
 
-### API Response Optimization
-**Decision**: Implement caching layer for frequently accessed order data
-**Rationale**: Minimize repeated calls to external order system
+### API Response Times
+**Goal**: <500ms API response
+**Strategies**:
+- Database query optimization with proper indexing
+- Redis caching for frequently accessed data
+- Connection pooling for database connections
 
-### Concurrent Case Processing
-**Decision**: Async support case creation with queueing for refund processing
-**Rationale**: Handle high-volume support case creation efficiently
+### Scalability Targets
+**Initial**: 10k+ customers, 5k+ monthly support cases
+**Future**: Horizontal scaling with load balancers
+
+## Integration Patterns
+
+### External Systems Integration
+**Payment Gateway**: REST API integration with error handling
+**Order System**: REST API for order validation and delivery date lookup
+
+### Error Handling
+- Comprehensive error responses
+- Retry mechanisms for external API failures
+- Rollback strategies for refund processing failures
 
 ## Security Considerations
 
-### Rate Limiting
-**Decision**: Implement Redis-based rate limiting per customer/support agent
-**Rationale**: Prevent abuse of API endpoints
+### Data Protection
+- Customer data encryption at rest
+- Secure API authentication
+- Role-based access control
+- Input validation and sanitization
 
-### Data Validation
-**Decision**: Comprehensive input validation at API and domain layers
-**Rationale**: Critical for financial operations and data integrity
+### Session Management
+- JWT token expiration management
+- Secure token storage
+- Refresh token strategy

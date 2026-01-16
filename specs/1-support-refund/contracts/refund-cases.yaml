@@ -176,55 +176,61 @@ components:
     RefundCase:
       type: object
       properties:
-        id:
+        refund_id:
           type: string
           format: uuid
         support_case_id:
           type: string
           format: uuid
-        customer_id:
+        status:
           type: string
-          format: uuid
-        order_reference:
-          type: string
+          enum: [pending, approved, executed, failed, cancelled]
+        requested_amount:
+          type: number
+          format: float
+        approved_amount:
+          type: number
+          format: float
         delivery_date:
           type: string
           format: date
-        refund_amount:
-          type: number
-          format: float
-        status:
-          type: string
-          enum: [PENDING_APPROVAL, APPROVED, PROCESSING, COMPLETED, REJECTED]
-        approved_at:
+        refund_requested_at:
           type: string
           format: date-time
-        processed_at:
+        refund_approved_at:
           type: string
           format: date-time
-        line_items:
+        refund_executed_at:
+          type: string
+          format: date-time
+        settlement_reference:
+          type: string
+        failure_reason:
+          type: string
+        refund_items:
           type: array
           items:
-            $ref: '#/components/schemas/RefundLineItem'
-        approval_window_expires:
+            $ref: '#/components/schemas/RefundItem'
+        approved_by:
           type: string
-          format: date-time
+          format: uuid
 
-    RefundLineItem:
+    RefundItem:
       type: object
       properties:
+        refund_item_id:
+          type: string
+          format: uuid
         product_id:
           type: string
         product_name:
           type: string
-        original_price:
-          type: number
-          format: float
         requested_quantity:
           type: integer
-        approved_quantity:
-          type: integer
-        approved_price:
+        original_unit_price:
+          type: number
+          format: float
+        total_refund_amount:
           type: number
           format: float
 
@@ -287,3 +293,6 @@ components:
           type: string
           minLength: 1
           maxLength: 50
+        approved_by:
+          type: string
+          format: uuid
