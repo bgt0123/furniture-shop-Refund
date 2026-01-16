@@ -32,7 +32,7 @@ A customer can request a refund for specific items within an open support case, 
 
 **Acceptance Scenarios**:
 
-1. **Given** an open support case for an order, **When** a customer requests refund for 2 of 4 chairs purchased, **Then** a refund case is created with status "pending approval" showing partial refund request
+1. **Given** an open support case for an order, **When** a customer requests refund for 2 of 4 chairs purchased, **Then** a refund case is created with status "pending approval" showing partial refund request calculated using original purchase price
 2. **Given** a refund case exists, **When** customer modifies the requested refund items or quantity, **Then** the refund case is updated with the new request details
 
 ---
@@ -47,7 +47,7 @@ Support agents can approve refund cases and execute refunds through payment syst
 
 **Acceptance Scenarios**:
 
-1. **Given** a refund case requested within 14 days of delivery, **When** a support agent approves and executes the refund, **Then** the system triggers payment refund and updates case status to "completed"
+1. **Given** a refund case requested within 14 days of delivery (validated via webshop order system), **When** a support agent approves and executes the refund, **Then** the system triggers payment refund via gateway API and updates case status to "completed"
 2. **Given** a refund case requested after 14 days of delivery, **When** a support agent attempts to approve, **Then** the system prevents approval and informs the agent about the time limit
 
 ---
@@ -71,7 +71,7 @@ System provides overview pages showing all support and refund cases with their c
 - How does system handle refund requests for products that were discounted or bundled?
 - What occurs when delivery date information is missing or incomplete?
 - How are refund cases handled when the original payment method is no longer available?
-- What happens if multiple refund cases are created for the same support case?
+- Multiple refund cases can be created for the same support case to handle different product issues
 
 ## Requirements
 
@@ -90,16 +90,26 @@ System provides overview pages showing all support and refund cases with their c
 - **FR-011**: System MUST provide overview pages showing support cases with status, customer, order, products
 - **FR-012**: System MUST provide overview pages showing refund cases with status, customer, order, products
 - **FR-013**: Both overview pages MUST display full history of case activities and status changes
-- **FR-014**: Customer refund request modification policy will be defined during implementation planning
+- **FR-014**: Customers can modify refund requests until the refund case is approved by support agents
 - **FR-015**: Support agents can approve refunds directly using a single-level approval workflow
 
 ### Key Entities
 
 - **Support Case**: Customer help request linked to specific orders - tracks status, customer details, order reference, products involved
-- **Refund Case**: Financial request created from support cases - tracks refund status, approved amount, products/quantities, delivery date validation
+- **Refund Case**: Financial request created from support cases - tracks refund status, approved amount (based on original purchase price), products/quantities, delivery date validation (from webshop order system)
 - **Order Reference**: External order data containing products purchased, customer information, delivery dates
 - **Customer**: End-user who initiates support cases and receives refunds
-- **Support Agent**: Internal user who manages and processes refund cases
+- **Support Agent**: Internal user who manages and processes refund cases using payment gateway API integration
+
+## Clarifications
+
+### Session 2025-01-16
+
+- Q: Refund amount calculation methodology → A: Use original purchase price per product
+- Q: Data source for delivery dates → A: Webshop order system  
+- Q: Refund execution method integration → A: Payment gateway API integration
+- Q: Customer refund request modification policy → A: Allow until refund case approval
+- Q: Multiple refund cases handling for same support case → A: Allow multiple distinct refund cases
 
 ## Success Criteria
 
