@@ -1,5 +1,6 @@
-import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { SupportDashboard } from './pages/SupportDashboard'
+import './App.css'
 
 function App() {
   return (
@@ -10,7 +11,8 @@ function App() {
         </header>
         <main>
           <Routes>
-            <Route path="/" element={<div>Welcome to the Support and Refund Service</div>} />
+            <Route path="/" element={<SupportDashboard />} />
+            <Route path="/support" element={<SupportDashboard />} />
           </Routes>
         </main>
       </div>

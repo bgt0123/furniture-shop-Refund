@@ -82,27 +82,27 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T018 [P] [QA] [US1] Contract test for support case creation in backend/tests/contract/test_support_case_creation.py
-- [ ] T019 [P] [QA] [US1] Integration test for support case creation journey in backend/tests/integration/test_support_case_creation.py
-- [ ] T020 [P] [QA] [US1] Unit test for SupportCase model validation in backend/tests/unit/test_support_case_model.py
-- [ ] T021 [P] [QA] [US1] Unit test for support case service in backend/tests/unit/test_support_case_service.py
+- [X] T018 [P] [QA] [US1] Contract test for support case creation in backend/tests/contract/test_support_case_creation.py
+- [X] T019 [P] [QA] [US1] Integration test for support case creation journey in backend/tests/integration/test_support_case_creation.py
+- [X] T020 [P] [QA] [US1] Unit test for SupportCase model validation in backend/tests/unit/test_support_case_model.py
+- [X] T021 [P] [QA] [US1] Unit test for support case service in backend/tests/unit/test_support_case_service.py
 
 ### Implementation for User Story 1
 
-- [ ] T022 [P] [DDD] [US1] Create SupportCase domain model in backend/src/models/support_case.py
-- [ ] T023 [P] [DDD] [US1] Create SupportCase repository in backend/src/repositories/support_repository.py
-- [ ] T024 [US1] Implement SupportCaseService in backend/src/services/support_case_service.py
-- [ ] T025 [US1] Implement POST /support/cases endpoint in backend/src/api/support_endpoints.py to create a new support case for a given order with selected products and an issue description, validating input data and initializing the case with an open status
-- [ ] T026 [US1] Implement GET /support/cases endpoint in backend/src/api/support_endpoints.py to return all support cases belonging to the authenticated customer with basic metadata
-- [ ] T027 [US1] Implement GET /support/cases/{caseId} endpoint in backend/src/api/support_endpoints.py to return the full details of a single support case including products, description, status, and timestamps
-- [ ] T028 [US1] Implement PATCH /support/cases/{caseId} endpoint in backend/src/api/support_endpoints.py to update mutable fields of a support case while enforcing business rules such as preventing modifications of closed cases
-- [ ] T029 [P] [US1] Create React SupportCaseForm component in frontend/src/components/SupportCaseForm.tsx 
-- [ ] T030 [P] [US1] Create React SupportCaseList component in frontend/src/components/SupportCaseList.tsx
-- [ ] T031 [P] [US1] Create React SupportCaseDetail component in frontend/src/components/SupportCaseDetail.tsx
-- [ ] T032 [US1] Create SupportDashboard page in frontend/src/pages/SupportDashboard.tsx
-- [ ] T033 [US1] Add client-side validation for support case form in frontend/src/services/validation.ts
-- [ ] T034 [US1] Connect frontend to backend API endpoints in frontend/src/services/api.ts
-- [ ]  T035 [US1] Add logging for support case operations
+- [X] T022 [P] [DDD] [US1] Create SupportCase domain model in backend/src/models/support_case.py
+- [X] T023 [P] [DDD] [US1] Create SupportCase repository in backend/src/repositories/support_repository.py
+- [X] T024 [US1] Implement SupportCaseService in backend/src/services/support_case_service.py
+- [X] T025 [US1] Implement POST /support/cases endpoint in backend/src/api/support_endpoints.py to create a new support case for a given order with selected products and an issue description, validating input data and initializing the case with an open status
+- [X] T026 [US1] Implement GET /support/cases endpoint in backend/src/api/support_endpoints.py to return all support cases belonging to the authenticated customer with basic metadata
+- [X] T027 [US1] Implement GET /support/cases/{caseId} endpoint in backend/src/api/support_endpoints.py to return the full details of a single support case including products, description, status, and timestamps
+- [X] T028 [US1] Implement PATCH /support/cases/{caseId} endpoint in backend/src/api/support_endpoints.py to update mutable fields of a support case while enforcing business rules such as preventing modifications of closed cases
+- [X] T029 [P] [US1] Create React SupportCaseForm component in frontend/src/components/SupportCaseForm.tsx 
+- [X] T030 [P] [US1] Create React SupportCaseList component in frontend/src/components/SupportCaseList.tsx
+- [X] T031 [P] [US1] Create React SupportCaseDetail component in frontend/src/components/SupportCaseDetail.tsx
+- [X] T032 [US1] Create SupportDashboard page in frontend/src/pages/SupportDashboard.tsx
+- [X] T033 [US1] Add client-side validation for support case form in frontend/src/services/validation.ts
+- [X] T034 [US1] Connect frontend to backend API endpoints in frontend/src/services/api.ts
+- [X] T035 [US1] Add logging for support case operations
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 ---
