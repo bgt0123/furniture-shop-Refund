@@ -1,8 +1,22 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel
-from models.support_case import SupportCaseStatus
+from pydantic import BaseModel, ConfigDict
+from enum import Enum
+
+
+class SupportCaseStatus(str, Enum):
+    """Support case status enum."""
+
+    OPEN = "Open"
+    CLOSED = "Closed"
+
+
+class RefundIntention(str, Enum):
+    """Refund intention enum."""
+
+    YES = "Yes"
+    NO = "No"
 
 
 class SupportCaseBase(BaseModel):
@@ -13,6 +27,7 @@ class SupportCaseBase(BaseModel):
     products: List[Dict[str, Any]]
     issue_description: str
     attachments: Optional[List[Dict[str, Any]]] = None
+    intends_refund: RefundIntention = RefundIntention.NO
 
 
 class SupportCaseCreate(SupportCaseBase):
@@ -28,6 +43,6 @@ class SupportCaseResponse(SupportCaseBase):
     status: SupportCaseStatus
     created_at: datetime
     closed_at: Optional[datetime] = None
+    intends_refund: RefundIntention = RefundIntention.NO
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

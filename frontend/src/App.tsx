@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { SupportDashboard } from './pages/SupportDashboard'
+import { RefundDashboard } from './pages/RefundDashboard'
 import './App.css'
+import './styles/refund.css'
 
 function App() {
   return (
@@ -13,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<SupportDashboard />} />
             <Route path="/support" element={<SupportDashboard />} />
+            <Route path="/refunds" element={<RefundDashboard />} />
           </Routes>
         </main>
       </div>

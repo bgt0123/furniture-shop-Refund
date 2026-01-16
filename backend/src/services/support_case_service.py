@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from models.support_case import SupportCase, SupportCaseStatus
+from models.support_case import SupportCase, SupportCaseStatus, RefundIntention
 from repositories.support_repository import SupportCaseRepository
 from utils.logging import logger
 
@@ -18,6 +18,7 @@ class SupportCaseService:
         products: List[Dict[str, Any]],
         issue_description: str,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        intends_refund: RefundIntention = RefundIntention.NO,
     ) -> SupportCase:
         """Create a new support case."""
         logger.info(
@@ -31,6 +32,7 @@ class SupportCaseService:
             issue_description=issue_description,
             attachments=attachments or [],
             status=SupportCaseStatus.OPEN,
+            intends_refund=intends_refund,
         )
 
         return self.repository.create(support_case)

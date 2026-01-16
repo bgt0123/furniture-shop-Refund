@@ -5,8 +5,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from uuid import uuid4
-from services.support_case_service import SupportCaseService
-from models.support_case import SupportCase
+from src.services.support_case_service import SupportCaseService
+from src.models.support_case import SupportCase
 
 
 class TestSupportCaseCreationJourney:

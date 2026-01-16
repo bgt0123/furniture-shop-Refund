@@ -12,6 +12,7 @@ interface SupportCase {
   status: string;
   created_at: string;
   closed_at: string | null;
+  intends_refund: string;
 }
 
 interface SupportCaseListProps {
@@ -85,6 +86,12 @@ export const SupportCaseList: React.FC<SupportCaseListProps> = ({ customerId }) 
                 <p><strong>Order:</strong> {supportCase.order_id}</p>
                 <p><strong>Products:</strong> {supportCase.products.length}</p>
                 <p><strong>Created:</strong> {new Date(supportCase.created_at).toLocaleDateString()}</p>
+                <p>
+                  <strong>Refund Intention:</strong> 
+                  <span className={`refund-intention ${supportCase.intends_refund === 'Yes' ? 'intended' : 'not-intended'}`}>
+                    {supportCase.intends_refund === 'Yes' ? '💰 Refund Requested' : 'None'} 
+                  </span>
+                </p>
                 
                 <div className="case-actions">
                   <Button

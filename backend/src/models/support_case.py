@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from enum import Enum
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLAlchemyEnum
 from sqlalchemy.dialects.postgresql import UUID
-from database.session import Base
+from src.database.session import Base
 
 
 class SupportCaseStatus(str, Enum):
@@ -12,6 +12,13 @@ class SupportCaseStatus(str, Enum):
 
     OPEN = "Open"
     CLOSED = "Closed"
+
+
+class RefundIntention(str, Enum):
+    """Refund intention enum."""
+
+    YES = "Yes"
+    NO = "No"
 
 
 class SupportCase(Base):
@@ -35,6 +42,12 @@ class SupportCase(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     closed_at = Column(DateTime, nullable=True)
     attachments = Column(JSON, default=[], nullable=False)
+    intends_refund = Column(
+        SQLAlchemyEnum(RefundIntention),
+        default=RefundIntention.NO,
+        nullable=False,
+        server_default=RefundIntention.NO.name,
+    )
 
     def __repr__(self):
         return f"<SupportCase {self.id} - {self.status.value}>"

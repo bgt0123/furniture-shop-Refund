@@ -18,6 +18,7 @@ interface SupportCase {
   created_at: string;
   closed_at: string | null;
   attachments: any[];
+  intends_refund: string;
 }
 
 export const SupportCaseDetail: React.FC<SupportCaseDetailProps> = ({
@@ -97,6 +98,12 @@ export const SupportCaseDetail: React.FC<SupportCaseDetailProps> = ({
             {caseData.closed_at && (
               <p><strong>Closed:</strong> {new Date(caseData.closed_at).toLocaleString()}</p>
             )}
+            <p>
+              <strong>Refund Intention:</strong> 
+              <span className={`refund-intention ${caseData.intends_refund === 'Yes' ? 'intended' : 'not-intended'}`}>
+                {caseData.intends_refund === 'Yes' ? '💰 Refund Requested' : 'No Refund Requested'} 
+              </span>
+            </p>
           </div>
 
           <div className="info-section">

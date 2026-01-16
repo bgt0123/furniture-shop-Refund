@@ -23,6 +23,7 @@ async def create_support_case(support_case_data: SupportCaseCreate):
             products=support_case_data.products,
             issue_description=support_case_data.issue_description,
             attachments=support_case_data.attachments or [],
+            intends_refund=support_case_data.intends_refund,
         )
         return SupportCaseResponse.from_orm(support_case)
     except Exception as e:

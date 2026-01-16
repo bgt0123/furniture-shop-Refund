@@ -23,6 +23,7 @@ export const SupportCaseForm: React.FC<SupportCaseFormProps> = ({
 }) => {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [issueDescription, setIssueDescription] = useState('');
+  const [intendsRefund, setIntendsRefund] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -58,7 +59,8 @@ export const SupportCaseForm: React.FC<SupportCaseFormProps> = ({
         order_id: orderId,
         products: selectedProductDetails,
         issue_description: issueDescription,
-        attachments: []
+        attachments: [],
+        intends_refund: intendsRefund ? "Yes" : "No"
       });
 
       setIssueDescription('');
@@ -111,6 +113,24 @@ export const SupportCaseForm: React.FC<SupportCaseFormProps> = ({
             rows={5}
             required
           />
+        </div>
+
+        <div className="form-section">
+          <h3>Refund Intention</h3>
+          <label className="refund-intention-checkbox">
+            <input
+              type="checkbox"
+              checked={intendsRefund}
+              onChange={(e) => setIntendsRefund(e.target.checked)}
+            />
+            <span className="refund-intention-label">
+              I intend to request a refund for these products
+            </span>
+          </label>
+          <p className="hint">
+            📝 Checking this box will indicate to our support team that you may want to request a refund. 
+            You can still create a refund request later if you don't select this now.
+          </p>
         </div>
 
         <Button

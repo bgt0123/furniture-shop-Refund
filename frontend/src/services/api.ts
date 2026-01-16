@@ -51,6 +51,22 @@ export const apiService = {
   closeSupportCase: (caseId: string) => 
     apiClient.patch(`/support/cases/${caseId}/close`),
 
+  // Refund cases
+  createRefundCase: (supportCaseId: string, data: any) => 
+    apiClient.post(`/support/cases/${supportCaseId}/refunds`, data),
+  getRefundCase: (refundId: string) => 
+    apiClient.get(`/refunds/cases/${refundId}`),
+  getCustomerRefundCases: (customerId: string) => 
+    apiClient.get(`/refunds/cases/customer/${customerId}`),
+  getRefundCases: (params?: { status?: string; customerId?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.customerId) queryParams.append('customerId', params.customerId);
+    
+    const queryString = queryParams.toString();
+    return apiClient.get(`/refunds/cases${queryString ? `?${queryString}` : ''}`);
+  },
+
   // Authentication helpers
   setAuthToken: (token: string) => {
     localStorage.setItem('auth_token', token);

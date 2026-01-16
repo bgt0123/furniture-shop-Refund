@@ -12,7 +12,8 @@ from sqlalchemy import (
     Numeric,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from database.session import Base
+from src.database.session import Base
+from .refund_eligibility import EligibilityStatus
 
 
 class RefundCaseStatus(str, Enum):
@@ -22,14 +23,6 @@ class RefundCaseStatus(str, Enum):
     APPROVED = "Approved"
     REJECTED = "Rejected"
     COMPLETED = "Completed"
-
-
-class EligibilityStatus(str, Enum):
-    """Refund eligibility status enum."""
-
-    ELIGIBLE = "Eligible"
-    PARTIALLY_ELIGIBLE = "Partially Eligible"
-    INELIGIBLE = "Ineligible"
 
 
 class RefundCase(Base):
@@ -56,6 +49,7 @@ class RefundCase(Base):
     processed_at = Column(DateTime, nullable=True)
     rejection_reason = Column(Text, nullable=True)
     agent_id = Column(String(36), nullable=True, index=True)
+    reason = Column(Text, nullable=False)
 
     def __repr__(self):
         return (
@@ -66,7 +60,7 @@ class RefundCase(Base):
         """Approve refund case."""
         if self.status == RefundCaseStatus.PENDING:
             self.status = RefundCaseStatus.APPROVED
-            self.agent_id = agent_id
+            self.agent_id = str(agent_id)
             self.processed_at = processed_at or datetime.utcnow()
 
     def reject(
@@ -75,7 +69,7 @@ class RefundCase(Base):
         """Reject refund case."""
         if self.status == RefundCaseStatus.PENDING:
             self.status = RefundCaseStatus.REJECTED
-            self.agent_id = agent_id
+            self.agent_id = str(agent_id)
             self.rejection_reason = reason
             self.processed_at = processed_at or datetime.utcnow()
 
@@ -83,3 +77,41 @@ class RefundCase(Base):
         """Mark refund case as completed."""
         if self.status in [RefundCaseStatus.APPROVED, RefundCaseStatus.REJECTED]:
             self.status = RefundCaseStatus.COMPLETED
+
+    def calculate_total_refund_amount(self, products: List[Dict[str, Any]]) -> float:
+        """Calculate total refund amount based on eligible products."""
+        total_amount = 0.0
+        for product in products:
+            price = float(product.get("price", 0))
+            quantity = product.get("quantity", 1)
+            total_amount += price * quantity
+        return total_amount
+
+    def determine_eligibility(self, products: List[Dict[str, Any]]) -> str:
+        """Determine eligibility status based on delivery dates."""
+        # Basic implementation - can be enhanced with RefundEligibility class
+        from datetime import datetime, date
+
+        eligible_count = 0
+        total_count = len(products)
+
+        for product in products:
+            delivery_date_str = product.get("delivery_date")
+            if delivery_date_str:
+                try:
+                    delivery_date = datetime.strptime(
+                        delivery_date_str, "%Y-%m-%d"
+                    ).date()
+                    days_diff = (datetime.utcnow().date() - delivery_date).days
+                    if days_diff <= 14:  # 14-day refund window
+                        eligible_count += 1
+                except ValueError:
+                    # If date parsing fails, treat as ineligible
+                    pass
+
+        if eligible_count == total_count:
+            return EligibilityStatus.ELIGIBLE
+        elif eligible_count == 0:
+            return EligibilityStatus.INELIGIBLE
+        else:
+            return EligibilityStatus.PARTIALLY_ELIGIBLE

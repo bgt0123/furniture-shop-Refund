@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { SupportCaseForm, SupportCaseList } from '../components';
-import { Card } from '../components';
+import { Card, Button } from '../components';
 import { validateUUID } from '../services/validation';
+
+interface Product {
+  id: string;
+  name: string;
+  price?: number;
+}
 
 export const SupportDashboard: React.FC = () => {
   const [customerId, setCustomerId] = useState('');
   const [orderId, setOrderId] = useState('');
-  const [activeTab, setActiveTab] = useState<'create' | 'view'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'view' | 'refunds'>('create');
   const [validationError, setValidationError] = useState('');
 
   const mockOrders = [
@@ -33,7 +39,6 @@ export const SupportDashboard: React.FC = () => {
 
   // Filter orders by customer ID and find products for selected order
   const customerOrders = customerId ? mockOrders.filter(order => order.customer_id === customerId) : [];
-  const selectedOrder = customerOrders.find(order => order.id === orderId);
 
   const handleOrderSelect = (orderId: string) => {
     setOrderId(orderId);
@@ -58,6 +63,12 @@ export const SupportDashboard: React.FC = () => {
             onClick={() => setActiveTab('view')}
           >
             View My Cases
+          </button>
+          <button
+            className={activeTab === 'refunds' ? 'active' : ''}
+            onClick={() => setActiveTab('refunds')}
+          >
+            Refunds
           </button>
         </div>
 
@@ -156,6 +167,27 @@ export const SupportDashboard: React.FC = () => {
             {customerId && validateUUID(customerId) && (
               <SupportCaseList customerId={customerId} />
             )}
+          </div>
+        )}
+
+        {activeTab === 'refunds' && (
+          <div className="tab-content">
+            <h2>Refund Management</h2>
+            <p className="info-message">
+              You can manage refund requests here. To create a refund, you need to first have an existing support case.
+            </p>
+            <div className="refund-actions">
+              <h3>Quick Access</h3>
+              <div className="action-buttons">
+                <Button onClick={() => window.open('/refunds', '_self')}>
+                  <span className="action-icon">💰</span>
+                  Go to Refund Dashboard
+                </Button>
+                <p className="action-description">
+                  Open the full refund management dashboard to create and track refund requests
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </Card>
