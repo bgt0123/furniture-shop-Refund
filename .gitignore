@@ -131,3 +131,13 @@ cython_debug/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
+# Our project specific
+support_refund.db
+support_refund.log
+frontend/dist/
+frontend/.vite/
+backend/**/__pycache__/
+*.sqlite
+*.sqlite3
+node_modules/

@@ -131,3 +131,87 @@ If a concept is complex in the business, it SHOULD be complex in the model.
 conda create --name hsrtw25 python=3.12
 conda activate hsrtw25
 ```
+
+# Customer Support and Refund Service
+
+A comprehensive system for managing customer support cases and refund requests.
+
+## Project Structure
+
+```
+backend/          # FastAPI backend
+  ├── src/        # Source code
+  ├── tests/      # Tests
+  └── pyproject.toml
+
+frontend/         # React frontend
+  ├── src/        # Source code
+  ├── tests/      # Tests
+  └── package.json
+
+specs/            # Specification documents
+  └── 001-support-refund-service/
+      ├── plan.md
+      ├── data-model.md
+      ├── contracts/
+      └── tasks.md
+```
+
+## Setup
+
+### Backend
+
+```bash
+cd backend
+poetry install
+poetry run uvicorn src.main:app --reload
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Features
+
+- Customer support case management
+- Refund request processing
+- 14-day eligibility validation
+- Role-based access control
+- Comprehensive API documentation
+
+## Technology Stack
+
+- **Backend**: Python 3.12, FastAPI, SQLite, Redis
+- **Frontend**: React 18, TypeScript, Vite
+- **Testing**: pytest, Jest, Playwright
+- **Linting**: Ruff, Black, MyPy, ESLint, Prettier
+
+## Development
+
+1. Install dependencies (see setup above)
+2. Run backend: `poetry run uvicorn src.main:app --reload`
+3. Run frontend: `npm run dev`
+4. Access API docs: http://localhost:8000/api/docs
+5. Access frontend: http://localhost:3000
+
+## Testing
+
+```bash
+# Backend tests
+cd backend
+poetry run pytest
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+## Documentation
+
+- API Documentation: http://localhost:8000/api/docs
+- Specification: `specs/001-support-refund-service/`
+- Data Model: `specs/001-support-refund-service/data-model.md`
