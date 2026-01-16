@@ -1,0 +1,289 @@
+openapi: 3.0.0
+info:
+  title: Refund Cases API
+  version: 1.0.0
+  description: API for managing refund cases and processing refunds
+
+paths:
+  /api/v1/support-cases/{case_id}/refund-cases:
+    get:
+      summary: List refund cases for support case
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Refund cases retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RefundCase'
+
+    post:
+      summary: Create refund case
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRefundCaseRequest'
+      responses:
+        '201':
+          description: Refund case created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCase'
+        '400':
+          description: Invalid request or delivery window expired
+
+  /api/v1/refund-cases/{refund_case_id}:
+    get:
+      summary: Get refund case details
+      parameters:
+        - name: refund_case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Refund case details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCase'
+
+    patch:
+      summary: Update refund case
+      parameters:
+        - name: refund_case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRefundCaseRequest'
+      responses:
+        '200':
+          description: Refund case updated
+
+  /api/v1/refund-cases/{refund_case_id}/approve:
+    post:
+      summary: Approve refund case
+      parameters:
+        - name: refund_case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Refund case approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCase'
+        '400':
+          description: Cannot approve (delivery window expired or invalid status)
+
+  /api/v1/refund-cases/{refund_case_id}/process:
+    post:
+      summary: Process refund
+      parameters:
+        - name: refund_case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessRefundRequest'
+      responses:
+        '200':
+          description: Refund processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundCase'
+        '400':
+          description: Cannot process refund (not approved or technical error)
+
+  /api/v1/refund-cases:
+    get:
+      summary: List all refund cases
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING_APPROVAL, APPROVED, PROCESSING, COMPLETED, REJECTED]
+        - name: customer_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Refund cases retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RefundCase'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+
+components:
+  schemas:
+    RefundCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        support_case_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_reference:
+          type: string
+        delivery_date:
+          type: string
+          format: date
+        refund_amount:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [PENDING_APPROVAL, APPROVED, PROCESSING, COMPLETED, REJECTED]
+        approved_at:
+          type: string
+          format: date-time
+        processed_at:
+          type: string
+          format: date-time
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RefundLineItem'
+        approval_window_expires:
+          type: string
+          format: date-time
+
+    RefundLineItem:
+      type: object
+      properties:
+        product_id:
+          type: string
+        product_name:
+          type: string
+        original_price:
+          type: number
+          format: float
+        requested_quantity:
+          type: integer
+        approved_quantity:
+          type: integer
+        approved_price:
+          type: number
+          format: float
+
+    CreateRefundCaseRequest:
+      type: object
+      required:
+        - line_items
+      properties:
+        line_items:
+          type: array
+          items:
+            type: object
+            required:
+              - product_id
+              - product_name
+              - original_price
+              - requested_quantity
+            properties:
+              product_id:
+                type: string
+              product_name:
+                type: string
+              original_price:
+                type: number
+                format: float
+              requested_quantity:
+                type: integer
+                minimum: 1
+
+    UpdateRefundCaseRequest:
+      type: object
+      properties:
+        line_items:
+          type: array
+          items:
+            type: object
+            required:
+              - product_id
+              - product_name
+              - original_price
+              - requested_quantity
+            properties:
+              product_id:
+                type: string
+              product_name:
+                type: string
+              original_price:
+                type: number
+                format: float
+              requested_quantity:
+                type: integer
+                minimum: 1
+
+    ProcessRefundRequest:
+      type: object
+      required:
+        - settlement_reference
+      properties:
+        settlement_reference:
+          type: string
+          minLength: 1
+          maxLength: 50

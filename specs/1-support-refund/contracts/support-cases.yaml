@@ -1,0 +1,215 @@
+openapi: 3.0.0
+info:
+  title: Support Cases API
+  version: 1.0.0
+  description: API for managing customer support cases
+
+paths:
+  /api/v1/support-cases:
+    get:
+      summary: List support cases
+      description: Get paginated list of support cases with filtering options
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [OPEN, IN_PROGRESS, CLOSED, ESCALATED]
+        - name: customer_id
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Support cases retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupportCase'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+
+    post:
+      summary: Create a support case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSupportCaseRequest'
+      responses:
+        '201':
+          description: Support case created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCase'
+        '400':
+          description: Invalid request
+
+  /api/v1/support-cases/{case_id}:
+    get:
+      summary: Get support case details
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Support case details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCaseWithHistory'
+        '404':
+          description: Support case not found
+
+    patch:
+      summary: Update support case
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSupportCaseRequest'
+      responses:
+        '200':
+          description: Support case updated
+        '404':
+          description: Support case not found
+
+  /api/v1/support-cases/{case_id}/status:
+    put:
+      summary: Update support case status
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+        '400':
+          description: Invalid status transition
+
+components:
+  schemas:
+    SupportCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        order_reference:
+          type: string
+        subject:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [OPEN, IN_PROGRESS, CLOSED, ESCALATED]
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, URGENT]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateSupportCaseRequest:
+      type: object
+      required:
+        - customer_id
+        - order_reference
+        - subject
+        - description
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        order_reference:
+          type: string
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    UpdateSupportCaseRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [OPEN, IN_PROGRESS, CLOSED, ESCALATED]
+
+    SupportCaseWithHistory:
+      allOf:
+        - $ref: '#/components/schemas/SupportCase'
+        - type: object
+          properties:
+            history:
+              type: array
+              items:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                  action:
+                    type: string
+                  details:
+                    type: string
