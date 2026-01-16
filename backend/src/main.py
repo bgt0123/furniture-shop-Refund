@@ -45,7 +45,7 @@ if __name__ == "__main__":
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
-    print("Starting server on http://127.0.0.1:8001")
-    print("API docs available at http://127.0.0.1:8001/api/docs")
+    print("Starting server on http://localhost:3000")
+    print("API docs available at http://localhost:3000/api/docs")
 
     uvicorn.run(app, host="localhost", port=3000, log_level="debug")
