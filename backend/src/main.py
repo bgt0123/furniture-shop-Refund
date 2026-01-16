@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from api.router import api_router
 from database.session import init_db
 
@@ -62,6 +63,15 @@ def create_app() -> FastAPI:
     except Exception as e:
         print(f"Database initialization failed: {e}")
 
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins="http://localhost:3000",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     # Include API routers
     app.include_router(api_router, prefix="/api/v1")
 
@@ -75,7 +85,7 @@ if __name__ == "__main__":
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
-    print("Starting server on http://localhost:3000")
-    print("API docs available at http://localhost:3000/api/docs")
+    print("Starting server on http://localhost:8000")
+    print("API docs available at http://localhost:8000/api/docs")
 
-    uvicorn.run(app, host="localhost", port=3000, log_level="debug")
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="debug")

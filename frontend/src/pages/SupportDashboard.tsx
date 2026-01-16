@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { SupportCaseForm, SupportCaseList } from '../components';
 import { Card } from '../components';
+import { validateUUID } from '../services/validation';
 
 export const SupportDashboard: React.FC = () => {
   const [customerId, setCustomerId] = useState('');
   const [orderId, setOrderId] = useState('');
   const [activeTab, setActiveTab] = useState<'create' | 'view'>('create');
+  const [validationError, setValidationError] = useState('');
 
   const mockProducts = [
     { id: 'prod-1', name: 'Office Chair', price: 199.99 },
@@ -44,32 +46,48 @@ export const SupportDashboard: React.FC = () => {
             <h2>Create New Support Case</h2>
             <div className="customer-info-form">
               <label>
-                Customer ID:
+                Customer ID (UUID format):
                 <input
                   type="text"
                   value={customerId}
-                  onChange={(e) => setCustomerId(e.target.value)}
-                  placeholder="Enter customer ID"
+                  onChange={(e) => {
+                    setCustomerId(e.target.value);
+                    setValidationError('');
+                  }}
+                  placeholder="e.g., e2281646-b06e-4fcc-930f-cedc34e3e304"
                 />
               </label>
               <label>
-                Order ID:
+                Order ID (UUID format):
                 <input
                   type="text"
                   value={orderId}
-                  onChange={(e) => setOrderId(e.target.value)}
-                  placeholder="Enter order ID"
+                  onChange={(e) => {
+                    setOrderId(e.target.value);
+                    setValidationError('');
+                  }}
+                  placeholder="e.g., e2281646-b06e-4fcc-930f-cedc34e3e304"
                 />
               </label>
             </div>
 
+            {validationError && (
+              <p className="error-message">{validationError}</p>
+            )}
+
             {customerId && orderId ? (
-              <SupportCaseForm
-                customerId={customerId}
-                orderId={orderId}
-                products={mockProducts}
-                onCaseCreated={handleCaseCreated}
-              />
+              validateUUID(customerId) && validateUUID(orderId) ? (
+                <SupportCaseForm
+                  customerId={customerId}
+                  orderId={orderId}
+                  products={mockProducts}
+                  onCaseCreated={handleCaseCreated}
+                />
+              ) : (
+                <p className="error-message">
+                  Please enter valid UUID format for both Customer ID and Order ID
+                </p>
+              )
             ) : (
               <p className="info-message">
                 Please enter your Customer ID and Order ID to create a support case.
@@ -82,16 +100,39 @@ export const SupportDashboard: React.FC = () => {
           <div className="tab-content">
             <h2>My Support Cases</h2>
             {customerId ? (
-              <SupportCaseList customerId={customerId} />
+              validateUUID(customerId) ? (
+                <SupportCaseList customerId={customerId} />
+              ) : (
+                <div className="customer-input">
+                  <p className="error-message">
+                    Please enter a valid Customer ID in UUID format
+                  </p>
+                  <label>
+                    Customer ID (UUID):
+                    <input
+                      type="text"
+                      value={customerId}
+                      onChange={(e) => {
+                        setCustomerId(e.target.value);
+                        setValidationError('');
+                      }}
+                      placeholder="e.g., e2281646-b06e-4fcc-930f-cedc34e3e304"
+                    />
+                  </label>
+                </div>
+              )
             ) : (
               <div className="customer-input">
                 <label>
-                  Customer ID:
+                  Customer ID (UUID format):
                   <input
                     type="text"
                     value={customerId}
-                    onChange={(e) => setCustomerId(e.target.value)}
-                    placeholder="Enter your customer ID"
+                    onChange={(e) => {
+                      setCustomerId(e.target.value);
+                      setValidationError('');
+                    }}
+                    placeholder="e.g., e2281646-b06e-4fcc-930f-cedc34e3e304"
                   />
                 </label>
                 <p className="info-message">
