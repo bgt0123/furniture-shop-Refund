@@ -9,9 +9,19 @@ from pathlib import Path
 # Add src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from api.router import api_router
 from database.session import init_db
+
+
+class CustomException(Exception):
+    """Custom exception base class."""
+
+    def __init__(self, message: str, status_code: int = 400):
+        self.message = message
+        self.status_code = status_code
 
 
 def create_app() -> FastAPI:
@@ -24,6 +34,26 @@ def create_app() -> FastAPI:
         redoc_url="/api/redoc",
         openapi_url="/api/openapi.json",
     )
+
+    @app.exception_handler(CustomException)
+    async def custom_exception_handler(request: Request, exc: CustomException):
+        """Handle custom exceptions."""
+        return JSONResponse(status_code=exc.status_code, content={"error": exc.message})
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ):
+        """Handle validation errors."""
+        return JSONResponse(
+            status_code=422,
+            content={"error": "Validation error", "details": exc.errors()},
+        )
+
+    @app.exception_handler(Exception)
+    async def general_exception_handler(request: Request, exc: Exception):
+        """Handle general exceptions."""
+        return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
     # Initialize database
     try:
