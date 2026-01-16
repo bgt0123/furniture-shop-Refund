@@ -9,7 +9,7 @@ class SupportCaseBase(BaseModel):
     """Base support case schema."""
 
     customer_id: UUID
-    order_id: UUID
+    order_id: str
     products: List[Dict[str, Any]]
     issue_description: str
     attachments: Optional[List[Dict[str, Any]]] = None

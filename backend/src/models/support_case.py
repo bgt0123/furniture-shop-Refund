@@ -23,7 +23,7 @@ class SupportCase(Base):
         String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True
     )
     customer_id = Column(String(36), nullable=False, index=True)
-    order_id = Column(String(36), nullable=False, index=True)
+    order_id = Column(String(20), nullable=False, index=True)
     products = Column(JSON, nullable=False)
     issue_description = Column(Text, nullable=False)
     status = Column(

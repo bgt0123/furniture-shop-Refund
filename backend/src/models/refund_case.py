@@ -42,7 +42,7 @@ class RefundCase(Base):
     )
     support_case_id = Column(String(36), nullable=False, index=True)
     customer_id = Column(String(36), nullable=False, index=True)
-    order_id = Column(String(36), nullable=False, index=True)
+    order_id = Column(String(20), nullable=False, index=True)
     products = Column(JSON, nullable=False)
     total_refund_amount = Column(Numeric(10, 2), nullable=False)
     status = Column(
