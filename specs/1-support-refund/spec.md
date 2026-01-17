@@ -95,6 +95,23 @@ System provides overview pages showing all support and refund cases with their c
 - **FR-014**: Customers can modify refund requests until the refund case is approved by support agents
 - **FR-015**: Support agents can approve refunds directly using a single-level approval workflow
 
+### Non-Functional Requirements
+
+#### Performance
+- **NFR-001**: API response times <500ms for core endpoints
+- **NFR-002**: Support 1k+ concurrent support cases
+- **NFR-003**: Handle 10k+ customers, 5k+ monthly support cases
+
+#### Scalability
+- **NFR-004**: Database schema supports horizontal scaling
+- **NFR-005**: Redis caching for session management and rate limiting
+- **NFR-006**: CI/CD pipeline for automated deployments
+
+#### Observability
+- **NFR-007**: Comprehensive logging with structured format
+- **NFR-008**: Health check endpoints for monitoring
+- **NFR-009**: Test coverage ≥80% maintained
+
 ### Key Entities
 
 - **Support Case**: Customer help request linked to specific orders - tracks status, customer details, order reference, products involved
@@ -115,6 +132,30 @@ System provides overview pages showing all support and refund cases with their c
 - Q: Refund failure handling strategy → A: Full rollback with user notification
 - Q: Support case status lifecycle → A: open → in-progress → resolved → closed
 - Q: Partial refund calculation for discounted products → A: Use original purchase price
+
+### Session 2026-01-17
+
+- Q: Database migration strategy → A: Alembic migrations
+- Q: Testing frameworks and approach → A: pytest + unittest.mock backend, Vitest + React Testing Library frontend
+- Q: External service integration approach → A: REST API + webhooks
+- Q: Frontend/backend API communication → A: Axios + typed contracts
+
+## Technical Implementation Details
+
+### Backend Architecture
+- **Database**: SQLite with Alembic migrations for schema versioning
+- **Authentication**: JWT-based with role-based authorization
+- **Testing**: pytest framework with unittest.mock for unit tests
+
+### Frontend Architecture  
+- **Framework**: React 18+ with TypeScript
+- **API Client**: Axios with TypeScript interfaces generated from OpenAPI spec
+- **Testing**: Vitest framework with React Testing Library
+
+### Integration Patterns
+- **External Services**: REST API with webhook callbacks for order system integrations
+- **Frontend/Backend Communication**: Axios REST client with typed API contracts
+- **Payment Gateway**: REST API integration with webhook confirmation handling
 
 ## Success Criteria
 
