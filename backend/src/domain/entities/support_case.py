@@ -11,7 +11,7 @@ class SupportCase(Base):
 
     case_id = Column(UUID, primary_key=True)
     customer_id = Column(UUID, ForeignKey("customers.customer_id"), nullable=False)
-    order_id = Column(UUID, nullable=False)
+    order_id = Column(UUID, ForeignKey("order_references.order_id"), nullable=False)
     title = Column(String(255), nullable=False)
     description = Column(Text)
     status = Column(
@@ -24,3 +24,4 @@ class SupportCase(Base):
 
     customer = relationship("Customer", back_populates="support_cases")
     refund_cases = relationship("RefundCase", back_populates="support_case")
+    order_reference = relationship("OrderReference", back_populates="support_cases")

@@ -4,6 +4,7 @@ setup(
     name="furniture-shop-refund-backend",
     version="0.1.0",
     packages=find_packages(),
+    python_requires=">=3.12",
     install_requires=[
         "fastapi>=0.104.0",
         "uvicorn[standard]>=0.24.0",
