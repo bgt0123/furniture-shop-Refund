@@ -87,18 +87,25 @@ Each support case contains exactly one refund request, but that refund request c
 - **FR-007**: The system MUST reference orders and products from the shop servicere
 - **FR-008**: Refund decisions MUST be recorded with timestamps and agent information
 - **FR-009**: Approved refunds MUST be processed as full purchase price refunds with payment method options
-- **FR-010**: The system MUST maintain separation between Support Service and Refund Service concerns
+- **FR-010**: The system MUST maintain separation between Support Service and Refund Service concerns, with RefundRequest fully managed by Refund Service
 - **FR-011**: Customers MUST authenticate before submitting support cases and refund requests
 - **FR-012**: Support agents MUST authenticate and have role-based access to assigned cases
 - **FR-013**: The system MUST prevent customers from accessing other customers' support cases
-- **FR-014**: Support cases MUST have defined state transitions: Open → In Progress → Closed
+- **FR-016**: Support cases MUST have defined state transitions: Open → In Progress → Closed
+- **FR-017**: Support cases MUST have a case_type field (Question or Refund) to distinguish between types
+- **FR-018**: RefundRequest MUST be created via Refund Service API when Support Case has type 'Refund'
 
 ### Key Entities *(include if feature involves data)*
 
-- **SupportCase**: Represents a customer inquiry containing general questions and/or refund requests
-- **RefundRequest**: Single refund submission within a support case that can include multiple products from an order
+- **SupportCase** (Support Service): Represents a customer inquiry containing general questions or refund request references
+- **RefundRequest** (Refund Service): Single refund submission that can include multiple products from an order
 - **SupportAgent**: User role responsible for reviewing cases and making refund decisions
 - **Customer**: End-user initiating support interactions and requesting refunds
+
+### Service Responsibilities
+
+- **Support Service**: Manages SupportCase lifecycle including case_type, handles general support interactions
+- **Refund Service**: Manages RefundRequest lifecycle, validates eligibility, processes refund decisions
 
 ## Clarifications
 
@@ -110,6 +117,31 @@ Each support case contains exactly one refund request, but that refund request c
 - Q: What types of evidence should be acceptable for refund requests? → A: Only Photos
 - Q: Should there be automatic notifications for case status changes? → A: No
 - Q: Should support cases have defined states? → A: Open → In Progress → Closed
+
+### Service Boundary Clarification
+
+- RefundRequest is part of the Refund Service domain and managed entirely by Refund Service
+- Support Case Service creates SupportCase entities and, when case_type='Refund', calls Refund Service API to create RefundRequest
+- SupportCase references RefundRequest via refund_request_id field
+- Service communication happens via API calls between Support Service and Refund Service
+
+### Workflow
+
+```
+Customer creates SupportCase
+     ↓
+Support Service validates case_type ('Question' or 'Refund')
+     ↓
+If case_type='Refund':
+    Support Service → Refund Service API: CreateRefundRequest
+    Refund Service validates refund eligibility
+    Refund Service returns refund_request_id
+    Support Service updates SupportCase.refund_request_id
+     ↓
+Agent reviews SupportCase and RefundRequest separately
+Refund decisions made in Refund Service
+Support responses handled in Support Service
+```
 
 ## Success Criteria *(mandatory)*
 

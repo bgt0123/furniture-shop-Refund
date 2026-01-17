@@ -1,0 +1,167 @@
+openapi: 3.0.0
+info:
+  title: Support Service API
+  version: 1.0.0
+  description: API for managing support cases and customer interactions
+
+paths:
+  # Support Cases
+  /api/v1/support-cases:
+    get:
+      summary: List support cases for authenticated customer
+      responses:
+        '200':
+          description: List of support cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupportCase'
+    post:
+      summary: Create new support case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSupportCaseRequest'
+      responses:
+        '201':
+          description: Support case created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCase'
+
+  /api/v1/support-cases/{case_number}:
+    get:
+      summary: Get support case details
+      parameters:
+        - name: case_number
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Support case details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCase'
+
+  # Create refund request within support case
+  /api/v1/support-cases/{case_number}/create-refund:
+    post:
+      summary: Create refund request for existing support case
+      parameters:
+        - name: case_number
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRefundRequest'
+      responses:
+        '201':
+          description: Refund request created and case updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportCase'
+
+  # Support Case Management
+
+  # Agent Endpoints
+  /api/v1/agent/support-cases:
+    get:
+      summary: List support cases for agent review
+      responses:
+        '200':
+          description: List of support cases awaiting agent action
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupportCase'
+
+  /api/v1/agent/support-cases/{case_number}/assign:
+    post:
+      summary: Assign support case to agent
+      parameters:
+        - name: case_number
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Case assigned successfully
+
+components:
+  schemas:
+    SupportCase:
+      type: object
+      properties:
+        case_number:
+          type: string
+          example: "SC-2026-001"
+        customer_id:
+          type: string
+        case_type:
+          type: string
+          enum: ["Question", "Refund"]
+          description: "Type of support case - Question or Refund"
+        refund_request_id:
+          type: string
+          nullable: true
+          description: "Reference to RefundRequest in RefundService when case_type=Refund"
+        subject:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: ["Open", "In Progress", "Closed"]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateSupportCaseRequest:
+      type: object
+      required:
+        - subject
+        - description
+        - case_type
+      properties:
+        subject:
+          type: string
+        description:
+          type: string
+        case_type:
+          type: string
+          enum: ["Question", "Refund"]
+        refund_request_data:
+          type: object
+          description: "Required when case_type=Refund"
+          properties:
+            product_ids:
+              type: array
+              items:
+                type: string
+            request_reason:
+              type: string
+            evidence_photo_urls:
+              type: array
+              items:
+                type: string
+
