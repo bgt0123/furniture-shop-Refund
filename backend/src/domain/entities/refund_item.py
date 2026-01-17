@@ -17,4 +17,4 @@ class RefundItem(Base):
     original_unit_price = Column(DECIMAL(10, 2), nullable=False)
     total_refund_amount = Column(DECIMAL(10, 2), nullable=False)
 
-    refund_case = relationship("RefundCase", back_populates="refund_items")
+    # refund_case = relationship("RefundCase", back_populates="refund_items")  # Disabled due to FK constraint issues

@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Install the package in development mode
-RUN pip install -e .
+# Install the package dependencies only (skip development install)
+RUN pip install -r requirements.txt
 
 EXPOSE 8000
 

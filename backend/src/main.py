@@ -10,9 +10,13 @@ from src.infrastructure.errors.exceptions import (
     business_exception_handler,
     BusinessException,
 )
+from src.infrastructure.database.database import create_tables
 
 # Setup logging
 setup_logging()
+
+# Create database tables
+create_tables()
 
 app = FastAPI(
     title="Furniture Shop Refund Microservice",
@@ -40,7 +44,7 @@ app.mount("/static", StaticFiles(directory="src/static"), name="static")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -17,4 +17,4 @@ class OrderReference(Base):
     created_at = Column(DateTime, nullable=False)
 
     # This would typically link to support cases or refund cases
-    support_cases = relationship("SupportCase", back_populates="order_reference")
+    # support_cases = relationship("SupportCase", back_populates="order_reference")  # Disabled due to FK constraint issues

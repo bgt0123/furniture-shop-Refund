@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SupportCaseForm from './components/support/SupportCaseForm'
 import SupportCaseList from './components/support/SupportCaseList'
+import SupportAgentDashboard from './components/support/SupportAgentDashboard'
 import { supportCaseService } from './services/supportCaseService'
 import './App.css'
 
@@ -18,6 +19,7 @@ type SupportCase = {
 function App() {
   const [supportCases, setSupportCases] = useState<SupportCase[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [showAgentDashboard, setShowAgentDashboard] = useState(false)
 
   const handleCreateSupportCase = async (formData: any) => {
     try {
@@ -50,35 +52,50 @@ function App() {
           <p>Welcome to the Furniture Shop Customer Support System</p>
           
           <div className="support-section">
-            <div className="actions-bar">
-              <button 
-                className="primary-button"
-                onClick={() => setShowForm(!showForm)}
-              >
-                {showForm ? 'Cancel' : 'Create Support Case'}
-              </button>
-              <button 
-                className="secondary-button"
-                onClick={loadSupportCases}
-              >
-                View My Cases
-              </button>
-            </div>
+      <div className="actions-bar">
+        <button 
+          className="primary-button"
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? 'Cancel' : 'Create Support Case'}
+        </button>
+        <button 
+          className="secondary-button"
+          onClick={loadSupportCases}
+        >
+          View My Cases
+        </button>
+        <button 
+          className="agent-button"
+          onClick={() => setShowAgentDashboard(!showAgentDashboard)}
+        >
+          Support Agent Dashboard
+        </button>
+      </div>
 
-            {showForm && (
-              <div className="form-section">
-                <h3>Create New Support Case</h3>
-                <SupportCaseForm onSubmit={handleCreateSupportCase} />
+            {showAgentDashboard ? (
+              <div className="agent-dashboard-section">
+                <h3>Support Agent Dashboard</h3>
+                <SupportAgentDashboard />
               </div>
-            )}
+            ) : (
+              <>
+                {showForm && (
+                  <div className="form-section">
+                    <h3>Create New Support Case</h3>
+                    <SupportCaseForm onSubmit={handleCreateSupportCase} />
+                  </div>
+                )}
 
-            <div className="list-section">
-              <h3>My Support Cases</h3>
-            <SupportCaseList 
-              cases={supportCases} 
-              onSelectCase={(caseId: string) => console.log('Selected case:', caseId)}
-            />
-            </div>
+                <div className="list-section">
+                  <h3>My Support Cases</h3>
+                  <SupportCaseList 
+                    cases={supportCases} 
+                    onSelectCase={(caseId: string) => console.log('Selected case:', caseId)}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </main>

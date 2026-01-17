@@ -15,4 +15,4 @@ class Customer(Base):
     last_name = Column(String)
     created_at = Column(DateTime, nullable=False)
 
-    support_cases = relationship("SupportCase", back_populates="customer")
+    # support_cases = relationship("SupportCase", back_populates="customer")  # Disabled due to FK constraint issue

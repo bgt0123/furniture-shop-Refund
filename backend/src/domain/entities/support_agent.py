@@ -16,4 +16,4 @@ class SupportAgent(Base):
     role = Column(Enum("agent", "admin", name="agent_role"), nullable=False)
     created_at = Column(DateTime, nullable=False)
 
-    approved_refunds = relationship("RefundCase", back_populates="approved_by_agent")
+    # approved_refunds = relationship("RefundCase", back_populates="approved_by_agent")  # Disabled due to FK constraint issues

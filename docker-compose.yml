@@ -7,9 +7,13 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///./refund_service.db
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
     volumes:
-      - ./backend:/app
-      - backend_data:/app/data
+      - ./backend/src:/app/src
+      - ./backend/data:/app/data
+    depends_on:
+      - redis
 
   frontend:
     build: ./frontend
@@ -19,6 +23,11 @@ services:
       - backend
     environment:
       - VITE_API_URL=http://localhost:8000
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
 
 volumes:
   backend_data:

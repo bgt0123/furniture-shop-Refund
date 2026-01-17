@@ -15,7 +15,20 @@ class AuthMiddleware:
 
     async def __call__(self, request: Request, call_next):
         # Skip authentication for certain paths
-        if request.url.path in ["/docs", "/redoc", "/openapi.json", "/health"]:
+        if request.url.path in [
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+            "/health",
+            "/auth/login",
+            "/auth/test-login",
+            "/auth/refresh",
+            "/auth/logout",
+        ]:
+            return await call_next(request)
+
+        # Skip authentication for OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
             return await call_next(request)
 
         # Extract token from Authorization header

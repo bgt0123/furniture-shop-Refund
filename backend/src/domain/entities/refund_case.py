@@ -32,6 +32,6 @@ class RefundCase(Base):
     failure_reason = Column(String)
     approved_by = Column(UUID, ForeignKey("support_agents.agent_id"))
 
-    support_case = relationship("SupportCase", back_populates="refund_cases")
-    refund_items = relationship("RefundItem", back_populates="refund_case")
-    approved_by_agent = relationship("SupportAgent", back_populates="approved_refunds")
+    # support_case = relationship("SupportCase", back_populates="refund_cases")  # Disabled due to FK constraint issues
+    # refund_items = relationship("RefundItem", back_populates="refund_case")  # Disabled due to FK constraint issues
+    # approved_by_agent = relationship("SupportAgent", back_populates="approved_refunds")  # Disabled due to FK constraint issues

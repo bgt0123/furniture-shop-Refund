@@ -10,10 +10,13 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer()
 
 # JWT configuration
+from src.infrastructure.config.config import settings
+
 jwt_config = JWTConfig(
-    secret_key="your-secret-key-here",  # Should be loaded from env
-    access_token_expire_minutes=30,
-    refresh_token_expire_days=7,
+    secret_key=settings.jwt_secret_key,
+    algorithm=settings.jwt_algorithm,
+    access_token_expire_minutes=settings.jwt_access_token_expire_minutes,
+    refresh_token_expire_days=settings.jwt_refresh_token_expire_days,
 )
 jwt_service = JWTService(jwt_config)
 
@@ -44,7 +47,11 @@ async def login(request: LoginRequest):
     """Authenticate user and return tokens."""
     # TODO: Implement actual user authentication
     # For now, create mock tokens
-    token_data = TokenData(user_id="user-123", email=request.email, role="customer")
+    token_data = TokenData(
+        user_id="123e4567-e89b-12d3-a456-426614174000",
+        email=request.email,
+        role="customer",
+    )
 
     access_token = jwt_service.create_access_token(token_data)
     refresh_token = jwt_service.create_refresh_token(token_data)
@@ -70,3 +77,29 @@ async def refresh_token(request: RefreshRequest):
 async def logout():
     """Logout user (in real implementation, would blacklist token)."""
     return {"message": "Successfully logged out"}
+
+
+@router.post("/test-login")
+async def test_login():
+    """Test authentication endpoint that provides a valid JWT token."""
+    # Create test customer data
+    test_user = TokenData(
+        user_id="123e4567-e89b-12d3-a456-426614174000",
+        email="customer@example.com",
+        role="customer",
+    )
+
+    # Generate access token
+    access_token = jwt_service.create_access_token(test_user)
+    refresh_token = jwt_service.create_refresh_token(test_user)
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "user_id": test_user.user_id,
+            "email": test_user.email,
+            "role": test_user.role,
+        },
+    }

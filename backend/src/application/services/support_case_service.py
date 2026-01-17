@@ -39,7 +39,7 @@ class SupportCaseService:
             {
                 "case_id": str(case.case_id),
                 "customer_id": str(case.customer_id),
-                "order_id": str(case.order_id),
+                "order_id": case.order_id,  # Already a string
                 "title": case.title,
                 "description": case.description,
                 "status": case.status,

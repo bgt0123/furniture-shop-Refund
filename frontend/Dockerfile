@@ -1,10 +1,10 @@
+# Simple frontend Dockerfile using existing build
 FROM nginx:alpine
 
 WORKDIR /usr/share/nginx/html
 
-RUN rm -rf ./*
-
-COPY dist .
+# Copy the already-built dist directory from the host
+COPY dist/ .
 
 EXPOSE 80
 

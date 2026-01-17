@@ -30,7 +30,7 @@ class CreateSupportCase:
         support_case = SupportCase(
             case_id=case_id,
             customer_id=UUID(request["customer_id"]),
-            order_id=UUID(request["order_id"]),
+            order_id=request["order_id"],  # No longer UUID conversion
             title=request["title"],
             description=request["description"],
             status="open",

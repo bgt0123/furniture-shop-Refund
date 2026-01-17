@@ -45,10 +45,29 @@ export type UpdateSupportCaseStatusRequest = {
   status: 'open' | 'in_progress' | 'resolved' | 'closed'
 }
 
+// Helper function to get or create authentication token
+async function ensureAuthenticated(): Promise<void> {
+  if (!localStorage.getItem('auth_token')) {
+    try {
+      const response = await apiClient.post('/auth/test-login');
+      localStorage.setItem('auth_token', response.data.access_token);
+    } catch (error) {
+      throw new Error('Failed to authenticate: ' + error);
+    }
+  }
+}
+
 class SupportCaseService {
   async createSupportCase(request: CreateSupportCaseRequest): Promise<SupportCase> {
+    await ensureAuthenticated();
     try {
-      const response = await apiClient.post('/api/support-cases', request)
+      // Convert camelCase to snake_case for backend
+      const backendRequest = {
+        title: request.title,
+        description: request.description,
+        order_id: request.orderId  // Convert orderId to order_id
+      }
+      const response = await apiClient.post('/support-cases', backendRequest)
       return response.data
     } catch (error) {
       throw new Error(`Failed to create support case: ${error}`)
@@ -56,8 +75,9 @@ class SupportCaseService {
   }
 
   async getSupportCase(caseId: string): Promise<SupportCase> {
+    await ensureAuthenticated();
     try {
-      const response = await apiClient.get(`/api/support-cases/${caseId}`)
+      const response = await apiClient.get(`/support-cases/${caseId}`)
       return response.data
     } catch (error) {
       throw new Error(`Failed to fetch support case: ${error}`)
@@ -68,9 +88,10 @@ class SupportCaseService {
     caseId: string,
     status: UpdateSupportCaseStatusRequest
   ): Promise<SupportCase> {
+    await ensureAuthenticated();
     try {
       const response = await apiClient.patch(
-        `/api/support-cases/${caseId}/status`,
+        `/support-cases/${caseId}/status`,
         status
       )
       return response.data
@@ -80,8 +101,9 @@ class SupportCaseService {
   }
 
   async getMySupportCases(): Promise<SupportCase[]> {
+    await ensureAuthenticated();
     try {
-      const response = await apiClient.get('/api/support-cases')
+      const response = await apiClient.get('/support-cases')
       return response.data
     } catch (error) {
       throw new Error(`Failed to fetch support cases: ${error}`)

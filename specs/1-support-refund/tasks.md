@@ -131,18 +131,18 @@ description: "Task list for Customer Support and Refund Microservice"
 
 ### Tests for User Story 3
 
-- [ ] T044 [P] [US3] Contract test for refund approval/processing endpoints in backend/tests/contract/test_refund_approval.py
-- [ ] T045 [P] [US3] Integration test for refund approval workflow in backend/tests/integration/test_refund_approval.py
-- [ ] T046 [P] [US3] Unit test for 14-day delivery window validation in backend/tests/unit/domain/test_delivery_validation.py
+- [X] T044 [P] [US3] Contract test for refund approval/processing endpoints in backend/tests/contract/test_refund_approval.py
+- [X] T045 [P] [US3] Integration test for refund approval workflow in backend/tests/integration/test_refund_approval.py
+- [X] T046 [P] [US3] Unit test for 14-day delivery window validation in backend/tests/unit/domain/test_delivery_validation.py
 
 ### Implementation for User Story 3
 
-- [ ] T047 [P] [US3] Create SupportAgent entity in backend/src/domain/entities/support_agent.py
-- [ ] T048 [US3] Implement RefundApprovalService in backend/src/application/services/refund_approval_service.py
-- [ ] T049 [US3] Implement DeliveryWindowValidator in backend/src/application/services/delivery_window_validator.py
-- [ ] T050 [US3] Implement PaymentGatewayIntegrationService in backend/src/infrastructure/external/payment_gateway_service.py
-- [ ] T051 [US3] Create refund approval endpoints in backend/src/api/endpoints/refund_approval.py
-- [ ] T052 [US3] Implement RefundExecutionService in backend/src/application/services/refund_execution_service.py
+- [X] T047 [P] [US3] Create SupportAgent entity in backend/src/domain/entities/support_agent.py
+- [X] T048 [US3] Implement RefundApprovalService in backend/src/application/services/refund_approval_service.py
+- [X] T049 [US3] Implement DeliveryWindowValidatorService in backend/src/application/services/delivery_window_validator_service.py
+- [X] T050 [US3] Implement PaymentGatewayIntegrationService in backend/src/infrastructure/external/payment_gateway.py
+- [X] T051 [US3] Create refund approval endpoints in backend/src/api/endpoints/refund_approval.py
+- [X] T052 [US3] Implement RefundExecutionService in backend/src/application/services/refund_execution_service.py
 - [ ] T053 [US3] Create support agent dashboard components in frontend/src/components/support/SupportAgentDashboard.tsx
 - [ ] T054 [US3] Create refund approval workflow components in frontend/src/components/support/RefundApprovalWorkflow.tsx
 - [ ] T055 [US3] Implement support agent API client in frontend/src/services/supportAgentService.ts

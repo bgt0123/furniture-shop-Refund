@@ -23,9 +23,7 @@ async def get_support_cases(
     service = SupportCaseService(repository)
 
     # Get cases for current customer
-    customer_id = UUID(
-        current_user.get("customer_id")
-    )  # Assuming JWT contains customer_id
+    customer_id = UUID(current_user.get("user_id"))
     cases = service.get_customer_support_cases(customer_id)
 
     return cases
@@ -40,7 +38,7 @@ async def create_support_case(
     service = SupportCaseService(repository)
 
     # Add customer ID from authenticated user
-    request["customer_id"] = current_user.get("customer_id")
+    request["customer_id"] = current_user.get("user_id")
 
     try:
         result = service.create_support_case(request)
