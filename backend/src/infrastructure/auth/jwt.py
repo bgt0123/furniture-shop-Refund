@@ -1,6 +1,6 @@
 """JWT authentication and token management."""
 
-import jwt as pyjwt
+import jwt
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import HTTPException, status
