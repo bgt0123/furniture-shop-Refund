@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from enum import Enum
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLAlchemyEnum
 from sqlalchemy.dialects.postgresql import UUID
-from src.database.session import Base
+from database.session import Base
 
 
 class SupportCaseStatus(str, Enum):

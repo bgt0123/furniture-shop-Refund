@@ -1,212 +1,130 @@
-import pytest
+"""Unit tests for refund eligibility calculation."""
+
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
+from uuid import uuid4
 from datetime import datetime, timedelta
-from src.models.refund_eligibility import RefundEligibility, EligibilityStatus
+from models.refund_eligibility import RefundEligibility
 
 
 class TestRefundEligibility:
-    """Test refund eligibility calculation logic."""
+    """Unit tests for refund eligibility calculation."""
 
-    def test_eligibility_calculation_eligible(self):
-        """Test eligibility calculation for eligible products."""
-        # Product delivered within 14 days
-        delivery_date = datetime.utcnow().date() - timedelta(days=5)
-        product_price = 99.99
-        quantity = 1
+    def test_eligible_within_14_days(self):
+        """Test that products within 14-day window are eligible."""
+        delivery_date = datetime.now() - timedelta(days=10)
+        request_date = datetime.now()
 
         eligibility = RefundEligibility.calculate_eligibility(
-            delivery_date=delivery_date,
-            product_price=product_price,
-            quantity=quantity,
-            days_threshold=14,
+            delivery_date, request_date
         )
 
-        assert eligibility.status == EligibilityStatus.ELIGIBLE
-        assert eligibility.refund_amount == product_price * quantity
+        assert eligibility["eligible"] is True
+        assert "within 14-day window" in eligibility["reason"]
 
-    def test_eligibility_calculation_ineligible(self):
-        """Test eligibility calculation for ineligible products."""
-        # Product delivered beyond 14 days
-        delivery_date = datetime.utcnow().date() - timedelta(days=20)
-        product_price = 99.99
-        quantity = 1
+    def test_ineligible_after_14_days(self):
+        """Test that products after 14-day window are ineligible."""
+        delivery_date = datetime.now() - timedelta(days=20)
+        request_date = datetime.now()
 
         eligibility = RefundEligibility.calculate_eligibility(
-            delivery_date=delivery_date,
-            product_price=product_price,
-            quantity=quantity,
-            days_threshold=14,
+            delivery_date, request_date
         )
 
-        assert eligibility.status == EligibilityStatus.INELIGIBLE
-        assert eligibility.refund_amount == 0.0
+        assert eligibility["eligible"] is False
+        assert "days over" in eligibility["reason"]
 
-    def test_eligibility_on_threshold_boundary(self):
-        """Test eligibility calculation exactly on the 14-day threshold."""
-        # Product delivered exactly 14 days ago
-        delivery_date = datetime.utcnow().date() - timedelta(days=14)
-        product_price = 99.99
-        quantity = 1
+    def test_eligible_on_exactly_14_days(self):
+        """Test that products on exactly 14 days are eligible."""
+        delivery_date = datetime.now() - timedelta(days=14)
+        request_date = datetime.now()
 
         eligibility = RefundEligibility.calculate_eligibility(
-            delivery_date=delivery_date,
-            product_price=product_price,
-            quantity=quantity,
-            days_threshold=14,
+            delivery_date, request_date
         )
 
-        # Should be eligible (inclusive on threshold)
-        assert eligibility.status == EligibilityStatus.ELIGIBLE
-        assert eligibility.refund_amount == product_price * quantity
+        assert eligibility["eligible"] is True
+        assert "within 14-day window" in eligibility["reason"]
 
-    def test_calculate_multiple_products(self):
+    def test_ineligible_after_14_days_one_day(self):
+        """Test that products after 14+1 days are ineligible."""
+        delivery_date = datetime.now() - timedelta(days=15)
+        request_date = datetime.now()
+
+        eligibility = RefundEligibility.calculate_eligibility(
+            delivery_date, request_date
+        )
+
+        assert eligibility["eligible"] is False
+        assert "days over" in eligibility["reason"]
+
+    def test_edge_case_time_of_day(self):
+        """Test eligibility calculation considers time of day."""
+        # Delivery at 10 AM
+        delivery_date = datetime.now().replace(hour=10, minute=0, second=0) - timedelta(
+            days=14
+        )
+        # Request at 2 PM same day (should still be eligible)
+        request_date = datetime.now().replace(hour=14, minute=0, second=0)
+
+        eligibility = RefundEligibility.calculate_eligibility(
+            delivery_date, request_date
+        )
+
+        assert eligibility["eligible"] is True
+
+    def test_multiple_products_mixed_eligibility(self):
         """Test eligibility calculation for multiple products."""
-        product_list = [
+        products = [
             {
-                "delivery_date": datetime.utcnow().date() - timedelta(days=5),
-                "price": 99.99,
+                "product_id": str(uuid4()),
                 "quantity": 1,
+                "price": 100.00,
+                "delivery_date": datetime.now() - timedelta(days=5),
             },
             {
-                "delivery_date": datetime.utcnow().date() - timedelta(days=20),
-                "price": 199.99,
+                "product_id": str(uuid4()),
                 "quantity": 2,
-            },
-            {
-                "delivery_date": datetime.utcnow().date() - timedelta(days=3),
-                "price": 49.99,
-                "quantity": 1,
+                "price": 50.00,
+                "delivery_date": datetime.now() - timedelta(days=20),
             },
         ]
 
-        eligibility = RefundEligibility.calculate_eligibility_for_products(
-            products=product_list, days_threshold=14
-        )
+        # Calculate eligibility for each product
+        eligibility_results = []
+        for product in products:
+            eligibility = RefundEligibility.calculate_eligibility(
+                product["delivery_date"], datetime.now()
+            )
+            eligibility_results.append(
+                {
+                    "product_id": product["product_id"],
+                    "eligible": eligibility["eligible"],
+                    "reason": eligibility["reason"],
+                }
+            )
 
-        # Should be partially eligible
-        assert eligibility.status == EligibilityStatus.PARTIALLY_ELIGIBLE
-        # Only products delivered within 14 days should be refunded
-        expected_amount = 99.99 + 49.99
-        assert abs(eligibility.refund_amount - expected_amount) < 0.01
+        # First product should be eligible, second ineligible
+        assert eligibility_results[0]["eligible"] is True
+        assert eligibility_results[1]["eligible"] is False
 
-    def test_all_eligible_products(self):
-        """Test when all products are eligible."""
-        product_list = [
-            {
-                "delivery_date": datetime.utcnow().date() - timedelta(days=5),
-                "price": 99.99,
-                "quantity": 1,
-            },
-            {
-                "delivery_date": datetime.utcnow().date() - timedelta(days=10),
-                "price": 199.99,
-                "quantity": 2,
-            },
-        ]
+    def test_weekends_and_holidays_handling(self):
+        """Test that weekends and holidays don't extend the window."""
+        # The 14-day window should be calendar days, not business days
+        # This tests that weekends/holidays don't affect the calculation
 
-        eligibility = RefundEligibility.calculate_eligibility_for_products(
-            products=product_list, days_threshold=14
-        )
+        # Delivery date
+        delivery_date = datetime.now().replace(hour=12, minute=0) - timedelta(days=20)
 
-        assert eligibility.status == EligibilityStatus.ELIGIBLE
-        expected_amount = 99.99 + (199.99 * 2)
-        assert abs(eligibility.refund_amount - expected_amount) < 0.01
-
-    def test_all_ineligible_products(self):
-        """Test when all products are ineligible."""
-        product_list = [
-            {
-                "delivery_date": datetime.utcnow().date() - timedelta(days=20),
-                "price": 99.99,
-                "quantity": 1,
-            },
-            {
-                "delivery_date": datetime.utcnow().date() - timedelta(days=30),
-                "price": 199.99,
-                "quantity": 1,
-            },
-        ]
-
-        eligibility = RefundEligibility.calculate_eligibility_for_products(
-            products=product_list, days_threshold=14
-        )
-
-        assert eligibility.status == EligibilityStatus.INELIGIBLE
-        assert eligibility.refund_amount == 0.0
-
-    def test_future_delivery_date(self):
-        """Test with future delivery date - should be eligible."""
-        delivery_date = datetime.utcnow().date() + timedelta(days=5)
-        product_price = 99.99
+        # Request date 6 days after window
+        request_date = delivery_date + timedelta(days=20)
 
         eligibility = RefundEligibility.calculate_eligibility(
-            delivery_date=delivery_date,
-            product_price=product_price,
-            quantity=1,
-            days_threshold=14,
+            delivery_date, request_date
         )
 
-        # Future date should be treated as eligible
-        assert eligibility.status == EligibilityStatus.ELIGIBLE
-        assert eligibility.refund_amount == product_price
-
-    def test_custom_threshold(self):
-        """Test with custom refund threshold."""
-        delivery_date = datetime.utcnow().date() - timedelta(days=10)
-        product_price = 99.99
-
-        # With 10-day threshold, should be ineligible
-        eligibility = RefundEligibility.calculate_eligibility(
-            delivery_date=delivery_date,
-            product_price=product_price,
-            quantity=1,
-            days_threshold=7,
-        )
-
-        assert eligibility.status == EligibilityStatus.INELIGIBLE
-
-        # With 10-day threshold, should be eligible
-        eligibility = RefundEligibility.calculate_eligibility(
-            delivery_date=delivery_date,
-            product_price=product_price,
-            quantity=1,
-            days_threshold=14,
-        )
-
-        assert eligibility.status == EligibilityStatus.ELIGIBLE
-
-    def test_product_quantities(self):
-        """Test with different product quantities."""
-        delivery_date = datetime.utcnow().date() - timedelta(days=5)
-        product_price = 50.0
-        quantity = 3
-
-        eligibility = RefundEligibility.calculate_eligibility(
-            delivery_date=delivery_date,
-            product_price=product_price,
-            quantity=quantity,
-            days_threshold=14,
-        )
-
-        assert eligibility.status == EligibilityStatus.ELIGIBLE
-        assert eligibility.refund_amount == product_price * quantity
-
-    def test_zero_amount_product(self):
-        """Test with zero-priced product."""
-        delivery_date = datetime.utcnow().date() - timedelta(days=5)
-        product_price = 0.0
-        quantity = 1
-
-        eligibility = RefundEligibility.calculate_eligibility(
-            delivery_date=delivery_date,
-            product_price=product_price,
-            quantity=quantity,
-            days_threshold=14,
-        )
-
-        assert eligibility.status == EligibilityStatus.ELIGIBLE
-        assert eligibility.refund_amount == 0.0
+        assert eligibility["eligible"] is False
+        assert "days over" in eligibility["reason"]

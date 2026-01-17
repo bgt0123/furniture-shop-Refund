@@ -115,29 +115,29 @@
 
 ### Tests for User Story 2
 
-- [ ] T036 [P] [QA] [US2] Contract test for refund case creation in backend/tests/contract/test_refund_case_creation.py
-- [ ] T037 [P] [QA] [US2] Integration test for refund request journey in backend/tests/integration/test_refund_request.py
-- [ ] T038 [P] [QA] [US2] Unit test for RefundCase model validation in backend/tests/unit/test_refund_case_model.py
-- [ ] T039 [P] [QA] [US2] Unit test for refund eligibility calculation in backend/tests/unit/test_refund_eligibility.py
-- [ ] T040 [P] [QA] [US2] Unit test for refund case service in backend/tests/unit/test_refund_case_service.py
+- [X] T036 [P] [QA] [US2] Contract test for refund case creation in backend/tests/contract/test_refund_case_creation.py
+- [X] T037 [P] [QA] [US2] Integration test for refund request journey in backend/tests/integration/test_refund_request.py
+- [X] T038 [P] [QA] [US2] Unit test for RefundCase model validation in backend/tests/unit/test_refund_case_model.py
+- [X] T039 [P] [QA] [US2] Unit test for refund eligibility calculation in backend/tests/unit/test_refund_eligibility.py
+- [X] T040 [P] [QA] [US2] Unit test for refund case service in backend/tests/unit/test_refund_case_service.py
 
 ### Implementation for User Story 2
 
-- [ ] T041 [P] [DDD] [US2] Create RefundCase domain model in backend/src/models/refund_case.py
-- [ ] T042 [P] [DDD] [US2] Create RefundEligibility value object in backend/src/models/refund_eligibility.py with 14-day eligibility validation logic
-- [ ] T043 [P] [DDD] [US2] Create RefundCase repository in backend/src/repositories/refund_repository.py
-- [ ] T044 [US2] Implement RefundCaseService with eligibility validation in backend/src/services/refund_case_service.py
-- [ ] T045 [US2] Implement POST /support/cases/{caseId}/refunds endpoint in backend/src/api/refund_endpoints.py to create a refund request for selected products of a support case, validating ownership, product association, and eligibility based on the defined refund window
-- [ ] T046 [US2] Implement GET /refunds/cases endpoint in backend/src/api/refund_endpoints.py to list all refund cases belonging to the authenticated customer
-- [ ] T047 [US2] Implement GET /refunds/cases/{refundId} endpoint in backend/src/api/refund_endpoints.py to return full details of a refund case including status, eligibility outcome, and linkage to the originating support case 
-- [ ] T048 [US2] Add integration with SupportCaseService for case validation in backend/src/services/refund_case_service.py
-- [ ] T049 [P] [US2] Create RefundRequestForm component in frontend/src/components/RefundRequestForm.tsx
-- [ ] T050 [P] [US2] Create RefundCaseList component in frontend/src/components/RefundCaseList.tsx
-- [ ] T051 [P] [US2] Create RefundCaseDetail component in frontend/src/components/RefundCaseDetail.tsx
-- [ ] T052 [US2] Implement RefundDashboard page in frontend/src/pages/RefundDashboard.tsx
-- [ ] T053 [US2] Implement eligibility status display in frontend/src/components/EligibilityStatus.tsx
-- [ ] T054 [US2] Connect frontend refund components to backend API in frontend/src/services/api.ts
-- [ ] T055 [US2] Add logging for refund operations in backend/src/utils/logging.py
+- [X] T041 [P] [DDD] [US2] Create RefundCase domain model in backend/src/models/refund_case.py
+- [X] T042 [P] [DDD] [US2] Create RefundEligibility value object in backend/src/models/refund_eligibility.py with 14-day eligibility validation logic
+- [X] T043 [P] [DDD] [US2] Create RefundCase repository in backend/src/repositories/refund_repository.py
+- [X] T044 [US2] Implement RefundCaseService with eligibility validation in backend/src/services/refund_case_service.py
+- [X] T045 [US2] Implement POST /support/cases/{caseId}/refunds endpoint in backend/src/api/refund_endpoints.py to create a refund request for selected products of a support case, validating ownership, product association, and eligibility based on the defined refund window
+- [X] T046 [US2] Implement GET /refunds/cases endpoint in backend/src/api/refund_endpoints.py to list all refund cases belonging to the authenticated customer
+- [X] T047 [US2] Implement GET /refunds/cases/{refundId} endpoint in backend/src/api/refund_endpoints.py to return full details of a refund case including status, eligibility outcome, and linkage to the originating support case 
+- [X] T048 [US2] Add integration with SupportCaseService for case validation in backend/src/services/refund_case_service.py
+- [X] T049 [P] [US2] Create RefundRequestForm component in frontend/src/components/RefundRequestForm.tsx
+- [X] T050 [P] [US2] Create RefundCaseList component in frontend/src/components/RefundCaseList.tsx
+- [X] T051 [P] [US2] Create RefundCaseDetail component in frontend/src/components/RefundCaseDetail.tsx
+- [X] T052 [US2] Implement RefundDashboard page in frontend/src/pages/RefundDashboard.tsx
+- [X] T053 [US2] Implement eligibility status display in frontend/src/components/EligibilityStatus.tsx
+- [X] T054 [US2] Connect frontend refund components to backend API in frontend/src/services/api.ts
+- [X] T055 [US2] Add logging for refund operations in backend/src/utils/logging.py
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. Customers can create support cases and request refunds from them.
 

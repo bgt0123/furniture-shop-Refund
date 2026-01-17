@@ -9,7 +9,7 @@ interface Product {
   price?: number;
 }
 
-export const SupportDashboard: React.FC = () => {
+const SupportDashboard: React.FC = () => {
   const [customerId, setCustomerId] = useState('');
   const [orderId, setOrderId] = useState('');
   const [activeTab, setActiveTab] = useState<'create' | 'view' | 'refunds'>('create');
@@ -194,3 +194,5 @@ export const SupportDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default SupportDashboard;

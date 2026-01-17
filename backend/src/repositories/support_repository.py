@@ -7,8 +7,8 @@ from database.session import SessionLocal
 class SupportCaseRepository:
     """Repository for support cases."""
 
-    def __init__(self):
-        self.db = SessionLocal()
+    def __init__(self, db_session):
+        self.db = db_session
 
     def create(self, support_case: SupportCase) -> SupportCase:
         """Create a new support case."""

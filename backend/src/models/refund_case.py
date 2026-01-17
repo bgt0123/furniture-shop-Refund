@@ -12,7 +12,7 @@ from sqlalchemy import (
     Numeric,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from src.database.session import Base
+from database.session import Base
 from .refund_eligibility import EligibilityStatus
 
 

@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Any
 from uuid import UUID
+from sqlalchemy.orm import Session
 from models.support_case import SupportCase, SupportCaseStatus, RefundIntention
 from repositories.support_repository import SupportCaseRepository
 from utils.logging import logger
@@ -8,8 +9,8 @@ from utils.logging import logger
 class SupportCaseService:
     """Service for support case operations."""
 
-    def __init__(self, repository: Optional[SupportCaseRepository] = None):
-        self.repository = repository or SupportCaseRepository()
+    def __init__(self, db_session: Session):
+        self.repository = SupportCaseRepository(db_session)
 
     def create_support_case(
         self,

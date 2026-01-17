@@ -4,7 +4,7 @@ import { Card } from '../components';
 import { validateUUID } from '../services/validation';
 import { apiService } from '../services/api';
 
-export const RefundDashboard: React.FC = () => {
+const RefundDashboard: React.FC = () => {
   const [customerId, setCustomerId] = useState('');
   const [supportCaseId, setSupportCaseId] = useState('');
   const [activeTab, setActiveTab] = useState<'create' | 'view' | 'details'>('create');
@@ -184,3 +184,5 @@ export const RefundDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default RefundDashboard;

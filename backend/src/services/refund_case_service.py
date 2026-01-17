@@ -1,17 +1,17 @@
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from src.models.refund_case import RefundCase, RefundCaseStatus
-from src.models.refund_eligibility import RefundEligibility, EligibilityStatus
-from src.repositories.refund_repository import RefundCaseRepository
-from src.utils.logging import logger
-from src.services.support_case_service import SupportCaseService
+from sqlalchemy.orm import Session
+from models.refund_case import RefundCase, RefundCaseStatus
+from models.refund_eligibility import RefundEligibility, EligibilityStatus
+from repositories.refund_repository import RefundCaseRepository
+from utils.logging import logger
 
 
 class RefundCaseService:
     """Service for refund case operations."""
 
-    def __init__(self, repository: Optional[RefundCaseRepository] = None):
-        self.repository = repository or RefundCaseRepository()
+    def __init__(self, db_session: Session):
+        self.repository = RefundCaseRepository(db_session)
 
     def create_refund_case(
         self,
@@ -20,6 +20,7 @@ class RefundCaseService:
         order_id: str,
         products: List[Dict[str, Any]],
         reason: str,
+        support_case: Optional[Any] = None,
     ) -> RefundCase:
         """Create a new refund case."""
         logger.info(
@@ -27,9 +28,6 @@ class RefundCaseService:
         )
 
         # Check if support case exists and is not closed
-        support_case_service = SupportCaseService()
-        support_case = support_case_service.get_support_case(support_case_id)
-
         if not support_case:
             raise ValueError(f"Support case {support_case_id} not found")
 
@@ -57,16 +55,15 @@ class RefundCaseService:
         eligibility_result = self._calculate_eligibility(products)
         total_refund_amount = self._calculate_total_refund_amount(products)
 
-        refund_case = RefundCase(
-            support_case_id=str(support_case_id),
-            customer_id=str(customer_id),
-            order_id=str(order_id),
-            products=products,
-            total_refund_amount=total_refund_amount,
-            status=RefundCaseStatus.PENDING,
-            eligibility_status=eligibility_result.status,
-            reason=reason,
-        )
+        refund_case = RefundCase()
+        refund_case.support_case_id = str(support_case_id)
+        refund_case.customer_id = str(customer_id)
+        refund_case.order_id = str(order_id)
+        refund_case.products = products
+        refund_case.total_refund_amount = total_refund_amount
+        refund_case.status = RefundCaseStatus.PENDING
+        refund_case.eligibility_status = eligibility_result.status
+        refund_case.reason = reason
 
         return self.repository.create(refund_case)
 
@@ -92,10 +89,32 @@ class RefundCaseService:
         logger.info("Getting all refund cases")
         return self.repository.get_all()
 
-    def get_refund_cases_by_status(self, status: str) -> List[RefundCase]:
+    def get_refund_cases_by_status(
+        self, status: str, limit: int = 50, offset: int = 0
+    ) -> List[RefundCase]:
         """Get all refund cases by status."""
         logger.info(f"Getting refund cases with status {status}")
-        return self.repository.get_by_status(status)
+        return self.repository.get_by_status(status, limit, offset)
+
+    def get_refund_cases_for_admin(
+        self,
+        status: str | None = None,
+        customer_id: UUID | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[RefundCase]:
+        """Get refund cases filtered for agents with pagination."""
+        logger.info("Getting refund cases for agents dashboard")
+        if customer_id:
+            return self.repository.get_by_customer(str(customer_id), limit, offset)
+        elif status:
+            return self.repository.get_by_status(status, limit, offset)
+        else:
+            return self.repository.get_all(limit, offset)
+
+    def get_pending_refund_count(self) -> int:
+        """Get count of pending refund cases."""
+        return self.repository.count_by_status("Pending")
 
     def approve_refund_case(
         self, refund_id: UUID, agent_id: UUID
