@@ -56,17 +56,6 @@ This document captures the technical decisions made during the implementation pl
 
 **Alternatives considered**: Cached reference data - rejected due to complexity and risk of stale decisions
 
-### Database Separation
-**Decision**: Separate SQLite databases for each service (support.db, refund.db)
-
-**Rationale**:
-- Full separation of bounded contexts at database level
-- Each service owns its data model independently
-- No cross-service database dependencies
-- Better scalability and deployment flexibility
-
-**Alternatives considered**: Shared database with separate schemas - rejected due to tighter coupling and shared infrastructure dependencies
-
 ### Authentication & Authorization
 **Decision**: Role-based access control with customer self-service and agent approval workflow
 
@@ -82,7 +71,7 @@ This document captures the technical decisions made during the implementation pl
 All technology choices align with the Furniture Web Shop Constitution v3.1.1:
 - Python 3.12+ with FastAPI for service APIs
 - React 18+ with TypeScript for frontend
-- Separate SQLite databases for each service (support.db, refund.db)
+- SQLite for primary data storage in each service
 - Redis for caching and session management
 - Docker containers for development and deployment
 
@@ -90,7 +79,8 @@ All technology choices align with the Furniture Web Shop Constitution v3.1.1:
 
 Entities planned:
 - SupportCase (aggregate root)
-- RefundRequest (entity within SupportCase)
+- SupportResponse (entity within SupportCase)
+- RefundCase (aggregate root)
 - SupportAgent (domain entity)
 - Customer (external entity reference)
 

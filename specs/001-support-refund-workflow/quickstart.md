@@ -7,7 +7,7 @@ This guide helps developers quickly understand and start working with the Suppor
 
 ### Service Boundaries
 - **Support Service**: Handles customer cases, evidence submission, agent assignment
-- **Refund Service**: Manages refund eligibility, decisions, processing
+- **Refund Service**: Manages refund eligibility, decisions, processing, creation
 - **Frontend**: Customer and agent interfaces that consume APIs
 
 ### DDD Structure
@@ -113,7 +113,7 @@ npm test
 
 ## Database Structure
 
-### Support Service Database (support.db)
+### Support Service Database
 ```sql
 -- Support cases table
 CREATE TABLE support_cases (
@@ -122,14 +122,11 @@ CREATE TABLE support_cases (
     status TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL
 );
-```
 
-### Refund Service Database (refund.db)
-```sql
 -- Refund requests table  
 CREATE TABLE refund_requests (
     refund_request_id TEXT PRIMARY KEY,
-    case_number TEXT NOT NULL,
+    case_number TEXT NOT NULL REFERENCES support_cases(case_number),
     status TEXT NOT NULL
 );
 ```
