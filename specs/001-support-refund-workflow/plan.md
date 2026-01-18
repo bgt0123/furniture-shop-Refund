@@ -69,13 +69,6 @@ specs/001-support-refund-workflow/
 support-service/
 ├── src/
 │   ├── domain/
-│   │   ├── entities/
-│   │   ├── value_objects/
-│   │   ├── aggregates/
-│   │   └── domain_services/
-│   ├── application/
-│   │   ├── use_cases/
-│   │   └── commands/
 │   ├── infrastructure/
 │   │   ├── repositories/
 │   │   ├── api/
@@ -90,13 +83,6 @@ support-service/
 refund-service/
 ├── src/
 │   ├── domain/
-│   │   ├── entities/
-│   │   ├── value_objects/
-│   │   ├── aggregates/
-│   │   └── domain_services/
-│   ├── application/
-│   │   ├── use_cases/
-│   │   └── commands/
 │   ├── infrastructure/
 │   │   ├── repositories/
 │   │   ├── api/

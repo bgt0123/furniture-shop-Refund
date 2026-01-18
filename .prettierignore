@@ -1,0 +1,7 @@
+# Ignore patterns for Prettier
+node_modules/
+dist/
+build/
+coverage/
+*.md
+*.log
