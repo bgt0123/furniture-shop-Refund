@@ -103,6 +103,14 @@ venv.bak/
 # VSCode
 .vscode/
 
+# Docker
+.dockerignore*
+*.dockerfile
+
+# Containers
+build/
+container*
+
 # macOS
 .DS_Store
 
@@ -110,6 +118,12 @@ venv.bak/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Additional Python patterns
+.coverage
+.tox/
+.coverage*
+.pytest_cache/
 
 # Spyder project settings
 .spyderproject
@@ -131,3 +145,7 @@ cython_debug/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
+
+#npm
+node_modules
