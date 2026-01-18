@@ -65,6 +65,21 @@ Each support case contains exactly one refund request, but that refund request c
 
 ---
 
+### User Story 4 - Shared Dashboard with Role-Based Access (Priority: P2)
+
+Customers and support agents access the same web dashboard interface, but with different permissions and features tailored to their roles, providing a consistent user experience while maintaining security boundaries.
+
+**Why this priority**: Provides unified interface experience while ensuring proper access control and workflow separation between customer self-service and agent administration.
+
+**Independent Test**: Can be fully tested by verifying customer-only access to own cases and agent access to multiple customer cases with administrative controls.
+
+**Acceptance Scenarios**:
+
+1. **Given** a customer logs into the dashboard, **When** they access their support cases, **Then** they see only their own cases with create/message capabilities
+2. **Given** a support agent logs into the dashboard, **When** they access support cases, **Then** they see assigned cases with decision-making capabilities across multiple customers
+
+---
+
 [Add more user stories as needed, each with an assigned priority]
 
 ### Edge Cases
@@ -88,12 +103,17 @@ Each support case contains exactly one refund request, but that refund request c
 - **FR-008**: Refund decisions MUST be recorded with timestamps and agent information
 - **FR-009**: Approved refunds MUST be processed as full purchase price refunds with payment method options
 - **FR-010**: The system MUST maintain separation between Support Service and Refund Service concerns, with RefundRequest fully managed by Refund Service
-- **FR-011**: Customers MUST authenticate before submitting support cases and refund requests
-- **FR-012**: Support agents MUST authenticate and have role-based access to assigned cases
+- **FR-011**: Customers MUST authenticate (via external Auth Service) before submitting support cases and refund requests
+- **FR-012**: Support agents MUST authenticate (via external Auth Service) and have role-based access to assigned cases
 - **FR-013**: The system MUST prevent customers from accessing other customers' support cases
 - **FR-016**: Support cases MUST have defined state transitions: Open → In Progress → Closed
 - **FR-017**: Support cases MUST have a case_type field (Question or Refund) to distinguish between types
 - **FR-018**: RefundRequest MUST be created via Refund Service API when Support Case has type 'Refund'
+- **FR-019**: The system MUST provide a shared dashboard interface for both customers and support agents
+- **FR-020**: Dashboard MUST display different features and permissions based on user role (customer vs agent)
+- **FR-021**: Customers MUST only see and manage their own support cases in the dashboard
+- **FR-022**: Support agents MUST be able to view and process multiple customer cases in the dashboard
+- **FR-023**: Dashboard MUST provide visual indicators for case status and workflow progress
 
 ### Key Entities *(include if feature involves data)*
 
@@ -106,6 +126,42 @@ Each support case contains exactly one refund request, but that refund request c
 
 - **Support Service**: Manages SupportCase lifecycle including case_type, handles general support interactions
 - **Refund Service**: Manages RefundRequest lifecycle, validates eligibility, processes refund decisions
+
+**Authentication Note**: Login and authentication services are NOT part of these microservices. Authentication is handled by a separate Auth Service that provides user identity and role information. These services rely on authenticated session tokens or API keys for authorization checks.
+
+### Dashboard Interface
+
+**Shared Dashboard with Role-Based Access**: Customers and Support Agents will use the same web-based dashboard interface, with different permissions and available actions based on their roles. The dashboard integrates with an external Authentication Service for user identity and role management.
+
+**Authentication Integration**:
+- Dashboard communicates with external Auth Service for login and session management
+- User roles (Customer/Agent) are provided by Auth Service
+- Session tokens validate user identity and permissions
+- No authentication logic implemented in Support or Refund Services
+
+**Customer Dashboard Features**:
+- View and manage own support cases
+- Create new support cases (Question or Refund type)
+- Submit refund evidence photos
+- View support case status and history
+- Communicate with support agents through message interface
+- View refund decision results and status
+
+**Support Agent Dashboard Features**:
+- View assigned support cases in dashboard queue
+- Process both question-type and refund-type cases
+- Review refund evidence and eligibility
+- Make refund decisions (Approve/Reject/RequestMoreInfo)
+- Submit support responses and internal notes
+- Access case history across all customers (read-only)
+- Close support cases after resolution
+- Manage case assignments and workflow
+
+**Role-Based Permissions**:
+- **Customers**: Can only access their own cases, create new cases, and respond to assigned agents
+- **Agents**: Can access multiple customer cases, make decisions, and perform administrative actions
+- **Authentication**: External Auth Service provides role-based access control
+- **Audit Trail**: All actions are logged with user role and timestamp for security
 
 ## Clarifications
 
