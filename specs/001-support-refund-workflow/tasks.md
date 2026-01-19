@@ -75,24 +75,24 @@ description: "Task list for Support and Refund Service Workflow implementation"
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Create SupportCase aggregate root in `support-service/src/domain/aggregates/support_case.py`
-- [ ] T018 [P] [US1] Create RefundCase aggregate root in `refund-service/src/domain/aggregates/refund_case.py`
-- [ ] T019 [P] [US1] Create SupportResponse entity in `support-service/src/domain/entities/support_response.py`
-- [ ] T020 [P] [US1] Create RefundRequest entity in `refund-service/src/domain/entities/refund_request.py`
-- [ ] T021 [P] [US1] Create RefundResponse entity in `refund-service/src/domain/entities/refund_response.py`
-- [ ] T022 [P] [US1] Create value objects (Money, CaseTimeline, ResponseContent) in `support-service/src/domain/value_objects/`
-- [ ] T023 [US1] Implement SupportCase repository in `support-service/src/infrastructure/repositories/support_case_repository.py`
-- [ ] T024 [US1] Implement RefundCase repository in `refund-service/src/infrastructure/repositories/refund_case_repository.py`
-- [ ] T025 [US1] Implement CreateSupportCase use case in `support-service/src/application/use_cases/create_support_case.py`
-- [ ] T026 [US1] Implement CreateRefundRequest use case in `refund-service/src/application/use_cases/create_refund_request.py`
-- [ ] T027 [US1] Implement customer dashboard component in `frontend/src/pages/customer/dashboard.tsx`
-- [ ] T028 [US1] Implement support case creation form in `frontend/src/components/support/create-case-form.tsx`
-- [ ] T029 [US1] Implement API endpoints for support case creation in `support-service/src/presentation/routes/support_cases.py`
-- [ ] T030 [US1] Implement API endpoints for refund request creation in `refund-service/src/presentation/routes/refund_requests.py`
-- [ ] T031 [US1] Add file upload handling for evidence photos in frontend services
-- [ ] T032 [US1] Implement file storage integration for evidence photos in `support-service/src/infrastructure/file_storage/`
+- [x] T017 [P] [US1] Create SupportCase aggregate root in `support-service/src/domain/support_case.py`
+- [x] T018 [P] [US1] Create RefundCase aggregate root in `refund-service/src/domain/refund_case.py`
+- [x] T019 [P] [US1] Create SupportResponse entity in `support-service/src/domain/support_response.py`
+- [x] T020 [P] [US1] Create RefundRequest entity in `refund-service/src/domain/refund_request.py`
+- [x] T021 [P] [US1] Create RefundResponse entity in `refund-service/src/domain/refund_response.py`
+- [x] T022 [P] [US1] Create value objects (Money, CaseTimeline, ResponseContent) in `support-service/src/domain/value_objects/`
+- [x] T023 [US1] Implement SupportCase repository in `support-service/src/infrastructure/repositories/support_case_repository.py`
+- [x] T024 [US1] Implement RefundCase repository in `refund-service/src/infrastructure/repositories/refund_case_repository.py`
+- [x] T025 [US1] Implement CreateSupportCase use case in `support-service/src/application/use_cases/create_support_case.py`
+- [x] T026 [US1] Implement CreateRefundRequest use case in `refund-service/src/application/use_cases/create_refund_request.py`
+- [x] T027 [US1] Implement support case dashboard in `frontend/src/pages/support-case/dashboard.tsx`
+- [x] T028 [US1] Implement support case creation form in `frontend/src/components/support/create-case-form.tsx`
+- [x] T029 [US1] Implement API endpoints for support case creation in `support-service/src/presentation/support_cases.py`
+- [x] T030 [US1] Implement API endpoints for refund request creation in `refund-service/src/presentation/refund_cases.py`
+- [x] T031 [US1] Add file upload handling for evidence photos in frontend services
+- [x] T032 [US1] Implement file storage integration for evidence photos in `support-service/src/infrastructure/file_storage/`
 
-**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
+**Checkpoint**: ✅ User Story 1 is fully functional and testable. Customers can create support cases with refund requests and upload evidence photos.
 
 ---
 

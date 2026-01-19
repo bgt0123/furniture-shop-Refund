@@ -2,10 +2,10 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ..infrastructure.config import get_config
-from ..infrastructure.logging_config import setup_logging, get_logger
-from ..infrastructure.middleware import error_handler
-from .refund_requests import router as refund_requests_router
+from infrastructure.config import get_config
+from infrastructure.logging_config import setup_logging, get_logger
+from infrastructure.middleware.error_handler import error_handler
+from presentation.refund_cases import router as refund_cases_router
 
 # Load configuration
 config = get_config()
@@ -13,6 +13,10 @@ config = get_config()
 # Setup logging
 setup_logging(config.log_level)
 logger = get_logger(__name__)
+
+# Initialize database
+from infrastructure.database.database_config import init_database
+init_database()
 
 app = FastAPI(
     title="Refund Service",
@@ -33,7 +37,7 @@ app.add_middleware(
 app.middleware("http")(error_handler)
 
 # Include routers
-app.include_router(refund_requests_router)
+app.include_router(refund_cases_router)
 
 # Development mode logging
 if config.is_development:

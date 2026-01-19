@@ -12,7 +12,7 @@ class Config:
         self.environment = os.getenv("ENVIRONMENT", "development").lower()
         
         # Database
-        self.refund_db_path = os.getenv("REFUND_DB_PATH", "refund-service/refund.db")
+        self.refund_db_path = os.getenv("REFUND_DB_PATH", "/app/data/refund.db")
         
         # Service
         self.service_port = int(os.getenv("REFUND_SERVICE_PORT", "8001"))
@@ -23,7 +23,7 @@ class Config:
         self.shop_service_url = os.getenv("SHOP_SERVICE_URL", "http://localhost:8081")
         
         # CORS
-        cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+        cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003")
         self.cors_origins = cors_origins.split(",") if "," in cors_origins else [cors_origins]
         
         # Logging

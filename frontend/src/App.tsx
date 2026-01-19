@@ -1,19 +1,23 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { CustomerDashboard } from './pages/customer/dashboard.tsx'
-import { AgentDashboard } from './pages/agent/dashboard.tsx'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/home.tsx';
+import SupportCaseDashboard from './pages/support-case/dashboard.tsx';
+import SupportCaseDetail from './pages/support-case/detail.tsx';
+import RefundCaseDashboard from './pages/refund-case/dashboard.tsx';
+import RefundCaseDetail from './pages/refund-case/detail.tsx';
+import './styles.css';
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          <Route path="/customer/*" element={<CustomerDashboard />} />
-          <Route path="/agent/*" element={<AgentDashboard />} />
-          <Route path="/" element={<div>Welcome to Furniture Shop Support</div>} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/support-cases" element={<SupportCaseDashboard />} />
+        <Route path="/support-cases/:caseNumber" element={<SupportCaseDetail />} />
+        <Route path="/refund-cases" element={<RefundCaseDashboard />} />
+        <Route path="/refund-cases/:refundCaseId" element={<RefundCaseDetail />} />
+        <Route path="/" element={<Home />} />
+      </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -2,10 +2,10 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ..infrastructure.config import get_config
-from ..infrastructure.logging_config import setup_logging, get_logger
-from ..infrastructure.middleware import error_handler
-from .support_cases import router as support_cases_router
+from infrastructure.config import get_config
+from infrastructure.logging_config import setup_logging, get_logger
+from infrastructure.middleware.error_handler import error_handler
+from presentation.support_cases import router as support_cases_router
 
 # Load configuration
 config = get_config()
@@ -13,6 +13,10 @@ config = get_config()
 # Setup logging
 setup_logging(config.log_level)
 logger = get_logger(__name__)
+
+# Initialize database
+from infrastructure.database.database_config import init_database
+init_database()
 
 app = FastAPI(
     title="Support Service",

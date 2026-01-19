@@ -12,7 +12,7 @@ class Config:
         self.environment = os.getenv("ENVIRONMENT", "development").lower()
         
         # Database
-        self.support_db_path = os.getenv("SUPPORT_DB_PATH", "support-service/support.db")
+        self.support_db_path = os.getenv("SUPPORT_DB_PATH", "/app/data/support.db")
         
         # Service
         self.service_port = int(os.getenv("SUPPORT_SERVICE_PORT", "8000"))
@@ -23,7 +23,7 @@ class Config:
         self.shop_service_url = os.getenv("SHOP_SERVICE_URL", "http://localhost:8081")
         
         # CORS
-        cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+        cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003")
         self.cors_origins = cors_origins.split(",") if "," in cors_origins else [cors_origins]
         
         # Logging

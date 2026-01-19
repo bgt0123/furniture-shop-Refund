@@ -62,6 +62,7 @@ class SupportCase:
         is_internal: bool = False
     ) -> SupportResponse:
         """Add a response to the support case"""
+        self._ensure_case_not_closed("add responses to")
         
         response = SupportResponse(
             response_id=str(uuid4()),
@@ -81,6 +82,7 @@ class SupportCase:
 
     def assign_agent(self, agent_id: str) -> None:
         """Assign an agent to the support case"""
+        self._ensure_case_not_closed("assign agent to")
         self.assigned_agent_id = agent_id
         self.status = CaseStatus.IN_PROGRESS
         self.updated_at = datetime.utcnow()
@@ -90,8 +92,20 @@ class SupportCase:
         self.status = CaseStatus.CLOSED
         self.updated_at = datetime.utcnow()
 
+    def reopen_case(self) -> None:
+        """Reopen the support case"""
+        self.status = CaseStatus.OPEN
+        self.updated_at = datetime.utcnow()
+
+    def _ensure_case_not_closed(self, operation: str) -> None:
+        """Ensure case is not closed before performing an operation"""
+        if self.status == CaseStatus.CLOSED:
+            raise ValueError(f"Cannot {operation} a closed support case")
+
     def add_refund_request(self, refund_request_id: str) -> None:
         """Add a refund request to the support case"""
+        self._ensure_case_not_closed("add refund request to")
+        
         if self.case_type != CaseType.REFUND:
             raise ValueError("Cannot add refund request to non-refund case")
         
@@ -101,11 +115,43 @@ class SupportCase:
         self.refund_request_id = refund_request_id
         self.updated_at = datetime.utcnow()
 
+    def update_case_type(self, case_type: CaseType, refund_request_id: Optional[str] = None) -> None:
+        """Update the case type and optionally link a refund request"""
+        self._ensure_case_not_closed("update case type of")
+        
+        # Validate case type transition
+        if self.case_type == CaseType.REFUND and case_type == CaseType.QUESTION:
+            if self.refund_request_id:
+                raise ValueError("Cannot change refund case to question case when refund request exists")
+        
+        self.case_type = case_type
+        
+        # Update refund request ID if provided
+        if refund_request_id:
+            if case_type != CaseType.REFUND:
+                raise ValueError("Can only add refund request to refund case type")
+            
+            if self.refund_request_id:
+                raise ValueError("Support case already has a refund request")
+                
+            self.refund_request_id = refund_request_id
+        
+        self.updated_at = datetime.utcnow()
+
     @property
     def can_customer_access(self) -> bool:
         """Check if customer should have access to this case"""
         # Customers can only access their own cases
         return self.customer_id.startswith("customer")
+
+    @property
+    def is_closed(self) -> bool:
+        """Check if the support case is closed"""
+        return self.status == CaseStatus.CLOSED
+
+    def can_be_edited(self) -> bool:
+        """Check if the support case can be edited"""
+        return not self.is_closed
 
     def __str__(self) -> str:
         return f"SupportCase {self.case_number} ({self.status.value})"
