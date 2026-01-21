@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/home.tsx';
-import SupportCaseDashboard from './pages/support-case/dashboard.tsx';
-import SupportCaseDetail from './pages/support-case/detail.tsx';
-import RefundCaseDashboard from './pages/refund-case/dashboard.tsx';
-import RefundCaseDetail from './pages/refund-case/detail.tsx';
+import Home from './pages/home';
+import SupportCaseDashboard from './pages/support-case/dashboard';
+import SupportCaseDetail from './pages/support-case/detail';
+import RefundCaseDashboard from './pages/refund-case/dashboard';
+import RefundCaseDetail from './pages/refund-case/detail';
 import './styles.css';
 
 function App() {

@@ -39,11 +39,9 @@ def init_database() -> None:
     conn = get_connection()
     
     try:
-        # Create tables
-        conn.execute(CREATE_REFUND_CASES_TABLE)
+        # Create tables with debug logging
+        print("Creating refund_requests table...")
         conn.execute(CREATE_REFUND_REQUESTS_TABLE)
-        conn.execute(CREATE_REFUND_RESPONSES_TABLE)
-        conn.execute(CREATE_CASE_TIMELINE_TABLE)
         
         # Create indexes
         for index_sql in REFUND_SERVICE_INDEXES:

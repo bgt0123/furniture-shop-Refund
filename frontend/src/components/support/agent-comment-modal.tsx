@@ -1,28 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-interface CommentModalProps {
+interface AgentCommentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (content: string, isInternal?: boolean, files?: File[], shouldCloseCase?: boolean) => void;
-  userRole: 'customer' | 'agent' | 'admin';
+  onSubmit: (content: string, commentType?: string, isInternal?: boolean, files?: File[], shouldCloseCase?: boolean) => void;
   caseNumber: string;
   allowCloseCase?: boolean;
   currentStatus?: string;
-  isAgentRole?: boolean;
 }
 
-const CommentModal: React.FC<CommentModalProps> = ({ 
+const AgentCommentModal: React.FC<AgentCommentModalProps> = ({ 
   isOpen, 
   onClose, 
   onSubmit, 
-  userRole,
   caseNumber,
   allowCloseCase = false,
-  currentStatus = 'open',
-  isAgentRole = false
+  currentStatus = 'open'
 }) => {
   const [content, setContent] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [commentType, setCommentType] = useState('agent_note');
   const [isInternal, setIsInternal] = useState(false);
   const [shouldCloseCase, setShouldCloseCase] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,17 +52,18 @@ const CommentModal: React.FC<CommentModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      await onSubmit(content, isInternal && isAgentRole, files, shouldCloseCase && allowCloseCase);
+      await onSubmit(content, commentType, isInternal, files, shouldCloseCase && allowCloseCase);
       
       // Reset form
       setContent('');
       setFiles([]);
+      setCommentType('agent_note');
       setIsInternal(false);
       setShouldCloseCase(false);
       handleCancel();
     } catch (error) {
-      console.error('Error submitting comment:', error);
-      alert('Failed to add comment. Please try again.');
+      console.error('Error submitting agent comment:', error);
+      alert('Failed to add agent comment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -79,18 +77,16 @@ const CommentModal: React.FC<CommentModalProps> = ({
     onClose();
   };
 
-  const isAgentOrAdmin = userRole === 'agent' || userRole === 'admin';
-
   return (
     <dialog
       ref={dialogRef}
-      className="dialog-modal"
+      className="dialog-modal max-w-3xl"
       onClose={handleCancel}
     >
       <div className="modal-container">
         <div className="modal-header">
           <h2 className="modal-title">
-            {isAgentRole ? '🛠️ Add Agent Response' : '💬 Add Customer Comment'}
+            🛠️ Add Agent Comment
           </h2>
           <button
             onClick={handleCancel}
@@ -105,25 +101,65 @@ const CommentModal: React.FC<CommentModalProps> = ({
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="mb-8">
               <label className="form-label">
-                {isAgentOrAdmin ? 'Agent Response for Case' : 'Customer Comment for Case'} #{caseNumber}
+                Agent Comment for Case #{caseNumber}
               </label>
               <p className="text-sm text-gray-600">
-                Your message will be visible to {isAgentOrAdmin ? 'the customer' : 'support agents'}.
+                Your response will be visible to the customer unless marked as internal.
               </p>
             </div>
 
             <div className="form-field">
               <label className="form-label">
-                {isAgentOrAdmin ? 'Agent Response' : 'Customer Comment'} Content *
+                Comment Type *
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="commentType"
+                    value="agent_note"
+                    checked={commentType === 'agent_note'}
+                    onChange={(e) => setCommentType(e.target.value)}
+                    className="w-4 h-4"
+                    disabled={isSubmitting}
+                  />
+                  <span className="text-sm text-gray-700">Regular Agent Note</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="commentType"
+                    value="customer_feedback"
+                    checked={commentType === 'customer_feedback'}
+                    onChange={(e) => setCommentType(e.target.value)}
+                    className="w-4 h-4"
+                    disabled={isSubmitting}
+                  />
+                  <span className="text-sm text-gray-700">Customer Feedback Response</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="commentType"
+                    value="resolution_update"
+                    checked={commentType === 'resolution_update'}
+                    onChange={(e) => setCommentType(e.target.value)}
+                    className="w-4 h-4"
+                    disabled={isSubmitting}
+                  />
+                  <span className="text-sm text-gray-700">Resolution Update</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">
+                Comment Content *
               </label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder={
-                  isAgentOrAdmin 
-                    ? 'Type your agent response to the customer...' 
-                    : 'Add your customer comment here...'
-                }
+                placeholder="Type your agent comment..."
                 className="form-input form-textarea"
                 rows={6}
                 disabled={isSubmitting}
@@ -131,50 +167,48 @@ const CommentModal: React.FC<CommentModalProps> = ({
               />
             </div>
 
-             {/* Agent-specific options */}
-             {isAgentRole && (
-               <div className="space-y-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                 <h3 className="font-semibold text-blue-800">Agent Options</h3>
-                 
-                 <div className="space-y-3">
-                   <label className="flex items-center space-x-3 cursor-pointer">
-                     <input
-                       type="checkbox"
-                       checked={isInternal}
-                       onChange={(e) => setIsInternal(e.target.checked)}
-                       className="rounded border-gray-300 w-4 h-4"
-                       disabled={isSubmitting}
-                     />
-                     <span className="text-sm text-gray-700 font-medium">
-                       📝 Internal note (not visible to customer)
-                     </span>
-                   </label>
-                   
-                   {allowCloseCase && currentStatus !== 'closed' && (
-                     <label className="flex items-center space-x-3 cursor-pointer">
-                       <input
-                         type="checkbox"
-                         checked={shouldCloseCase}
-                         onChange={(e) => setShouldCloseCase(e.target.checked)}
-                         className="rounded border-gray-300 w-4 h-4"
-                         disabled={isSubmitting}
-                       />
-                       <span className="text-sm text-green-700 font-medium">
-                         🔒 Close case with this response
-                       </span>
-                     </label>
-                   )}
-                   
-                   {shouldCloseCase && (
-                     <div className="bg-green-100 border-l-4 border-green-500 pl-3 py-2 rounded">
-                       <p className="text-xs text-green-700 font-medium">
-                         ✅ Case will be closed immediately after submitting this response
-                       </p>
-                     </div>
-                   )}
-                 </div>
-               </div>
-             )}
+            {/* Agent-specific options */}
+            <div className="space-y-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-800">Agent Options</h3>
+              
+              <div className="space-y-3">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isInternal}
+                    onChange={(e) => setIsInternal(e.target.checked)}
+                    className="rounded border-gray-300 w-4 h-4"
+                    disabled={isSubmitting}
+                  />
+                  <span className="text-sm text-gray-700 font-medium">
+                    📝 Internal note (not visible to customer)
+                  </span>
+                </label>
+                
+                {allowCloseCase && currentStatus !== 'closed' && (
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={shouldCloseCase}
+                      onChange={(e) => setShouldCloseCase(e.target.checked)}
+                      className="rounded border-gray-300 w-4 h-4"
+                      disabled={isSubmitting}
+                    />
+                    <span className="text-sm text-green-700 font-medium">
+                      🔒 Close case with this response
+                    </span>
+                  </label>
+                )}
+                
+                {shouldCloseCase && (
+                  <div className="bg-green-100 border-l-4 border-green-500 pl-3 py-2 rounded">
+                    <p className="text-xs text-green-700 font-medium">
+                      ✅ Case will be closed immediately after submitting this response
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* File upload section */}
             <div className="form-field">
@@ -186,13 +220,13 @@ const CommentModal: React.FC<CommentModalProps> = ({
                 onChange={handleFileChange}
                 multiple
                 className="form-input"
-                id="file-input"
+                id="agent-file-input"
                 disabled={isSubmitting}
                 accept="image/*,.pdf,.doc,.docx"
               />
               <div className="mt-2 flex items-center space-x-4">
                 <label
-                  htmlFor="file-input"
+                  htmlFor="agent-file-input"
                   className="cursor-pointer bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
                 >
                   📎 Choose Files
@@ -238,10 +272,10 @@ const CommentModal: React.FC<CommentModalProps> = ({
                  className="btn btn-submit"
                  disabled={isSubmitting || !content.trim()}
                >
-                  {isSubmitting 
-                    ? (isAgentOrAdmin ? 'Adding Response...' : 'Adding Comment...') 
-                    : (isAgentOrAdmin ? 'Add Agent Response' : 'Add Customer Comment')
-                 }
+            {isSubmitting 
+              ? 'Adding Comment...' 
+              : 'Add Agent Comment'
+            }
                </button>
             </div>
           </form>
@@ -251,4 +285,4 @@ const CommentModal: React.FC<CommentModalProps> = ({
   );
 };
 
-export default CommentModal;
+export default AgentCommentModal;

@@ -1,24 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-interface AgentResponseModalProps {
+interface CustomerCommentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (content: string, messageType: string, files?: File[], shouldCloseCase?: boolean) => void;
+  onSubmit: (content: string, files?: File[]) => void;
   caseNumber: string;
-  currentStatus: string;
 }
 
-const AgentResponseModal: React.FC<AgentResponseModalProps> = ({ 
+const CustomerCommentModal: React.FC<CustomerCommentModalProps> = ({ 
   isOpen, 
   onClose, 
   onSubmit, 
-  caseNumber,
-  currentStatus
+  caseNumber
 }) => {
   const [content, setContent] = useState('');
   const [files, setFiles] = useState<File[]>([]);
-  const [messageType, setMessageType] = useState('answer');
-  const [shouldCloseCase, setShouldCloseCase] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -49,17 +45,15 @@ const AgentResponseModal: React.FC<AgentResponseModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      await onSubmit(content, messageType, files, shouldCloseCase);
+      await onSubmit(content, files);
       
       // Reset form
       setContent('');
       setFiles([]);
-      setMessageType('answer');
-      setShouldCloseCase(false);
       handleCancel();
     } catch (error) {
-      console.error('Error submitting response:', error);
-      alert('Failed to add response. Please try again.');
+      console.error('Error submitting customer comment:', error);
+      alert('Failed to add comment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -68,27 +62,19 @@ const AgentResponseModal: React.FC<AgentResponseModalProps> = ({
   const handleCancel = () => {
     setContent('');
     setFiles([]);
-    setMessageType('answer');
-    setShouldCloseCase(false);
     onClose();
   };
-
-  const messageTypes = [
-    { value: 'answer', label: 'Answer', description: 'Provide a solution or response to the customer inquiry' },
-    { value: 'status_update', label: 'Status Update', description: 'Update the customer on case progress' },
-    { value: 'question', label: 'Clarification Question', description: 'Ask the customer for more information' }
-  ];
 
   return (
     <dialog
       ref={dialogRef}
-      className="dialog-modal"
+      className="dialog-modal max-w-3xl"
       onClose={handleCancel}
     >
       <div className="modal-container">
         <div className="modal-header">
           <h2 className="modal-title">
-            🛠️ Add Agent Response
+            💬 Add Customer Comment
           </h2>
           <button
             onClick={handleCancel}
@@ -103,68 +89,26 @@ const AgentResponseModal: React.FC<AgentResponseModalProps> = ({
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="mb-8">
               <label className="form-label">
-                Response for Case #{caseNumber}
+                My Comment for Case #{caseNumber}
               </label>
               <p className="text-sm text-gray-600">
-                Your response will be visible to the customer.
+                Your comment will be visible to support agents.
               </p>
-            </div>
-
-            {/* Message type selection */}
-            <div className="form-field">
-              <label className="form-label">Response Type *</label>
-              <div className="space-y-4">
-                {messageTypes.map((type) => (
-                  <label key={type.value} className="flex items-start space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="messageType"
-                      value={type.value}
-                      checked={messageType === type.value}
-                      onChange={(e) => setMessageType(e.target.value)}
-                      className="mt-1 rounded border-gray-300 w-4 h-4"
-                      disabled={isSubmitting}
-                    />
-                    <div className="flex-1">
-                      <span className="text-sm font-medium text-gray-900">{type.label}</span>
-                      <p className="text-xs text-gray-500 mt-1">{type.description}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
             </div>
 
             <div className="form-field">
               <label className="form-label">
-                Response Content *
+                Comment Content *
               </label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Type your response to the customer..."
+                placeholder="Add your customer comment here..."
                 className="form-input form-textarea"
                 rows={6}
                 disabled={isSubmitting}
                 required
               />
-            </div>
-
-            {/* Agent-specific options */}
-            <div className="space-y-4">
-              {currentStatus !== 'Closed' && (
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={shouldCloseCase}
-                    onChange={(e) => setShouldCloseCase(e.target.checked)}
-                    className="rounded border-gray-300 w-4 h-4"
-                    disabled={isSubmitting}
-                  />
-                  <span className="text-sm text-green-700 font-medium">
-                    🔒 Close case after response
-                  </span>
-                </label>
-              )}
             </div>
 
             {/* File upload section */}
@@ -177,13 +121,13 @@ const AgentResponseModal: React.FC<AgentResponseModalProps> = ({
                 onChange={handleFileChange}
                 multiple
                 className="form-input"
-                id="file-input"
+                id="customer-file-input"
                 disabled={isSubmitting}
                 accept="image/*,.pdf,.doc,.docx"
               />
               <div className="mt-2 flex items-center space-x-4">
                 <label
-                  htmlFor="file-input"
+                  htmlFor="customer-file-input"
                   className="cursor-pointer bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
                 >
                   📎 Choose Files
@@ -224,13 +168,16 @@ const AgentResponseModal: React.FC<AgentResponseModalProps> = ({
               >
                 Cancel
               </button>
-              <button 
-                type="submit" 
-                className="btn btn-submit"
-                disabled={isSubmitting || !content.trim()}
-              >
-                {isSubmitting ? 'Adding...' : 'Add Response'}
-              </button>
+               <button 
+                 type="submit" 
+                 className="btn btn-submit"
+                 disabled={isSubmitting || !content.trim()}
+               >
+                 {isSubmitting 
+                   ? 'Adding Comment...' 
+                   : 'Add Customer Comment'
+                 }
+               </button>
             </div>
           </form>
         </div>
@@ -239,4 +186,4 @@ const AgentResponseModal: React.FC<AgentResponseModalProps> = ({
   );
 };
 
-export default AgentResponseModal;
+export default CustomerCommentModal;

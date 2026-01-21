@@ -1,7 +1,7 @@
 // API client for communicating with backend services
 
-const REFUND_SERVICE_BASE_URL = import.meta.env.VITE_REFUND_SERVICE_URL || 'http://localhost:8002';
-const SUPPORT_SERVICE_BASE_URL = import.meta.env.VITE_SUPPORT_SERVICE_URL || 'http://localhost:8001';
+const REFUND_SERVICE_BASE_URL = 'http://localhost:8002';
+const SUPPORT_SERVICE_BASE_URL = 'http://localhost:8001';
 
 export class ApiError extends Error {
   public statusCode?: number;
@@ -114,11 +114,7 @@ export const supportApi = {
     });
   },
 
-  reopenCase: async (caseId: string) => {
-    return makeRequest(`${SUPPORT_SERVICE_BASE_URL}/support-cases/${caseId}/reopen`, {
-      method: 'PUT'
-    });
-  },
+
 
   assignAgent: async (caseId: string, agentId: string) => {
     return makeRequest(`${SUPPORT_SERVICE_BASE_URL}/support-cases/${caseId}/assign/${agentId}`, {

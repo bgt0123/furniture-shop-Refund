@@ -19,7 +19,6 @@ class CreateSupportCaseRequest(BaseModel):
     case_type: str  # "question" or "refund"
     subject: str
     description: str
-    refund_request_id: Optional[str] = None
     evidence_files: Optional[List[str]] = None  # File paths/URLs
     order_id: Optional[str] = None
     product_ids: Optional[List[str]] = None
@@ -33,7 +32,7 @@ class SupportCaseResponse(BaseModel):
     subject: str
     description: str
     status: str
-    refund_request_id: Optional[str] = None
+    refund_request_ids: Optional[List[str]] = None
     assigned_agent_id: Optional[str] = None
     order_id: Optional[str] = None
     product_ids: Optional[List[str]] = None
@@ -55,13 +54,7 @@ class CommentResponse(BaseModel):
     is_internal: bool
 
 
-class SupportResponseRequest(BaseModel):
-    sender_id: str
-    sender_type: str  # "customer" or "agent"
-    content: str
-    message_type: str  # "question", "answer", "status_update", "close_case"
-    attachments: Optional[List[str]] = None
-    is_internal: bool = False
+# SupportResponse is deprecated - use AddCommentRequest instead
 
 
 class AddCommentRequest(BaseModel):
@@ -84,7 +77,7 @@ async def create_support_case(request: CreateSupportCaseRequest):
             case_type=request.case_type,
             subject=request.subject,
             description=request.description,
-            refund_request_id=request.refund_request_id,
+            # Don't pass refund_request_id - it will be added separately via add_refund_request
             order_id=request.order_id,
             product_ids=request.product_ids,
             delivery_date=request.delivery_date
@@ -99,7 +92,7 @@ async def create_support_case(request: CreateSupportCaseRequest):
             subject=support_case.subject,
             description=support_case.description,
             status=support_case.status.value,
-            refund_request_id=support_case.refund_request_id,
+            refund_request_ids=support_case.refund_request_ids,
             assigned_agent_id=support_case.assigned_agent_id,
             order_id=support_case.order_id,
             product_ids=support_case.product_ids,
@@ -161,7 +154,7 @@ async def get_support_case(case_number: str):
             subject=support_case.subject,
             description=support_case.description,
             status=support_case.status.value,
-            refund_request_id=support_case.refund_request_id,
+            refund_request_ids=support_case.refund_request_ids,
             assigned_agent_id=support_case.assigned_agent_id,
             order_id=support_case.order_id,
             product_ids=support_case.product_ids,
@@ -193,7 +186,7 @@ async def get_customer_support_cases(customer_id: str):
             subject=case.subject,
             description=case.description,
             status=case.status.value,
-            refund_request_id=case.refund_request_id,
+            refund_request_ids=case.refund_request_ids,
             assigned_agent_id=case.assigned_agent_id,
             created_at=case.created_at.isoformat(),
             updated_at=case.updated_at.isoformat()
@@ -218,7 +211,7 @@ async def get_all_support_cases():
             subject=case.subject,
             description=case.description,
             status=case.status.value,
-            refund_request_id=case.refund_request_id,
+            refund_request_ids=case.refund_request_ids,
             assigned_agent_id=case.assigned_agent_id,
             created_at=case.created_at.isoformat(),
             updated_at=case.updated_at.isoformat()
@@ -227,41 +220,7 @@ async def get_all_support_cases():
     ]
 
 
-@router.post("/{case_number}/responses")
-async def add_response(case_number: str, request: SupportResponseRequest):
-    """Add a response to a support case"""
-    dependencies = get_dependencies()
-    
-    try:
-        result = dependencies.add_response.execute(
-            case_number=case_number,
-            sender_id=request.sender_id,
-            sender_type=request.sender_type,
-            content=request.content,
-            message_type=request.message_type,
-            attachments=request.attachments,
-            is_internal=request.is_internal
-        )
-        
-        response = result["response"]
-        
-        return {
-            "response_id": response.response_id,
-            "case_number": response.case_number,
-            "sender_id": response.sender_id,
-            "sender_type": response.sender_type.value,
-            "content": response.content,
-            "message_type": response.message_type.value,
-            "timestamp": response.timestamp.isoformat(),
-            "attachments": response.attachments,
-            "is_internal": response.is_internal
-        }
-        
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+# The add_response endpoint is deprecated - use add_comment instead
 
 
 @router.put("/{case_number}/assign/{agent_id}")
@@ -300,7 +259,7 @@ class UpdateSupportCaseRequest(BaseModel):
 
 class UpdateCaseTypeRequest(BaseModel):
     case_type: str
-    refund_request_id: Optional[str] = None
+    refund_request_ids: Optional[List[str]] = None
 
 
 @router.put("/{case_number}/close")
@@ -325,30 +284,6 @@ async def close_case(case_number: str):
             detail=str(e)
         )
 
-
-@router.put("/{case_number}/reopen")
-async def reopen_case(case_number: str):
-    """Reopen a support case"""
-    dependencies = get_dependencies()
-    
-    try:
-        result = dependencies.reopen_case.execute(case_number=case_number)
-        
-        support_case = result["support_case"]
-        
-        return {
-            "case_number": support_case.case_number,
-            "status": support_case.status.value,
-            "updated_at": support_case.updated_at.isoformat()
-        }
-        
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-
 @router.put("/{case_number}/update-type")
 async def update_case_type(case_number: str, request: UpdateCaseTypeRequest):
     """Update case type and optionally link refund request"""
@@ -358,7 +293,7 @@ async def update_case_type(case_number: str, request: UpdateCaseTypeRequest):
         result = dependencies.update_case_type.execute(
             case_number=case_number,
             case_type=request.case_type,
-            refund_request_id=request.refund_request_id
+            refund_request_ids=request.refund_request_ids
         )
         
         support_case = result["support_case"]
@@ -370,7 +305,7 @@ async def update_case_type(case_number: str, request: UpdateCaseTypeRequest):
             subject=support_case.subject,
             description=support_case.description,
             status=support_case.status.value,
-            refund_request_id=support_case.refund_request_id,
+            refund_request_ids=support_case.refund_request_ids,
             assigned_agent_id=support_case.assigned_agent_id,
             created_at=support_case.created_at.isoformat(),
             updated_at=support_case.updated_at.isoformat()
@@ -432,7 +367,7 @@ async def update_support_case(case_number: str, request: UpdateSupportCaseReques
             subject=support_case.subject,
             description=support_case.description,
             status=support_case.status.value,
-            refund_request_id=support_case.refund_request_id,
+            refund_request_ids=support_case.refund_request_ids,
             assigned_agent_id=support_case.assigned_agent_id,
             created_at=support_case.created_at.isoformat(),
             updated_at=support_case.updated_at.isoformat()
@@ -523,4 +458,27 @@ async def add_comment(case_number: str, request: AddCommentRequest):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        )# Trigger reload
+        )
+
+
+@router.delete("/{case_number}")
+async def delete_case(case_number: str):
+    """Delete a support case"""
+    dependencies = get_dependencies()
+    
+    try:
+        result = dependencies.delete_case.execute(case_number=case_number)
+        
+        support_case = result["support_case"]
+        
+        return {
+            "case_number": support_case.case_number,
+            "is_deleted": support_case.is_deleted,
+            "updated_at": support_case.updated_at.isoformat()
+        }
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

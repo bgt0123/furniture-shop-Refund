@@ -1,6 +1,6 @@
 """Dependency injection setup for refund service"""
 
-from infrastructure.repositories.refund_case_repository import RefundCaseRepository
+from infrastructure.repositories.refund_request_repository import RefundRequestRepository
 from domain.events.create_refund_request import CreateRefundRequest
 import httpx
 import os
@@ -10,7 +10,7 @@ class Dependencies:
     """Container for application dependencies"""
     
     def __init__(self):
-        self.refund_case_repository = RefundCaseRepository()
+        self.refund_request_repository = RefundRequestRepository()
         
         class SupportCaseRepository:
             """Repository that calls the actual Support Service API"""
@@ -31,9 +31,11 @@ class Dependencies:
                             def __init__(self, data):
                                 self.case_number = data["case_number"]
                                 self.customer_id = data["customer_id"]
-                                self.case_type = type("CaseType", (), {"value": data["case_type"]})
-                                self.status = type("CaseStatus", (), {"value": data["status"], "CLOSED": "closed"})
+                                self.case_type = data["case_type"]
+                                self.status = data["status"]
                                 self.is_closed = data["status"] == "closed"
+                                self.is_deleted = data.get("is_deleted", False)
+                                self.refund_request_ids = data.get("refund_request_ids", [])
                         
                         return SupportCase(data)
                     elif response.status_code == 404:
@@ -44,9 +46,16 @@ class Dependencies:
                             def __init__(self, case_number):
                                 self.case_number = case_number
                                 self.customer_id = "unknown"
-                                self.case_type = type("CaseType", (), {"value": "refund"})
-                                self.status = type("CaseStatus", (), {"value": "open", "CLOSED": "closed"})
+                                self.case_type = "refund"
+                                self.status = "open"
                                 self.is_closed = False
+                                self.is_deleted = False
+                                self.refund_request_ids = []
+                            
+                            def add_refund_request(self, refund_request_id):
+                                """Mock method to add refund request ID"""
+                                self.refund_request_ids.append(refund_request_id)
+                                print(f"Mock: Added refund request {refund_request_id} to support case {self.case_number}")
                         
                         return NotFoundMockSupportCase(case_number)
                     else:
@@ -60,15 +69,22 @@ class Dependencies:
                         def __init__(self, case_number):
                             self.case_number = case_number
                             self.customer_id = "unknown"
-                            self.case_type = type("CaseType", (), {"value": "refund"})
-                            self.status = type("CaseStatus", (), {"value": "open", "CLOSED": "closed"})
+                            self.case_type = "refund"
+                            self.status = "open"
                             self.is_closed = False
+                            self.is_deleted = False
+                            self.refund_request_ids = []
+                        
+                        def add_refund_request(self, refund_request_id):
+                            """Mock method to add refund request ID"""
+                            self.refund_request_ids.append(refund_request_id)
+                            print(f"Mock: Added refund request {refund_request_id} to support case {self.case_number}")
                     
                     return ExceptionMockSupportCase(case_number)
         
         self.support_case_repository = SupportCaseRepository()
         self.create_refund_request = CreateRefundRequest(
-            self.refund_case_repository, 
+            self.refund_request_repository, 
             self.support_case_repository
         )
 

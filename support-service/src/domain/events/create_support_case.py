@@ -56,13 +56,17 @@ class CreateSupportCase:
                 raise ValueError("Product IDs are required for refund cases")
         
         # Create SupportCase aggregate
+        refund_request_ids = []
+        if refund_request_id:
+            refund_request_ids.append(refund_request_id)
+            
         support_case = SupportCase(
             case_number=case_number,
             customer_id=customer_id,
             case_type=case_type_enum,
             subject=subject,
             description=description,
-            refund_request_id=refund_request_id,
+            refund_request_ids=refund_request_ids,
             order_id=order_id,
             product_ids=product_ids or [],
             delivery_date=parsed_delivery_date,

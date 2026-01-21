@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import SupportCaseForm from '../../components/support/support-case-form';
-import AgentResponseModal from '../../components/support/agent-response-modal';
+
 import { supportApi, refundApi, ApiError } from '../../services/api';
 
 interface SupportCase {
@@ -17,41 +17,45 @@ interface SupportCase {
   updated: string;
 }
 
- const SupportCaseDashboard: React.FC = () => {
+  const SupportCaseDashboard: React.FC = () => {
    const [cases, setCases] = useState<SupportCase[]>([]);
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState<string | null>(null);
    const casesRef = useRef(cases);
    const isFetchingRefundStatuses = useRef(false);
+   const location = useLocation();
 
-   // Mock user authentication - in real app this would come from authentication context
-    const [currentUser, setCurrentUser] = useState({
-      id: import.meta.env.VITE_DEFAULT_USER_ID || 'cust-123',
-      role: 'customer',
-      name: 'Demo Customer'
-    });
+   // Get user role from URL query parameter, default to 'customer' for safety
+   const urlParams = new URLSearchParams(location.search);
+   const userRoleParam = urlParams.get('role');
+
+    // Mock user authentication - in real app this would come from authentication context
+      const [currentUser, setCurrentUser] = useState({
+        id: 'cust-123',
+        role: (userRoleParam as 'customer' | 'agent' | 'admin') || 'customer',
+        name: 'Demo Customer'
+      });
 
    const [showModal, setShowModal] = useState(false);
-   const [showAgentResponseModal, setShowAgentResponseModal] = useState(false);
    const [editingCase, setEditingCase] = useState<SupportCase | null>(null);
-   const [respondingCase, setRespondingCase] = useState<SupportCase | null>(null);
 
    // Fetch support cases on component mount and when user changes
    useEffect(() => {
      fetchSupportCases();
      
-     // Set up polling for refund status updates every 10 seconds
-      const intervalId = setInterval(() => {
-        // Refresh refund statuses using ref to avoid dependency issues
-        const refundCases = casesRef.current.filter(supportCase => supportCase.refund_request_id);
-        console.log('🔁 Polling: Found', refundCases.length, 'refund cases to check');
-        if (refundCases.length > 0) {
-          console.log('🔁 Polling: Case numbers:', refundCases.map(c => c.caseNumber));
-          fetchRefundStatuses(refundCases);
-        } else {
-          console.log('🔁 Polling: No refund cases found');
-        }
-      }, 15000);
+      // Set up polling for refund status updates every 5 seconds
+       const intervalId = setInterval(() => {
+         // Refresh refund statuses using ref to avoid dependency issues
+         const refundCases = casesRef.current.filter(supportCase => supportCase.refund_request_id);
+         console.log('🔁 Polling: Found', refundCases.length, 'refund cases to check');
+         console.log('🔁 Polling: Cases with IDs:', refundCases.map(c => ({ caseNumber: c.caseNumber, refundId: c.refund_request_id, currentStatus: c.refund_status })));
+         if (refundCases.length > 0) {
+           console.log('🔁 Polling: Starting fetchRefundStatuses...');
+           fetchRefundStatuses(refundCases);
+         } else {
+           console.log('🔁 Polling: No refund cases found');
+         }
+       }, 5000);
      
      return () => clearInterval(intervalId);
    }, [currentUser.id]);
@@ -134,11 +138,19 @@ interface SupportCase {
              console.log('Calling fetchRefundStatuses with:', refundCases.map(c => c.caseNumber));
              fetchRefundStatuses(refundCases);
            }
-         } else {
-           // Already in correct format (loaded from localStorage)
-           setCases(fetchedCases);
-           casesRef.current = fetchedCases;
-         }
+          } else {
+            // Already in correct format (loaded from localStorage)
+            setCases(fetchedCases);
+            casesRef.current = fetchedCases;
+            
+            // Fetch updated refund statuses for localStorage cases as well
+            const refundCases = fetchedCases.filter(supportCase => supportCase.refund_request_id);
+            console.log('Fetching refund statuses for localStorage cases:', refundCases.length);
+            if (refundCases.length > 0) {
+              console.log('Calling fetchRefundStatuses for localStorage cases:', refundCases.map(c => c.caseNumber));
+              fetchRefundStatuses(refundCases);
+            }
+          }
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch support cases';
       setError(errorMessage);
@@ -432,47 +444,7 @@ interface SupportCase {
     }
   };
 
-  const handleReopenCase = async (caseId: string) => {
-    try {
-      setError(null);
-      
-      // Find the case number from the case ID
-      const caseToReopen = cases.find(c => c.id === caseId);
-      if (!caseToReopen) return;
-      
-      try {
-        // Try to call the backend endpoint
-        await supportApi.reopenCase(caseToReopen.caseNumber);
-        
-        // Update local state immediately for better UX
-        const updatedCases = cases.map(c => 
-          c.id === caseId && c.status === 'Closed' 
-            ? { ...c, status: 'Open' as const }
-            : c
-        );
-        setCases(updatedCases);
-        casesRef.current = updatedCases;
-      } catch (err) {
-        if (err instanceof ApiError && err.statusCode === 404) {
-          // If endpoint doesn't exist yet, simulate reopening
-          const updatedCases = cases.map(c => 
-            c.id === caseId && c.status === 'Closed' 
-              ? { ...c, status: 'Open' as const }
-              : c
-          );
-          setCases(updatedCases);
-          casesRef.current = updatedCases;
-          return;
-        }
-        throw err;
-      }
-      
-      // Refresh the cases list to get updated status (to sync with backend)
-      fetchSupportCases();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to reopen support case');
-    }
-  };
+
 
 
 
@@ -486,38 +458,7 @@ interface SupportCase {
      setEditingCase(null);
    };
 
-   const handleAgentResponse = async (content: string, messageType: string, files?: File[], shouldCloseCase?: boolean) => {
-     try {
-       setError(null);
-       
-       if (!respondingCase) return;
-       
-       // Prepare response data
-       const responseData = {
-         sender_id: currentUser.id,
-         sender_type: currentUser.role,
-         content: content,
-         message_type: messageType,
-         attachments: files ? files.map(file => file.name) : [],
-         is_internal: false
-       };
-       
-       await supportApi.addResponse(respondingCase.caseNumber, responseData);
-       
-       // If agent wants to close the case, do it
-       if (shouldCloseCase) {
-         await supportApi.closeCase(respondingCase.caseNumber);
-       }
-       
-       // Refresh the cases list to show the new response
-       fetchSupportCases();
-       
-       setShowAgentResponseModal(false);
-       setRespondingCase(null);
-     } catch (err) {
-       setError(err instanceof ApiError ? err.message : 'Failed to add response');
-     }
-   };
+
 
   const startCreatingCase = () => {
     console.log('Create button clicked');
@@ -551,14 +492,16 @@ interface SupportCase {
                <button 
                  onClick={() => {
                    const newRole = currentUser.role === 'customer' ? 'agent' : 'customer';
-                   const newUser = {
-                     ...currentUser,
-                     role: newRole,
-                     id: newRole === 'customer' ? 'cust-123' : 'agent-001',
-                     name: newRole === 'customer' ? 'Demo Customer' : 'Demo Agent'
-                   };
-                   setCurrentUser(newUser);
-                   fetchSupportCases();
+                    const newUser = {
+                      ...currentUser,
+                      role: newRole as 'customer' | 'agent' | 'admin',
+                      id: newRole === 'customer' ? 'cust-123' : 'agent-001',
+                      name: newRole === 'customer' ? 'Demo Customer' : 'Demo Agent'
+                    };
+                  setCurrentUser(newUser);
+                    // Update URL with new role
+                    window.history.replaceState(null, '', `/support-cases?role=${newRole}`);
+                    fetchSupportCases();
                  }}
                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                >
@@ -576,13 +519,7 @@ interface SupportCase {
            currentUser={currentUser}
          />
 
-         <AgentResponseModal
-           isOpen={showAgentResponseModal}
-           onClose={() => setShowAgentResponseModal(false)}
-           onSubmit={handleAgentResponse}
-           caseNumber={respondingCase?.caseNumber || ''}
-           currentStatus={respondingCase?.status || 'Open'}
-         />
+
 
         {error && (
           <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -593,17 +530,23 @@ interface SupportCase {
         <div className="grid grid-cols-1 gap-8">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
-               <h2 className="text-2xl font-semibold text-gray-800">
-                 {currentUser.role === 'customer' ? 'My Support Cases' : 'All Support Cases'}
-               </h2>
-              <button
-                onClick={startCreatingCase}
-                disabled={loading}
-                className="btn-primary px-6 py-3 text-lg flex items-center disabled:opacity-50"
-              >
-                <span className="mr-2">➕</span>
-                {loading ? 'Loading...' : 'Create New Case'}
-              </button>
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  {currentUser.role === 'customer' ? 'My Support Cases' : 'All Support Cases'}
+                </h2>
+               {currentUser.role === 'customer' ? (
+                 <button
+                   onClick={startCreatingCase}
+                   disabled={loading}
+                   className="btn-primary px-6 py-3 text-lg flex items-center disabled:opacity-50"
+                 >
+                   <span className="mr-2">➕</span>
+                   {loading ? 'Loading...' : 'Create New Case'}
+                 </button>
+               ) : (
+                 <div className="text-sm text-gray-600 bg-blue-50 px-4 py-2 rounded-lg">
+                   🛠️ Agents manage existing cases but cannot create new ones
+                 </div>
+               )}
             </div>
 
             {loading ? (
@@ -667,12 +610,12 @@ interface SupportCase {
                        <div><span className="font-medium">Last updated:</span> {supportCase.updated}</div>
                      </div>
                        <div className="action-buttons">
-                         <Link 
-                           to={`/support-cases/${supportCase.caseNumber}`}
-                           className="btn-primary"
-                         >
-                           📋 View Details
-                         </Link>
+                          <Link 
+                            to={`/support-cases/${supportCase.caseNumber}?role=${currentUser.role}`}
+                            className="btn-primary"
+                          >
+                            📋 View Details
+                          </Link>
                            {supportCase.status !== 'Closed' && currentUser.role === 'customer' && (
                             <button
                               onClick={() => startEditingCase(supportCase)}
@@ -681,37 +624,20 @@ interface SupportCase {
                               ✏️ Edit
                             </button>
                            )}
-                           {supportCase.status !== 'Closed' && currentUser.role === 'agent' && (
-                            <button
-                              onClick={() => {
-                                setRespondingCase(supportCase);
-                                setShowAgentResponseModal(true);
-                              }}
-                              className="btn-secondary"
-                            >
-                              💬 Respond
-                            </button>
-                           )}
+
                         {!supportCase.refund_request_id && supportCase.caseType === 'Refund' && supportCase.status !== 'Closed' && (
                           <span className="refund-status-message text-xs">
                             Case already configured for refund
                           </span>
                         )}
-                         {supportCase.status === 'Closed' ? (
-                           <button
-                             onClick={() => handleReopenCase(supportCase.id)}
-                             className="btn-warning"
-                           >
-                             🔄 Reopen Case
-                           </button>
-                         ) : (
-                           <button
-                             onClick={() => handleCloseCase(supportCase.id)}
-                             className="btn-danger"
-                           >
-                             🔒 Close Case
-                           </button>
-                         )}
+                          {supportCase.status !== 'Closed' && (
+                            <button
+                              onClick={() => handleCloseCase(supportCase.id)}
+                              className="btn-danger"
+                            >
+                              🔒 Close Case
+                            </button>
+                          )}
                       </div>
                   </div>
                 ))}

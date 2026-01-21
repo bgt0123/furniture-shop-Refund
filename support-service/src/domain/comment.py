@@ -58,6 +58,20 @@ class Comment:
             (self.is_refund_feedback() and not self.is_internal)
         )
 
+    def to_dict(self) -> dict:
+        """Convert comment to dictionary for serialization"""
+        return {
+            "comment_id": self.comment_id,
+            "case_number": self.case_number,
+            "author_id": self.author_id,
+            "author_type": self.author_type,
+            "content": self.content,
+            "comment_type": self.comment_type.value,
+            "attachments": self.attachments,
+            "timestamp": self.timestamp.isoformat(),
+            "is_internal": self.is_internal
+        }
+
     def __str__(self) -> str:
         return f"Comment by {self.author_type} at {self.timestamp}"
 

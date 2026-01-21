@@ -3,7 +3,6 @@ from typing import List, Optional
 from enum import Enum
 from uuid import uuid4
 
-from .support_response import SupportResponse, SenderType, MessageType
 from .comment import Comment, CommentType
 
 
@@ -23,8 +22,7 @@ class CaseType(Enum):
 class SupportCase:
     """Aggregate root for support cases
     
-    A support case represents a customer inquiry that may contain
-    refund requests. This aggregate ensures business rules are enforced.
+    A support case manages customer inquiries and refund requests with business rules.
     """
 
     def __init__(
@@ -34,8 +32,7 @@ class SupportCase:
         case_type: CaseType,
         subject: str,
         description: str,
-        refund_request_id: Optional[str] = None,
-        support_responses: Optional[List[SupportResponse]] = None,
+        refund_request_ids: Optional[List[str]] = None,
         comments: Optional[List[Comment]] = None,
         status: CaseStatus = CaseStatus.OPEN,
         created_at: Optional[datetime] = None,
@@ -43,15 +40,15 @@ class SupportCase:
         assigned_agent_id: Optional[str] = None,
         order_id: Optional[str] = None,
         product_ids: Optional[List[str]] = None,
-        delivery_date: Optional[datetime] = None
+        delivery_date: Optional[datetime] = None,
+        is_deleted: bool = False
     ):
         self.case_number = case_number
         self.customer_id = customer_id
         self.case_type = case_type
         self.subject = subject
         self.description = description
-        self.refund_request_id = refund_request_id
-        self.support_responses = support_responses or []
+        self.refund_request_ids = refund_request_ids or []
         self.comments = comments or []
         self.status = status
         self.created_at = created_at or datetime.utcnow()
@@ -60,101 +57,77 @@ class SupportCase:
         self.order_id = order_id
         self.product_ids = product_ids or []
         self.delivery_date = delivery_date
-
-    def add_response(
-        self,
-        sender_id: str,
-        sender_type: SenderType,
-        content: str,
-        message_type: MessageType,
-        attachments: Optional[List[str]] = None,
-        is_internal: bool = False
-    ) -> SupportResponse:
-        """Add a response to the support case"""
-        self._ensure_case_not_closed("add responses to")
-        
-        response = SupportResponse(
-            response_id=str(uuid4()),
-            case_number=self.case_number,
-            sender_id=sender_id,
-            sender_type=sender_type,
-            content=content,
-            message_type=message_type,
-            attachments=attachments or [],
-            is_internal=is_internal
-        )
-        
-        self.support_responses.append(response)
-        self.updated_at = datetime.utcnow()
-        
-        return response
+        self.is_deleted = is_deleted
 
     def assign_agent(self, agent_id: str) -> None:
         """Assign an agent to the support case"""
-        self._ensure_case_not_closed("assign agent to")
+        self._ensure_case_not_closed_or_deleted("assign agent to")
         self.assigned_agent_id = agent_id
         self.status = CaseStatus.IN_PROGRESS
         self.updated_at = datetime.utcnow()
 
     def close_case(self) -> None:
-        """Close the support case"""
-        # Allow closing regardless of agent responses
-        # Customers may still want to close cases even after agent responses
-        # Agents can reopen if needed
+        """Close the support case permanently"""
+        self._ensure_case_not_deleted("close")
+        if self.status == CaseStatus.CLOSED:
+            raise ValueError("Support case is already closed")
         self.status = CaseStatus.CLOSED
         self.updated_at = datetime.utcnow()
 
-    def reopen_case(self) -> None:
-        """Reopen the support case"""
-        self.status = CaseStatus.OPEN
+    def delete_case(self) -> None:
+        """Mark support case as deleted"""
+        self._ensure_case_not_deleted("delete")
+        self.is_deleted = True
         self.updated_at = datetime.utcnow()
 
-    def _ensure_case_not_closed(self, operation: str) -> None:
-        """Ensure case is not closed before performing an operation"""
+    def _ensure_case_not_closed_or_deleted(self, operation: str) -> None:
+        """Ensure case is not closed or deleted before performing an operation"""
+        if self.is_deleted:
+            raise ValueError(f"Cannot {operation} a deleted support case")
         if self.status == CaseStatus.CLOSED:
             raise ValueError(f"Cannot {operation} a closed support case")
 
+    def _ensure_case_not_deleted(self, operation: str) -> None:
+        """Ensure case is not deleted before performing an operation"""
+        if self.is_deleted:
+            raise ValueError(f"Cannot {operation} a deleted support case")
+
+    def can_add_refund_request(self) -> bool:
+        """Check if refund request can be added"""
+        return (
+            not self.is_deleted and
+            self.status != CaseStatus.CLOSED and
+            self.case_type == CaseType.REFUND
+        )
+
     def add_refund_request(self, refund_request_id: str) -> None:
         """Add a refund request to the support case"""
-        self._ensure_case_not_closed("add refund request to")
+        if not self.can_add_refund_request():
+            raise ValueError("Cannot add refund request to this support case")
         
-        if self.case_type != CaseType.REFUND:
-            raise ValueError("Cannot add refund request to non-refund case")
+        if refund_request_id in self.refund_request_ids:
+            raise ValueError("Refund request already exists in this support case")
         
-        if self.refund_request_id:
-            raise ValueError("Support case already has a refund request")
-        
-        self.refund_request_id = refund_request_id
+        self.refund_request_ids.append(refund_request_id)
         self.updated_at = datetime.utcnow()
 
-    def update_case_type(self, case_type: CaseType, refund_request_id: Optional[str] = None) -> None:
-        """Update the case type and optionally link a refund request"""
-        self._ensure_case_not_closed("update case type of")
-        
-        # Validate case type transition
-        if self.case_type == CaseType.REFUND and case_type == CaseType.QUESTION:
-            if self.refund_request_id:
-                raise ValueError("Cannot change refund case to question case when refund request exists")
-        
+    def _validate_case_type_transition(self, new_case_type: CaseType) -> None:
+        """Validate changing case type"""
+        if self.case_type == CaseType.REFUND and new_case_type == CaseType.QUESTION:
+            if self.refund_request_ids:
+                raise ValueError("Cannot change refund case to question case when refund requests exist")
+
+    def update_case_type(self, case_type: CaseType) -> None:
+        """Update the case type"""
+        self._ensure_case_not_closed_or_deleted("update case type of")
+        self._validate_case_type_transition(case_type)
         self.case_type = case_type
-        
-        # Update refund request ID if provided
-        if refund_request_id:
-            if case_type != CaseType.REFUND:
-                raise ValueError("Can only add refund request to refund case type")
-            
-            if self.refund_request_id:
-                raise ValueError("Support case already has a refund request")
-                
-            self.refund_request_id = refund_request_id
-        
         self.updated_at = datetime.utcnow()
 
     @property
-    def can_customer_access(self) -> bool:
-        """Check if customer should have access to this case"""
-        # Customers can only access their own cases
-        return self.customer_id.startswith("customer")
+    def has_active_refund(self) -> bool:
+        """Check if there's an active refund request"""
+        return len(self.refund_request_ids) > 0
 
     @property
     def is_closed(self) -> bool:
@@ -171,7 +144,7 @@ class SupportCase:
         is_internal: bool = False
     ) -> Comment:
         """Add a comment to the support case"""
-        self._ensure_case_not_closed("add comments to")
+        self._ensure_case_not_deleted("add comments to")
         
         comment = Comment(
             comment_id=str(uuid4()),
@@ -181,6 +154,7 @@ class SupportCase:
             content=content,
             comment_type=comment_type,
             attachments=attachments or [],
+            timestamp=datetime.utcnow(),
             is_internal=is_internal
         )
         
@@ -199,14 +173,16 @@ class SupportCase:
             attachments=attachments
         )
 
-    def add_agent_response(self, agent_id: str, content: str, attachments: Optional[List[str]] = None) -> Comment:
+    def add_agent_response(self, agent_id: str, content: str, attachments: Optional[List[str]] = None,
+                         is_internal: bool = False) -> Comment:
         """Add an agent response to the support case"""
         return self.add_comment(
             author_id=agent_id,
             author_type="agent",
             content=content,
             comment_type=CommentType.AGENT_RESPONSE,
-            attachments=attachments
+            attachments=attachments,
+            is_internal=is_internal
         )
 
     def add_refund_feedback(
@@ -226,21 +202,37 @@ class SupportCase:
             is_internal=is_internal
         )
 
-    def get_comments_for_customer(self) -> List[Comment]:
-        """Get comments that should be visible to customers"""
-        return [comment for comment in self.comments if comment.can_customer_see()]
+    def get_timeline_events(self) -> List[Comment]:
+        """Get all timeline events sorted by timestamp"""
+        return sorted(self.comments, key=lambda c: c.timestamp)
 
-    def get_agent_responses(self) -> List[Comment]:
-        """Get all agent responses"""
-        return [comment for comment in self.comments if comment.is_agent_response()]
+    def get_visible_comments(self) -> List[Comment]:
+        """Get comments that should be visible in case timeline"""
+        return [comment for comment in self.comments if not comment.is_internal]
 
-    def get_refund_feedbacks(self) -> List[Comment]:
-        """Get all refund feedbacks"""
-        return [comment for comment in self.comments if comment.is_refund_feedback()]
+    def merge_comment_systems(self, existing_comments: List['Comment']) -> None:
+        """Merge existing comment system into this domain model"""
+        self.comments.extend(existing_comments)
 
-    def can_be_edited(self) -> bool:
-        """Check if the support case can be edited"""
-        return not self.is_closed
+    def to_dict(self) -> dict:
+        """Convert support case to dictionary for serialization"""
+        return {
+            "case_number": self.case_number,
+            "customer_id": self.customer_id,
+            "case_type": self.case_type.value,
+            "subject": self.subject,
+            "description": self.description,
+            "refund_request_ids": self.refund_request_ids,
+            "comments": [c.to_dict() for c in self.comments],
+            "status": self.status.value,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "assigned_agent_id": self.assigned_agent_id,
+            "order_id": self.order_id,
+            "product_ids": self.product_ids,
+            "delivery_date": self.delivery_date.isoformat() if self.delivery_date else None,
+            "is_deleted": self.is_deleted
+        }
 
     def __str__(self) -> str:
         return f"SupportCase {self.case_number} ({self.status.value})"

@@ -52,12 +52,11 @@ const Home: React.FC = () => {
               incorrect products
             </p>
             <div className="features text-left space-y-2 text-sm opacity-80">
-              <div className="flex items-center">• Submit refund requests</div>
+              <div className="flex items-center">• Edit refund requests</div>
               <div className="flex items-center">• Upload damage evidence</div>
               <div className="flex items-center">• Track refund status</div>
-              <div className="flex items-center">
-                • Receive refund decisions
-              </div>
+              <div className="flex items-center">• Handles money and legal obligations</div>
+              <div className="flex items-center">• Receive refund decisions regarding their eligibility</div>
             </div>
             <div className="mt-6 text-lg font-semibold">
               Go to Refund Cases →

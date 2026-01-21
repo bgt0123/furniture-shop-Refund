@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { supportApi, refundApi, ApiError } from '../../services/api';
-import CommentModal from '../../components/support/comment-modal';
+import CustomerCommentModal from '../../components/support/customer-comment-modal';
+import AgentCommentModal from '../../components/support/agent-comment-modal';
 
 interface SupportCaseDetail {
   case_number: string;
@@ -10,7 +11,7 @@ interface SupportCaseDetail {
   subject: string;
   description: string;
   status: string;
-  refund_request_id?: string;
+  refund_request_ids?: string[];
   assigned_agent_id?: string;
   order_id?: string;
   product_ids?: string[];
@@ -18,20 +19,10 @@ interface SupportCaseDetail {
   comments?: any[];
   created_at: string;
   updated_at: string;
-  responses?: SupportResponse[];
   attachments?: string[];
 }
 
-interface SupportResponse {
-  id: string;
-  sender_id: string;
-  sender_type: string;
-  content: string;
-  message_type: string;
-  attachments?: string[];
-  is_internal?: boolean;
-  created_at: string;
-}
+// SupportResponse interface removed - using Comment system instead
 
 interface RefundCase {
   refund_case_id: string;
@@ -48,11 +39,12 @@ interface RefundCase {
 const SupportCaseDetail: React.FC = () => {
   const { caseNumber } = useParams<{ caseNumber: string }>();
   const location = useLocation();
-  const [supportCase, setSupportCase] = useState<SupportCaseDetail | null>(null);
-  const [refundCase, setRefundCase] = useState<RefundCase | null>(null);
+   const [supportCase, setSupportCase] = useState<SupportCaseDetail | null>(null);
+   const [refundCases, setRefundCases] = useState<RefundCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showCustomerCommentModal, setShowCustomerCommentModal] = useState(false);
+  const [showAgentCommentModal, setShowAgentCommentModal] = useState(false);
   
   // Get user role from URL query parameter, default to 'customer' for safety
   const urlParams = new URLSearchParams(location.search);
@@ -78,28 +70,31 @@ const SupportCaseDetail: React.FC = () => {
       const caseData = await supportApi.getSupportCaseDetailed(caseNumber);
       setSupportCase(caseData);
 
-        // If there's a refund request ID, fetch refund case details
-        if (caseData.refund_request_id) {
-          try {
-            const refundData = await refundApi.getRefundCaseDetailed(caseData.refund_request_id);
-            setRefundCase(refundData);
-          } catch (err) {
-            console.error('Failed to fetch refund case:', err);
-            // Set a dummy refund case with 'pending' status to avoid UI errors
-            const fallbackRefundCase: RefundCase = {
-              refund_case_id: caseData.refund_request_id,
-              case_number: caseData.case_number,
-              customer_id: caseData.customer_id,
-              order_id: caseData.order_id || 'ORD-unknown',
-              status: 'pending',
-              created_at: caseData.created_at,
-              updated_at: caseData.updated_at,
-              request_reason: 'Refund request',
-              product_ids: caseData.product_ids || []
-            };
-            setRefundCase(fallbackRefundCase);
-          }
-        }
+         // If there are refund request IDs, fetch refund case details
+         if (caseData.refund_request_ids && caseData.refund_request_ids.length > 0) {
+           const refundPromises = caseData.refund_request_ids.map(async (refundRequestId: string) => {
+             try {
+               return await refundApi.getRefundCaseDetailed(refundRequestId);
+             } catch (err) {
+               console.error('Failed to fetch refund case:', err);
+               // Set a dummy refund case with 'pending' status
+               return {
+                 refund_case_id: refundRequestId,
+                 case_number: caseData.case_number,
+                 customer_id: caseData.customer_id,
+                 order_id: caseData.order_id || 'ORD-unknown',
+                 status: 'pending',
+                 created_at: caseData.created_at,
+                 updated_at: caseData.updated_at,
+                 request_reason: 'Refund request',
+                 product_ids: caseData.product_ids || []
+               } as RefundCase;
+             }
+           });
+           
+           const refundResults = await Promise.all(refundPromises);
+           setRefundCases(refundResults.filter(Boolean));
+         }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to fetch case details');
     } finally {
@@ -139,7 +134,7 @@ const SupportCaseDetail: React.FC = () => {
            { emoji: '📋', text: caseType, className: 'bg-gray-100 text-gray-800' };
   };
 
-  const handleCommentSubmit = async (content: string, isInternal?: boolean, files?: File[], shouldCloseCase?: boolean) => {
+  const handleCustomerCommentSubmit = async (content: string, files?: File[]) => {
     if (!supportCase) return;
     
     try {
@@ -156,9 +151,44 @@ const SupportCaseDetail: React.FC = () => {
 
       const commentData = {
         author_id: currentUser.id,
-        author_type: currentUser.role,
+        author_type: 'customer',
         content: content,
-        comment_type: currentUser.role === 'agent' ? 'agent_response' : 'customer_comment',
+        comment_type: 'customer_comment',
+        attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
+        is_internal: false
+      };
+
+      await supportApi.addComment(supportCase.case_number, commentData);
+      
+      // Refresh case details to show updated comments
+      fetchCaseDetails();
+      setShowCustomerCommentModal(false);
+      
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to add comment');
+    }
+  };
+
+  const handleAgentCommentSubmit = async (content: string, _commentType?: string, isInternal?: boolean, files?: File[], shouldCloseCase?: boolean) => {
+    if (!supportCase) return;
+    
+    try {
+      setError(null);
+      
+      // Upload files if any
+      let uploadedAttachments: string[] = [];
+      
+      if (files && files.length > 0) {
+        // For now, we'll just use the file names as mock attachments
+        uploadedAttachments = files.map(file => file.name);
+        // TODO: Implement actual file upload
+      }
+
+      const commentData = {
+        author_id: currentUser.id,
+        author_type: 'agent',
+        content: content,
+        comment_type: 'agent_response', // Using commentType parameter would require backend changes
         attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
         is_internal: isInternal || false
       };
@@ -166,7 +196,7 @@ const SupportCaseDetail: React.FC = () => {
       await supportApi.addComment(supportCase.case_number, commentData);
       
       // If should close case and allowed to do so
-      if (shouldCloseCase && supportCase.status !== 'closed' && currentUser.role === 'agent') {
+      if (shouldCloseCase && supportCase.status !== 'closed') {
         try {
           await supportApi.closeCase(supportCase.case_number);
         } catch (err) {
@@ -176,7 +206,7 @@ const SupportCaseDetail: React.FC = () => {
       
       // Refresh case details to show updated comments
       fetchCaseDetails();
-      setShowCommentModal(false);
+      setShowAgentCommentModal(false);
       
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to add comment');
@@ -209,9 +239,9 @@ const SupportCaseDetail: React.FC = () => {
           <div className="error-alert">
             {error}
           </div>
-          <Link to="/support-cases" className="back-link">
-            ← Back to Support Cases
-          </Link>
+           <Link to={"/support-cases?role=" + currentUser.role} className="back-link">
+             ← Back to Support Cases
+           </Link>
         </div>
       </div>
     );
@@ -224,9 +254,9 @@ const SupportCaseDetail: React.FC = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">Case Not Found</h1>
             <p className="text-gray-600 mb-4">The requested support case could not be found.</p>
-            <Link to="/support-cases" className="back-link">
-              ← Back to Support Cases
-            </Link>
+           <Link to={"/support-cases?role=" + currentUser.role} className="back-link">
+             ← Back to Support Cases
+           </Link>
           </div>
         </div>
       </div>
@@ -241,7 +271,7 @@ const SupportCaseDetail: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="header-section">
-          <Link to="/support-cases" className="back-link">
+          <Link to={"/support-cases?role=" + currentUser.role} className="back-link">
             ← Back to Support Cases
           </Link>
           <div className="flex justify-between items-center">
@@ -312,63 +342,76 @@ const SupportCaseDetail: React.FC = () => {
           </div>
 
           {/* Associated Refund Case */}
-          {supportCase.refund_request_id && (
-            <div className="border-t pt-4 mt-6">
-              <h3 className="font-medium text-gray-700 mb-4">Refund Request Details</h3>
-              {refundCase ? (
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="font-semibold text-green-800 text-lg">
-                        💰 Refund Case #{refundCase.refund_case_id}
-                      </h4>
-                      <div className="flex items-center mt-2">
-                        {refundCase.status ? (
-                          (() => {
-                            const statusInfo = getRefundStatusDisplay(refundCase.status);
-                            return (
-                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.className}`}>
-                                {statusInfo.emoji} {statusInfo.text}
-                              </span>
-                            );
-                          })()
-                        ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                            ❓ Status Unknown
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Link 
-                      to={`/refund-cases/${refundCase.refund_case_id}`}
-                      className="btn-primary flex items-center"
-                    >
-                      📋 View Full Refund Details
-                    </Link>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="bg-white p-2 rounded border">
-                      <span className="font-medium text-gray-600">Order ID:</span>
-                      <div className="text-gray-800 font-mono">{refundCase.order_id}</div>
-                    </div>
-                    <div className="bg-white p-2 rounded border">
-                      <span className="font-medium text-gray-600">Created:</span>
-                      <div className="text-gray-800">{formatDate(refundCase.created_at)}</div>
-                    </div>
-                    <div className="bg-white p-2 rounded border">
-                      <span className="font-medium text-gray-600">Last Updated:</span>
-                      <div className="text-gray-800">{formatDate(refundCase.updated_at)}</div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <p className="text-gray-600 mt-2">Loading refund case details...</p>
-                </div>
-              )}
-            </div>
-          )}
+           {supportCase.refund_request_ids && supportCase.refund_request_ids.length > 0 && (
+             <div className="border-t pt-4 mt-6">
+               <h3 className="font-medium text-gray-700 mb-4">
+                 Refund Request{supportCase.refund_request_ids.length > 1 ? 's' : ''} Details 
+                 <span className="text-sm text-gray-500 font-normal">({supportCase.refund_request_ids.length} total)</span>
+               </h3>
+               {refundCases.length > 0 ? (
+                 <div className="space-y-4">
+                   {refundCases.map((refundCase, index) => (
+                     <div key={refundCase.refund_case_id} className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
+                       <div className="flex justify-between items-start mb-3">
+                         <div>
+                           <h4 className="font-semibold text-green-800 text-lg">
+                             💰 Refund Request #{index + 1}: {refundCase.refund_case_id}
+                           </h4>
+                           <div className="flex items-center mt-2">
+                             {refundCase.status ? (
+                               (() => {
+                                 const statusInfo = getRefundStatusDisplay(refundCase.status);
+                                 return (
+                                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.className}`}>
+                                     {statusInfo.emoji} {statusInfo.text}
+                                   </span>
+                                 );
+                               })()
+                             ) : (
+                               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                 ❓ Status Unknown
+                               </span>
+                             )}
+                           </div>
+                         </div>
+                         <Link 
+                           to={`/refund-cases/${refundCase.refund_case_id}`}
+                           className="btn-primary flex items-center"
+                         >
+                           📋 View Full Details
+                         </Link>
+                       </div>
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                         <div className="bg-white p-2 rounded border">
+                           <span className="font-medium text-gray-600">Order ID:</span>
+                           <div className="text-gray-800 font-mono">{refundCase.order_id}</div>
+                         </div>
+                         <div className="bg-white p-2 rounded border">
+                           <span className="font-medium text-gray-600">Created:</span>
+                           <div className="text-gray-800">{formatDate(refundCase.created_at)}</div>
+                         </div>
+                         <div className="bg-white p-2 rounded border">
+                           <span className="font-medium text-gray-600">Last Updated:</span>
+                           <div className="text-gray-800">{formatDate(refundCase.updated_at)}</div>
+                         </div>
+                       </div>
+                       {refundCase.request_reason && (
+                         <div className="mt-3 bg-white p-2 rounded border">
+                           <span className="font-medium text-gray-600">Reason:</span>
+                           <div className="text-gray-800 text-sm">{refundCase.request_reason}</div>
+                         </div>
+                       )}
+                     </div>
+                   ))}
+                 </div>
+               ) : (
+                 <div className="text-center py-4">
+                   <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                   <p className="text-gray-600 mt-2">Loading refund case details...</p>
+                 </div>
+               )}
+             </div>
+           )}
 
           {/* Attachments */}
           {supportCase.attachments && supportCase.attachments.length > 0 && (
@@ -392,27 +435,8 @@ const SupportCaseDetail: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Case History</h2>
           <div className="space-y-6">
-            {(supportCase.responses && supportCase.responses.length > 0) || (supportCase.comments && supportCase.comments.length > 0) ? (
-              <div className="space-y-4">
-                {supportCase.responses && supportCase.responses.map((response) => (
-                  <div key={response.id} className="border-l-4 border-blue-500 pl-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium text-gray-700">
-                        {response.sender_type === 'agent' ? '👤 Support Agent Response' : '👤 Customer Comment'}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {formatDate(response.created_at)}
-                      </span>
-                    </div>
-                    <p className="text-gray-800 whitespace-pre-wrap">{response.content}</p>
-                    {response.attachments && response.attachments.length > 0 && (
-                      <div className="mt-2">
-                        <span className="text-xs text-gray-600">Attachments: </span>
-                        {response.attachments.join(', ')}
-                      </div>
-                    )}
-                  </div>
-                ))}
+             {supportCase.comments && supportCase.comments.length > 0 ? (
+               <div className="space-y-4">
                 
                 {supportCase.comments && supportCase.comments.map((comment) => {
                   const getBorderColor = () => {
@@ -426,8 +450,8 @@ const SupportCaseDetail: React.FC = () => {
                   
                   const getIcon = () => {
                     switch (comment.comment_type) {
-                      case 'customer_comment': return '👤 Customer Comment';
-                      case 'agent_response': return '👤 Agent Response';
+                       case 'customer_comment': return '💬 Customer Comment';
+                       case 'agent_response': return '🛠️ Agent Response';
                       case 'refund_feedback': return '💰 Refund Feedback';
                       default: return '📝 Comment';
                     }
@@ -467,26 +491,39 @@ const SupportCaseDetail: React.FC = () => {
             {supportCase.status !== 'closed' && (
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                 <button
-                  onClick={() => setShowCommentModal(true)}
+                  onClick={() => {
+                    if (currentUser.role === 'agent') {
+                      setShowAgentCommentModal(true);
+                    } else {
+                      setShowCustomerCommentModal(true);
+                    }
+                  }}
                   className="btn-primary"
                 >
-                  💬 Add {currentUser.role === 'agent' ? 'Response' : 'Comment'}
+                  💬 Add Comment
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        <CommentModal
-          isOpen={showCommentModal}
-          onClose={() => setShowCommentModal(false)}
-          onSubmit={handleCommentSubmit}
-          userRole={currentUser.role}
-          caseNumber={supportCase?.case_number || ''}
-          allowCloseCase={currentUser.role === 'agent'}
-          currentStatus={supportCase?.status || 'open'}
-          isAgentRole={currentUser.role === 'agent'}
-        />
+        {currentUser.role === 'agent' ? (
+          <AgentCommentModal
+            isOpen={showAgentCommentModal}
+            onClose={() => setShowAgentCommentModal(false)}
+            onSubmit={handleAgentCommentSubmit}
+            caseNumber={supportCase?.case_number || ''}
+            allowCloseCase={true}
+            currentStatus={supportCase?.status || 'open'}
+          />
+        ) : (
+          <CustomerCommentModal
+            isOpen={showCustomerCommentModal}
+            onClose={() => setShowCustomerCommentModal(false)}
+            onSubmit={handleCustomerCommentSubmit}
+            caseNumber={supportCase?.case_number || ''}
+          />
+        )}
       </div>
     </div>
   );

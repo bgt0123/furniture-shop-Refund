@@ -172,6 +172,7 @@ description: "Task list for Support and Refund Service Workflow implementation"
 - [ ] T065 Run quickstart.md validation to ensure development setup instructions work
 - [ ] T065 Add comprehensive error handling and user-friendly error messages
 - [ ] T067 Implement input validation and sanitization across all endpoints
+- [ ] T068 Check that the APIs are coherent and RESTful 
 
 ---
 

@@ -34,7 +34,7 @@ class SupportCaseRepository:
                     support_case.subject,
                     support_case.description,
                     support_case.status.value,
-                    support_case.refund_request_id,
+                    ",".join(support_case.refund_request_ids) if support_case.refund_request_ids else None,
                     support_case.assigned_agent_id,
                     support_case.created_at.isoformat(),
                     support_case.updated_at.isoformat(),
@@ -148,13 +148,18 @@ class SupportCaseRepository:
                 )
                 comments.append(comment)
             
+            # Parse refund_request_ids
+            refund_request_ids = []
+            if data["refund_request_id"]:
+                refund_request_ids = data["refund_request_id"].split(",") if data["refund_request_id"] else []
+            
             support_case = SupportCase(
                 case_number=data["case_number"],
                 customer_id=data["customer_id"],
                 case_type=case_type,
                 subject=data["subject"],
                 description=data["description"],
-                refund_request_id=data["refund_request_id"],
+                refund_request_ids=refund_request_ids,
                 status=status,
                 created_at=created_at,
                 updated_at=updated_at,
@@ -238,13 +243,18 @@ class SupportCaseRepository:
                     )
                     comments.append(comment)
                 
+                # Parse refund_request_ids
+                refund_request_ids = []
+                if data["refund_request_id"]:
+                    refund_request_ids = data["refund_request_id"].split(",") if data["refund_request_id"] else []
+                
                 case = SupportCase(
                     case_number=data["case_number"],
                     customer_id=data["customer_id"],
                     case_type=case_type,
                     subject=data["subject"],
                     description=data["description"],
-                    refund_request_id=data["refund_request_id"],
+                    refund_request_ids=refund_request_ids,
                     status=status,
                     created_at=created_at,
                     updated_at=updated_at,
@@ -290,21 +300,39 @@ class SupportCaseRepository:
                 except:
                     status = CaseStatus.OPEN
                 
+                # Parse refund_request_ids
+                refund_request_ids = []
+                refund_request_id_str = data.get('refund_request_id')
+                if refund_request_id_str:
+                    refund_request_ids = refund_request_id_str.split(",") if refund_request_id_str else []
+                
+                # Parse product_ids
+                product_ids = []
+                product_ids_str = data.get('product_ids')
+                if product_ids_str:
+                    product_ids = product_ids_str.split(",") if product_ids_str else []
+                
+                # Handle dates
+                created_at_str = data.get('created_at')
+                updated_at_str = data.get('updated_at')
+                created_at = datetime.fromisoformat(created_at_str) if created_at_str else datetime.utcnow()
+                updated_at = datetime.fromisoformat(updated_at_str) if updated_at_str else datetime.utcnow()
+                
                 # Create SupportCase object
                 support_case = SupportCase(
-                    case_number=data.get('case_number'),
-                    customer_id=data.get('customer_id'),
+                    case_number=data.get('case_number', ''),
+                    customer_id=data.get('customer_id', ''),
                     case_type=case_type,
-                    subject=data.get('subject'),
-                    description=data.get('description'),
+                    subject=data.get('subject', ''),
+                    description=data.get('description', ''),
                     status=status,
-                    refund_request_id=data.get('refund_request_id'),
+                    refund_request_ids=refund_request_ids,
                     assigned_agent_id=data.get('assigned_agent_id'),
                     order_id=data.get('order_id'),
-                    product_ids=data.get('product_ids'),
+                    product_ids=product_ids,
                     delivery_date=data.get('delivery_date'),
-                    created_at=datetime.fromisoformat(data.get('created_at')),
-                    updated_at=datetime.fromisoformat(data.get('updated_at'))
+                    created_at=created_at,
+                    updated_at=updated_at
                 )
                 
                 cases.append(support_case)

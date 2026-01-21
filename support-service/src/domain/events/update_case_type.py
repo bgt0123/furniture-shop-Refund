@@ -1,6 +1,6 @@
 """UpdateCaseType use case implementation"""
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from domain.support_case import SupportCase, CaseType
 
 
@@ -15,7 +15,7 @@ class UpdateCaseType:
         self,
         case_number: str,
         case_type: str,
-        refund_request_id: Optional[str] = None
+        refund_request_ids: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """Execute the update case type use case"""
         
@@ -35,11 +35,13 @@ class UpdateCaseType:
         except ValueError:
             raise ValueError(f"Invalid case type: {case_type}")
         
-        # Update case type
-        support_case.update_case_type(
-            case_type=case_type_enum,
-            refund_request_id=refund_request_id
-        )
+        # Update case type and add refund requests
+        support_case.update_case_type(case_type=case_type_enum)
+        
+        # Add refund request IDs if provided
+        if refund_request_ids:
+            for refund_request_id in refund_request_ids:
+                support_case.add_refund_request(refund_request_id)
         
         # Save updated support case
         self.support_case_repository.save(support_case)
