@@ -5,3 +5,12 @@ build/
 coverage/
 *.md
 *.log
+*.sqlite*
+.env*
+.DS_Store
+.git/
+.vscode/
+.idea/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

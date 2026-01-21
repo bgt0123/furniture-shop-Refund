@@ -3,6 +3,12 @@
 const REFUND_SERVICE_BASE_URL = 'http://localhost:8002';
 const SUPPORT_SERVICE_BASE_URL = 'http://localhost:8001';
 
+export interface RequestInit {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+}
+
 export class ApiError extends Error {
   public statusCode?: number;
   

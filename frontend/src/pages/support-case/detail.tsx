@@ -4,7 +4,7 @@ import { supportApi, refundApi, ApiError } from '../../services/api';
 import CustomerCommentModal from '../../components/support/customer-comment-modal';
 import AgentCommentModal from '../../components/support/agent-comment-modal';
 
-interface SupportCaseDetail {
+interface SupportCaseData {
   case_number: string;
   customer_id: string;
   case_type: string;
@@ -39,8 +39,8 @@ interface RefundCase {
 const SupportCaseDetail: React.FC = () => {
   const { caseNumber } = useParams<{ caseNumber: string }>();
   const location = useLocation();
-   const [supportCase, setSupportCase] = useState<SupportCaseDetail | null>(null);
-   const [refundCases, setRefundCases] = useState<RefundCase[]>([]);
+  const [supportCase, setSupportCase] = useState<SupportCaseData | null>(null);
+  const [refundCases, setRefundCases] = useState<RefundCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCustomerCommentModal, setShowCustomerCommentModal] = useState(false);

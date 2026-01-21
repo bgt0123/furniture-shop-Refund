@@ -10,11 +10,6 @@ class SupportCaseRepository:
     
     def save(self, support_case) -> None:
         """Save a support case to the database"""
-        import sys
-        print(f"DEBUG: Starting save for case {support_case.case_number}", file=sys.stderr)
-        print(f"DEBUG: Case has comments attribute: {hasattr(support_case, 'comments')}", file=sys.stderr)
-        if hasattr(support_case, 'comments'):
-            print(f"DEBUG: Number of comments: {len(support_case.comments) if support_case.comments else 'None'}", file=sys.stderr)
         
         conn = get_connection()
         try:
@@ -45,17 +40,13 @@ class SupportCaseRepository:
             )
             
             # Save comments
-            print(f"DEBUG: Checking comments to save...", file=sys.stderr)
             if hasattr(support_case, 'comments'):
-                print(f"DEBUG: Case has comments attribute", file=sys.stderr)
                 if support_case.comments:
-                    print(f"Saving {len(support_case.comments)} comments for case {support_case.case_number}", file=sys.stderr)
                     # First delete existing comments for this case
                     cursor.execute("DELETE FROM support_comments WHERE case_number = ?", (support_case.case_number,))
                     
                     # Then insert all current comments
                     for i, comment in enumerate(support_case.comments):
-                        print(f"  Saving comment {i}: id={comment.comment_id}", file=sys.stderr)
                         cursor.execute(
                         """
                         INSERT INTO support_comments 
@@ -77,7 +68,6 @@ class SupportCaseRepository:
                     )
             
             conn.commit()
-            print(f"Saved support case {support_case.case_number} with {len(getattr(support_case, 'comments', []))} comments")
         finally:
             conn.close()
 
@@ -275,15 +265,15 @@ class SupportCaseRepository:
         conn = get_connection()
         try:
             cursor = conn.cursor()
+            # Get all support cases
             cursor.execute("SELECT * FROM support_cases")
             rows = cursor.fetchall()
-            
-            print(f"Found {len(rows)} total support cases")
             
             # Import domain objects
             from domain.support_case import SupportCase, CaseType, CaseStatus
             from domain.comment import Comment, CommentType
             from datetime import datetime
+            import json
             
             cases = []
             for row in rows:
@@ -313,10 +303,52 @@ class SupportCaseRepository:
                     product_ids = product_ids_str.split(",") if product_ids_str else []
                 
                 # Handle dates
-                created_at_str = data.get('created_at')
-                updated_at_str = data.get('updated_at')
-                created_at = datetime.fromisoformat(created_at_str) if created_at_str else datetime.utcnow()
-                updated_at = datetime.fromisoformat(updated_at_str) if updated_at_str else datetime.utcnow()
+                created_at = datetime.utcnow()
+                updated_at = datetime.utcnow()
+                if data.get('created_at'):
+                    try:
+                        created_at = datetime.fromisoformat(str(data['created_at']))
+                    except ValueError:
+                        pass
+                if data.get('updated_at'):
+                    try:
+                        updated_at = datetime.fromisoformat(str(data['updated_at']))
+                    except ValueError:
+                        pass
+                
+                # Parse comments from JSON
+                comments = []
+                comments_json = data.get('comments_json', '[]')
+                try:
+                    comment_data_list = json.loads(comments_json)
+                    for comment_data in comment_data_list:
+                        if isinstance(comment_data, dict) and comment_data.get('content'):
+                            comment_type = CommentType(comment_data.get('comment_type', 'customer_comment'))
+                            timestamp = datetime.utcnow()
+                            if comment_data.get('timestamp'):
+                                try:
+                                    timestamp = datetime.fromisoformat(str(comment_data['timestamp']))
+                                except ValueError:
+                                    pass
+                            attachments = []
+                            if comment_data.get('attachments'):
+                                attachments = comment_data.get('attachments', '').split(",") if comment_data.get('attachments') else []
+                            
+                            comment = Comment(
+                                comment_id=comment_data.get('comment_id', ''),
+                                case_number=comment_data.get('case_number', ''),
+                                author_id=comment_data.get('author_id', ''),
+                                author_type=comment_data.get('author_type', ''),
+                                content=comment_data.get('content', ''),
+                                comment_type=comment_type,
+                                attachments=attachments,
+                                timestamp=timestamp,
+                                is_internal=bool(comment_data.get('is_internal', False))
+                            )
+                            comments.append(comment)
+                except (json.JSONDecodeError, ValueError) as e:
+                    # If JSON parsing fails, continue without comments
+                    pass
                 
                 # Create SupportCase object
                 support_case = SupportCase(
@@ -332,7 +364,8 @@ class SupportCaseRepository:
                     product_ids=product_ids,
                     delivery_date=data.get('delivery_date'),
                     created_at=created_at,
-                    updated_at=updated_at
+                    updated_at=updated_at,
+                    comments=comments
                 )
                 
                 cases.append(support_case)

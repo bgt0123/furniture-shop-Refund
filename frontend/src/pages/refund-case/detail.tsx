@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { refundApi, supportApi, ApiError } from '../../services/api';
 
-interface RefundCaseDetail {
+interface RefundCaseData {
   refund_case_id: string;
   case_number: string;
   customer_id: string;
@@ -31,7 +31,7 @@ interface SupportCase {
 
 const RefundCaseDetail: React.FC = () => {
   const { refundCaseId } = useParams<{ refundCaseId: string }>();
-  const [refundCase, setRefundCase] = useState<RefundCaseDetail | null>(null);
+  const [refundCase, setRefundCase] = useState<RefundCaseData | null>(null);
   const [supportCase, setSupportCase] = useState<SupportCase | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

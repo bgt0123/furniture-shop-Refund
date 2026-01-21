@@ -6,7 +6,18 @@ from .database_config import get_connection
 
 def migrate_schema() -> None:
     """Apply database schema migrations"""
-    conn = get_connection()
+    import sqlite3
+    import os
+    from .database_config import get_database_path
+    
+    # Use direct connection for migrations to avoid pool issues at import time
+    db_path = get_database_path()
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    
     try:
         cursor = conn.cursor()
         
