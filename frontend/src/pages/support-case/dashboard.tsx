@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import SupportCaseForm from '../../components/support/support-case-form';
+import AgentResponseModal from '../../components/support/agent-response-modal';
 import { supportApi, refundApi, ApiError } from '../../services/api';
 
 interface SupportCase {
@@ -11,64 +12,133 @@ interface SupportCase {
   caseType: 'Question' | 'Refund';
   status: 'Open' | 'In Progress' | 'Closed';
   refund_request_id?: string;
+  refund_status?: string;
   created: string;
   updated: string;
 }
 
-const SupportCaseDashboard: React.FC = () => {
-  const [cases, setCases] = useState<SupportCase[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+ const SupportCaseDashboard: React.FC = () => {
+   const [cases, setCases] = useState<SupportCase[]>([]);
+   const [loading, setLoading] = useState(false);
+   const [error, setError] = useState<string | null>(null);
+   const casesRef = useRef(cases);
+   const isFetchingRefundStatuses = useRef(false);
 
-  // Mock customer ID - in real app this would come from authentication
-  const mockCustomerId = 'cust-123';
+   // Mock user authentication - in real app this would come from authentication context
+    const [currentUser, setCurrentUser] = useState({
+      id: import.meta.env.VITE_DEFAULT_USER_ID || 'cust-123',
+      role: 'customer',
+      name: 'Demo Customer'
+    });
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingCase, setEditingCase] = useState<SupportCase | null>(null);
+   const [showModal, setShowModal] = useState(false);
+   const [showAgentResponseModal, setShowAgentResponseModal] = useState(false);
+   const [editingCase, setEditingCase] = useState<SupportCase | null>(null);
+   const [respondingCase, setRespondingCase] = useState<SupportCase | null>(null);
 
-  // Fetch support cases on component mount
-  useEffect(() => {
-    fetchSupportCases();
-  }, []);
-
-  const fetchSupportCases = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('Fetching support cases for customer:', mockCustomerId);
-      
-      const fetchedCases = await supportApi.getCustomerSupportCases(mockCustomerId);
-      console.log('Fetched cases:', fetchedCases);
-      
-      // Map API response to frontend format
-      const mappedCases: SupportCase[] = fetchedCases.map(caseData => {
-        let status: 'Open' | 'In Progress' | 'Closed';
-        switch(caseData.status) {
-          case 'closed': status = 'Closed'; break;
-          case 'in_progress': status = 'In Progress'; break;
-          default: status = 'Open';
+   // Fetch support cases on component mount and when user changes
+   useEffect(() => {
+     fetchSupportCases();
+     
+     // Set up polling for refund status updates every 10 seconds
+      const intervalId = setInterval(() => {
+        // Refresh refund statuses using ref to avoid dependency issues
+        const refundCases = casesRef.current.filter(supportCase => supportCase.refund_request_id);
+        console.log('🔁 Polling: Found', refundCases.length, 'refund cases to check');
+        if (refundCases.length > 0) {
+          console.log('🔁 Polling: Case numbers:', refundCases.map(c => c.caseNumber));
+          fetchRefundStatuses(refundCases);
+        } else {
+          console.log('🔁 Polling: No refund cases found');
         }
-        
-        let caseType: 'Question' | 'Refund';
-        switch(caseData.case_type) {
-          case 'refund': caseType = 'Refund'; break;
-          default: caseType = 'Question';
-        }
-        
-        return {
-          id: caseData.case_number,
-          caseNumber: caseData.case_number,
-          title: caseData.subject,
-          description: caseData.description,
-          caseType,
-          status,
-          refund_request_id: caseData.refund_request_id,
-          created: new Date(caseData.created_at).toISOString().split('T')[0],
-          updated: new Date(caseData.updated_at).toLocaleDateString()
-        };
-      });
+      }, 15000);
+     
+     return () => clearInterval(intervalId);
+   }, [currentUser.id]);
+
+   const fetchSupportCases = async () => {
+     try {
+       setLoading(true);
+       setError(null);
+        console.log('Fetching support cases for user:', currentUser.id);
+       
+       let fetchedCases: any[] = [];
+       
+       // Try to fetch from API first
+       try {
+          // Fetch cases based on user role
+          if (currentUser.role === 'customer') {
+            fetchedCases = await supportApi.getCustomerSupportCases(currentUser.id);
+          } else {
+            // For agents, fetch all cases
+            fetchedCases = await supportApi.getAllSupportCases();
+          }
+         console.log('✅ API call successful. Fetched cases:', fetchedCases);
+         
+          // Save cases to localStorage for persistence
+          if (fetchedCases.length > 0) {
+            localStorage.setItem(`support-cases-${currentUser.id}`, JSON.stringify(fetchedCases));
+          }
+       } catch (error) {
+         console.error('❌ Failed to fetch cases from API:', error);
+         
+         // Try to load from localStorage as fallback
+          const storedCases = localStorage.getItem(`support-cases-${currentUser.id}`);
+         if (storedCases) {
+           fetchedCases = JSON.parse(storedCases);
+           console.log('📁 Loaded cases from localStorage:', fetchedCases);
+         } else {
+           console.log('💡 No cases found, starting with empty list');
+           fetchedCases = [];
+         }
+       }
       
-      setCases(mappedCases);
+        // Map API response to frontend format (if loaded from API)
+        if (fetchedCases.length > 0 && fetchedCases[0].case_number) {
+          // Create mapped cases first
+          const mappedCases: SupportCase[] = fetchedCases.map(caseData => {
+            let status: 'Open' | 'In Progress' | 'Closed';
+            switch(caseData.status) {
+              case 'closed': status = 'Closed'; break;
+              case 'in_progress': status = 'In Progress'; break;
+              default: status = 'Open';
+            }
+            
+            let caseType: 'Question' | 'Refund';
+            switch(caseData.case_type) {
+              case 'refund': caseType = 'Refund'; break;
+              default: caseType = 'Question';
+            }
+            
+            return {
+              id: caseData.case_number,
+              caseNumber: caseData.case_number,
+              title: caseData.subject,
+              description: caseData.description,
+              caseType,
+              status,
+              refund_request_id: caseData.refund_request_id,
+              refund_status: undefined, // Will be fetched separately
+              created: new Date(caseData.created_at).toISOString().split('T')[0],
+              updated: new Date(caseData.updated_at).toLocaleDateString()
+            };
+          });
+          
+           setCases(mappedCases);
+           casesRef.current = mappedCases;
+           
+           // Fetch refund statuses for refund cases separately (non-blocking)
+           const refundCases = mappedCases.filter(supportCase => supportCase.refund_request_id);
+           console.log('Found', refundCases.length, 'refund cases to fetch statuses for');
+           if (refundCases.length > 0) {
+             console.log('Calling fetchRefundStatuses with:', refundCases.map(c => c.caseNumber));
+             fetchRefundStatuses(refundCases);
+           }
+         } else {
+           // Already in correct format (loaded from localStorage)
+           setCases(fetchedCases);
+           casesRef.current = fetchedCases;
+         }
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch support cases';
       setError(errorMessage);
@@ -76,51 +146,151 @@ const SupportCaseDashboard: React.FC = () => {
       // Show empty state if backend is not available
       if (err instanceof ApiError && err.statusCode === 0) {
         setCases([]);
+        casesRef.current = [];
       }
     } finally {
       setLoading(false);
-    }
-  };
+     }
+   };
 
-  const handleFormSubmit = async (formData: { title: string; description: string; caseType: 'Question' | 'Refund' }) => {
+    const fetchRefundStatuses = async (refundCases: SupportCase[]) => {
+      // Prevent overlapping calls
+      if (isFetchingRefundStatuses.current) {
+        console.log('Skipping refund status fetch - already in progress');
+        return;
+      }
+      
+      isFetchingRefundStatuses.current = true;
+      console.log('fetchRefundStatuses called with:', refundCases.length, 'cases');
+      try {
+       const refundStatusPromises = refundCases.map(async (supportCase) => {
+          try {
+            console.log('Attempting to fetch refund status for:', supportCase.caseNumber, 'refund ID:', supportCase.refund_request_id);
+            const refundData = await refundApi.getRefundCaseDetailed(supportCase.refund_request_id!);
+            console.log('✅ Refund status fetched successfully for', supportCase.caseNumber, ':', refundData.status);
+            console.log('Refund data details - ID:', refundData.refund_case_id, 'Status:', refundData.status, 'Case:', refundData.case_number);
+            return {
+              caseId: supportCase.id,
+              refundStatus: refundData.status
+            };
+          } catch (error) {
+            console.error('❌ Failed to fetch refund status for', supportCase.caseNumber, 'refund ID:', supportCase.refund_request_id, 'Error:', error);
+            return {
+              caseId: supportCase.id,
+              refundStatus: 'unknown'
+            };
+          }
+       });
+       
+        const refundStatusResults = await Promise.allSettled(refundStatusPromises);
+        console.log('Refund status fetch completed. Results:', refundStatusResults.length);
+        
+        // Update cases with refund statuses
+        setCases(currentCases => {
+          console.log('Updating cases with refund statuses. Current cases:', currentCases.length);
+          const updatedCases = currentCases.map(caseData => {
+            const statusResult = refundStatusResults.find(result => 
+              result.status === 'fulfilled' && result.value.caseId === caseData.id
+            );
+            
+            if (statusResult && statusResult.status === 'fulfilled') {
+              console.log('Updating case', caseData.caseNumber, 'with refund status:', statusResult.value.refundStatus);
+              return {
+                ...caseData,
+                refund_status: statusResult.value.refundStatus
+              };
+            }
+            return caseData;
+          });
+          
+         console.log('Updated cases:', updatedCases.length);
+         casesRef.current = updatedCases;
+         return updatedCases;
+        });
+      } catch (error) {
+        console.error('Error fetching refund statuses:', error);
+      } finally {
+        isFetchingRefundStatuses.current = false;
+      }
+    };
+
+   const handleFormSubmit = async (formData: {
+    title: string; 
+    description: string; 
+    caseType: 'Question' | 'Refund'; 
+    orderId?: string; 
+    deliveryDate?: string; 
+    productIds?: string[]; 
+    refundReason?: string; 
+  }) => {
     try {
       setError(null);
       
-      if (editingCase) {
-         // Edit existing case - API doesn't support editing yet
-         const updatedCases: SupportCase[] = cases.map(c => 
-           c.id === editingCase.id 
-             ? { ...c, title: formData.title, description: formData.description, caseType: formData.caseType }
-             : c
-         );
-         setCases(updatedCases);
-        setEditingCase(null);
-       } else {
-         // Create new case
-         const newCaseData = await supportApi.createSupportCase({
-           customer_id: mockCustomerId,
-           case_type: formData.caseType.toLowerCase(),
-           subject: formData.title,
-           description: formData.description,
-           refund_request_id: undefined,
-           evidence_files: []
-         });
-         
-         // If case type is Refund, create a refund request automatically
-         if (formData.caseType === 'Refund') {
-           try {
-             // Create refund request linked to this support case
-             const refundResponse = await refundApi.createRefundRequest({
-               case_number: newCaseData.case_number,
-               customer_id: mockCustomerId,
-               order_id: 'ORD-' + Math.random().toString(36).substr(2, 8).toUpperCase(),
-               product_ids: ['PROD-001', 'PROD-002'],
-               request_reason: 'Product defect or damage',
-               evidence_photos: []
-             });
+       if (editingCase) {
+          // Edit existing case - call backend API
+          try {
+            await supportApi.updateCase(editingCase.caseNumber, {
+              subject: formData.title,
+              description: formData.description,
+              case_type: formData.caseType.toLowerCase(),
+              user_role: currentUser.role,
+              user_id: currentUser.id
+            });
+            
+            // Update local state after successful API call
+            const updatedCases: SupportCase[] = cases.map(c => 
+              c.id === editingCase.id 
+                ? { ...c, title: formData.title, description: formData.description, caseType: formData.caseType }
+                : c
+            );
+            setCases(updatedCases);
+            casesRef.current = updatedCases;
+            // Save to localStorage for persistence
+            localStorage.setItem(`support-cases-${currentUser.id}`, JSON.stringify(updatedCases));
+          } catch (error) {
+            setError(error instanceof ApiError ? error.message : 'Failed to update support case');
+            return; // Don't close modal if there's an error
+          }
+          setEditingCase(null);
+         } else {
+          // Create new case
+          const newCaseData = await supportApi.createSupportCase({
+             customer_id: currentUser.id,
+            case_type: formData.caseType.toLowerCase(),
+            subject: formData.title,
+            description: formData.description,
+            refund_request_id: undefined,
+            evidence_files: [],
+            order_id: formData.orderId || (formData.caseType === 'Refund' ? `ORD-${Date.now()}` : undefined),
+            product_ids: formData.productIds || (formData.caseType === 'Refund' ? ['PROD-DEFAULT'] : undefined),
+            delivery_date: formData.deliveryDate || (formData.caseType === 'Refund' ? new Date().toISOString().split('T')[0] : undefined)
+          });
+          
+          // If case type is Refund, create a refund request automatically
+          if (formData.caseType === 'Refund') {
+            try {
+               // Add delay to ensure support case is persisted
+               console.log('Adding delay before creating refund request...');
+               await new Promise(resolve => setTimeout(resolve, 1000));
+               
+               // Create refund request linked to this support case
+              const refundResponse = await refundApi.createRefundRequest({
+                case_number: newCaseData.case_number,
+                customer_id: currentUser.id,
+                order_id: formData.orderId || `ORD-${Date.now()}`,
+                product_ids: formData.productIds || [],
+                request_reason: formData.refundReason || formData.description || 'Refund request',
+                evidence_photos: []
+              });
              
-             // Update support case to link the refund request
-             await supportApi.updateCaseType(newCaseData.case_number, 'refund', refundResponse.refund_case_id);
+              // Add small delay to ensure support case is available
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              // Update support case to link the refund request
+               await supportApi.updateCaseType(newCaseData.case_number, { 
+                 case_type: 'refund', 
+                 refund_request_id: refundResponse.refund_case_id 
+               });
              
              // Map API response to frontend format with refund request linked
              let status: 'Open' | 'In Progress' | 'Closed';
@@ -140,40 +310,64 @@ const SupportCaseDashboard: React.FC = () => {
                refund_request_id: refundResponse.refund_case_id,
                created: new Date(newCaseData.created_at).toISOString().split('T')[0],
                updated: 'just now'
-             };
-             
-             setCases([newCase, ...cases]);
-           } catch (err) {
-             // If refund creation fails, still create the support case but show error
-             console.error('Failed to create refund request:', err);
-             
-             let status: 'Open' | 'In Progress' | 'Closed';
-             switch(newCaseData.status) {
-               case 'closed': status = 'Closed'; break;
-               case 'in_progress': status = 'In Progress'; break;
-               default: status = 'Open';
-             }
-             
+              };
+              
+               setCases([newCase, ...cases]);
+               casesRef.current = [newCase, ...cases];
+               // Save to localStorage for persistence
+               localStorage.setItem(`support-cases-${currentUser.id}`, JSON.stringify([newCase, ...cases]));
+            } catch (err: any) {
+              // If refund creation fails, still create the support case but show error
+              console.error('Failed to create refund request:', err);
+              
+              // Check if the error is about support case not found (timing issue)
+              const isSupportCaseNotFound = err?.message?.includes('Support case') && err?.message?.includes('not found');
+              
+              console.log('Refund creation failed details:', {
+                error: err,
+                errorMessage: err?.message,
+                caseNumber: newCaseData.case_number,
+                orderId: formData.orderId,
+                productIds: formData.productIds,
+                refundReason: formData.refundReason,
+                isSupportCaseNotFound
+              });
+              
+              let status: 'Open' | 'In Progress' | 'Closed';
+              switch(newCaseData.status) {
+                case 'closed': status = 'Closed'; break;
+                case 'in_progress': status = 'In Progress'; break;
+                default: status = 'Open';
+              }
+              
              let caseType: 'Question' | 'Refund';
-             switch(newCaseData.case_type) {
-               case 'refund': caseType = 'Refund'; break;
-               default: caseType = 'Question';
+             // Handle case type mapping with better error handling
+             if (newCaseData.case_type === 'refund' || newCaseData.case_type === 'Refund') {
+               caseType = 'Refund';
+             } else {
+               caseType = 'Question';
              }
-             
-             const newCase: SupportCase = {
-               id: newCaseData.case_number,
-               caseNumber: newCaseData.case_number,
-               title: newCaseData.subject,
-               description: newCaseData.description,
-               caseType,
-               status,
-               created: new Date(newCaseData.created_at).toISOString().split('T')[0],
-               updated: 'just now'
-             };
-             
-             setCases([newCase, ...cases]);
-             setError('Support case created but refund request failed. Please create refund request manually.');
-           }
+              
+               const newCase: SupportCase = {
+                 id: newCaseData.case_number,
+                 caseNumber: newCaseData.case_number,
+                 title: newCaseData.subject,
+                 description: newCaseData.description,
+                 caseType,
+                 status,
+                 created: new Date(newCaseData.created_at).toISOString().split('T')[0],
+                 updated: 'just now'
+               };
+              
+               setCases([newCase, ...cases]);
+               casesRef.current = [newCase, ...cases];
+               
+               const errorMessage = isSupportCaseNotFound
+                ? 'Support case created successfully, but refund service encountered timing issue. Please try creating refund request again later.'
+                : 'Support case created but refund request failed. Please create refund request manually.';
+              
+              setError(errorMessage);
+            }
          } else {
            // Normal case creation for Question type
            let status: 'Open' | 'In Progress' | 'Closed';
@@ -198,12 +392,15 @@ const SupportCaseDashboard: React.FC = () => {
              status,
              created: new Date(newCaseData.created_at).toISOString().split('T')[0],
              updated: 'just now'
-           };
-           
-           setCases([newCase, ...cases]);
-         }
-       }
-      setShowModal(false);
+            };
+            
+            setCases([newCase, ...cases]);
+            casesRef.current = [newCase, ...cases];
+            // Save to localStorage for persistence
+             localStorage.setItem(`support-cases-${currentUser.id}`, JSON.stringify([newCase, ...cases]));
+          }
+        }
+       setShowModal(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to save support case');
     }
@@ -226,6 +423,7 @@ const SupportCaseDashboard: React.FC = () => {
           : c
       );
       setCases(updatedCases);
+      casesRef.current = updatedCases;
       
       // Refresh the cases list to get updated status (to sync with backend)
       fetchSupportCases();
@@ -253,6 +451,7 @@ const SupportCaseDashboard: React.FC = () => {
             : c
         );
         setCases(updatedCases);
+        casesRef.current = updatedCases;
       } catch (err) {
         if (err instanceof ApiError && err.statusCode === 404) {
           // If endpoint doesn't exist yet, simulate reopening
@@ -262,6 +461,7 @@ const SupportCaseDashboard: React.FC = () => {
               : c
           );
           setCases(updatedCases);
+          casesRef.current = updatedCases;
           return;
         }
         throw err;
@@ -274,79 +474,50 @@ const SupportCaseDashboard: React.FC = () => {
     }
   };
 
-  const handleCreateRefundRequest = async (caseId: string) => {
-    try {
-      setError(null);
-      
-      // Find the case number from the case ID
-      const caseToRefund = cases.find(c => c.id === caseId);
-      if (!caseToRefund) {
-        setError('Support case not found');
-        return;
-      }
-      
-      // Validate that this is a Question case that can be converted to Refund
-      if (caseToRefund.caseType !== 'Question') {
-        setError('Cannot create refund request for non-question cases');
-        return;
-      }
-      
-      if (caseToRefund.status === 'Closed') {
-        setError('Cannot create refund request for closed cases');
-        return;
-      }
-      
-      if (caseToRefund.refund_request_id) {
-        setError('This case already has a refund request');
-        return;
-      }
-      
-      const refundResponse = await refundApi.createRefundRequest({
-        case_number: caseToRefund.caseNumber,
-        customer_id: mockCustomerId,
-        order_id: 'ORD-' + Math.random().toString(36).substr(2, 8).toUpperCase(),
-        product_ids: ['PROD-001', 'PROD-002'],
-        request_reason: 'Product defect or damage',
-        evidence_photos: []
-      });
-      
-      try {
-        // Update support case to refund type and link the refund request
-        await supportApi.updateCaseType(caseToRefund.caseNumber, 'refund', refundResponse.refund_case_id);
-      } catch (err) {
-        if (err instanceof ApiError && err.statusCode === 404) {
-           // If endpoint doesn't exist yet, simulate the update
-           const updatedCases = cases.map(c => 
-             c.id === caseId && c.caseType === 'Question' && !c.refund_request_id
-               ? { 
-                   ...c, 
-                   caseType: 'Refund' as const, 
-                   refund_request_id: refundResponse.refund_case_id 
-                 }
-               : c
-           );
-           setCases(updatedCases);
-          return;
-        }
-        throw err;
-      }
-      
-      // Refresh the cases list to get updated status
-      fetchSupportCases();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to create refund request');
-    }
-  };
+
 
   const startEditingCase = (supportCase: SupportCase) => {
     setEditingCase(supportCase);
     setShowModal(true);
   };
 
-  const handleModalClose = () => {
-    setShowModal(false);
-    setEditingCase(null);
-  };
+   const handleModalClose = () => {
+     setShowModal(false);
+     setEditingCase(null);
+   };
+
+   const handleAgentResponse = async (content: string, messageType: string, files?: File[], shouldCloseCase?: boolean) => {
+     try {
+       setError(null);
+       
+       if (!respondingCase) return;
+       
+       // Prepare response data
+       const responseData = {
+         sender_id: currentUser.id,
+         sender_type: currentUser.role,
+         content: content,
+         message_type: messageType,
+         attachments: files ? files.map(file => file.name) : [],
+         is_internal: false
+       };
+       
+       await supportApi.addResponse(respondingCase.caseNumber, responseData);
+       
+       // If agent wants to close the case, do it
+       if (shouldCloseCase) {
+         await supportApi.closeCase(respondingCase.caseNumber);
+       }
+       
+       // Refresh the cases list to show the new response
+       fetchSupportCases();
+       
+       setShowAgentResponseModal(false);
+       setRespondingCase(null);
+     } catch (err) {
+       setError(err instanceof ApiError ? err.message : 'Failed to add response');
+     }
+   };
 
   const startCreatingCase = () => {
     console.log('Create button clicked');
@@ -357,22 +528,61 @@ const SupportCaseDashboard: React.FC = () => {
   return (
     <div className="support-case-dashboard min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 app relative z-10">
       <div className="max-w-6xl mx-auto support-dashboard">
-        <div className="header-section mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            📋 Support Case Dashboard
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Manage your support cases and create refund requests
-          </p>
-        </div>
+         <div className="header-section mb-8">
+           <div className="flex justify-between items-start">
+             <div>
+               <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                 📋 Support Case Dashboard
+               </h1>
+               <p className="text-gray-600 text-lg">
+                 Manage your support cases and create refund requests
+                </p>
+                <div className="mt-2 text-sm text-blue-600">
+                  Cases with refunds: {cases.filter(c => c.refund_request_id).length} | Questions: {cases.filter(c => c.caseType === 'Question').length}
+                </div>
+              </div>
+             <div className="flex items-center space-x-4">
+               <div className="bg-blue-50 px-4 py-2 rounded-lg">
+                 <span className="text-blue-700 font-medium">{currentUser.name}</span>
+                 <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold uppercase ml-2">
+                   {currentUser.role}
+                 </span>
+               </div>
+               <button 
+                 onClick={() => {
+                   const newRole = currentUser.role === 'customer' ? 'agent' : 'customer';
+                   const newUser = {
+                     ...currentUser,
+                     role: newRole,
+                     id: newRole === 'customer' ? 'cust-123' : 'agent-001',
+                     name: newRole === 'customer' ? 'Demo Customer' : 'Demo Agent'
+                   };
+                   setCurrentUser(newUser);
+                   fetchSupportCases();
+                 }}
+                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+               >
+                 Switch to {currentUser.role === 'customer' ? 'Agent' : 'Customer'}
+               </button>
+             </div>
+           </div>
+         </div>
 
-        <SupportCaseForm
-          isOpen={showModal}
-          onClose={handleModalClose}
-          onSubmit={handleFormSubmit}
-          onRefundRequestCreate={handleCreateRefundRequest}
-          editingCase={editingCase}
-        />
+         <SupportCaseForm
+           isOpen={showModal}
+           onClose={handleModalClose}
+           onSubmit={handleFormSubmit}
+           editingCase={editingCase}
+           currentUser={currentUser}
+         />
+
+         <AgentResponseModal
+           isOpen={showAgentResponseModal}
+           onClose={() => setShowAgentResponseModal(false)}
+           onSubmit={handleAgentResponse}
+           caseNumber={respondingCase?.caseNumber || ''}
+           currentStatus={respondingCase?.status || 'Open'}
+         />
 
         {error && (
           <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -383,9 +593,9 @@ const SupportCaseDashboard: React.FC = () => {
         <div className="grid grid-cols-1 gap-8">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">
-                My Support Cases
-              </h2>
+               <h2 className="text-2xl font-semibold text-gray-800">
+                 {currentUser.role === 'customer' ? 'My Support Cases' : 'All Support Cases'}
+               </h2>
               <button
                 onClick={startCreatingCase}
                 disabled={loading}
@@ -436,6 +646,21 @@ const SupportCaseDashboard: React.FC = () => {
                       }`}>
                         {supportCase.caseType} Case
                       </span>
+                      {supportCase.caseType === 'Refund' && (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          !supportCase.refund_status || supportCase.refund_status === 'unknown' ? 'bg-gray-100 text-gray-800' :
+                          supportCase.refund_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          supportCase.refund_status === 'approved' ? 'bg-green-100 text-green-800' :
+                          supportCase.refund_status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                           {!supportCase.refund_status || supportCase.refund_status === 'unknown' ? '⏳ Checking...' :
+                           supportCase.refund_status === 'pending' ? '⏳ Pending' :
+                           supportCase.refund_status === 'approved' ? '✅ Approved' :
+                           supportCase.refund_status === 'rejected' ? '❌ Rejected' :
+                           '❓ ' + supportCase.refund_status}
+                        </span>
+                      )}
                     </div>
                      <div className="grid grid-cols-1 gap-2 text-xs text-gray-500 mb-4">
                        <div><span className="font-medium">Created:</span> {supportCase.created}</div>
@@ -448,22 +673,25 @@ const SupportCaseDashboard: React.FC = () => {
                          >
                            📋 View Details
                          </Link>
-                        {supportCase.status !== 'Closed' && (
-                         <button
-                           onClick={() => startEditingCase(supportCase)}
-                           className="btn-secondary"
-                         >
-                           ✏️ Edit
-                         </button>
-                        )}
-                        {supportCase.refund_request_id && (
-                         <Link
-                           to={`/refund-cases/${supportCase.refund_request_id}`}
-                           className="btn-primary"
-                         >
-                           💰 View Refund Case
-                         </Link>
-                        )}
+                           {supportCase.status !== 'Closed' && currentUser.role === 'customer' && (
+                            <button
+                              onClick={() => startEditingCase(supportCase)}
+                              className="btn-secondary"
+                            >
+                              ✏️ Edit
+                            </button>
+                           )}
+                           {supportCase.status !== 'Closed' && currentUser.role === 'agent' && (
+                            <button
+                              onClick={() => {
+                                setRespondingCase(supportCase);
+                                setShowAgentResponseModal(true);
+                              }}
+                              className="btn-secondary"
+                            >
+                              💬 Respond
+                            </button>
+                           )}
                         {!supportCase.refund_request_id && supportCase.caseType === 'Refund' && supportCase.status !== 'Closed' && (
                           <span className="refund-status-message text-xs">
                             Case already configured for refund

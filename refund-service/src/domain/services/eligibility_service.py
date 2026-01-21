@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime, timedelta
 from ..refund_request import RefundRequest
 
 
@@ -14,13 +15,24 @@ class EligibilityService:
         """Check if refund request is eligible based on business rules"""
         
         # Must be within 14 days of delivery OR product defective
-        # (This would normally involve date calculations)
         if is_product_defective:
             return True
 
         # Products must exist in referenced order
         if not refund_request.product_ids:
             return False
+
+        # Check if within 14 days of delivery
+        try:
+            delivery_date = datetime.fromisoformat(order_delivery_date)
+            current_date = datetime.utcnow()
+            days_since_delivery = (current_date - delivery_date).days
+            
+            if days_since_delivery > 14:
+                return False
+        except (ValueError, TypeError):
+            # If date parsing fails, assume eligible
+            pass
 
         # Cannot process already refunded products 
         # (This would check against a database of refunded products)

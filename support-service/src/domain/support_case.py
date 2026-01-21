@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from enum import Enum
 from uuid import uuid4
 
 from .support_response import SupportResponse, SenderType, MessageType
+from .comment import Comment, CommentType
 
 
 class CaseStatus(Enum):
@@ -35,10 +36,14 @@ class SupportCase:
         description: str,
         refund_request_id: Optional[str] = None,
         support_responses: Optional[List[SupportResponse]] = None,
+        comments: Optional[List[Comment]] = None,
         status: CaseStatus = CaseStatus.OPEN,
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
-        assigned_agent_id: Optional[str] = None
+        assigned_agent_id: Optional[str] = None,
+        order_id: Optional[str] = None,
+        product_ids: Optional[List[str]] = None,
+        delivery_date: Optional[datetime] = None
     ):
         self.case_number = case_number
         self.customer_id = customer_id
@@ -47,10 +52,14 @@ class SupportCase:
         self.description = description
         self.refund_request_id = refund_request_id
         self.support_responses = support_responses or []
+        self.comments = comments or []
         self.status = status
         self.created_at = created_at or datetime.utcnow()
         self.updated_at = updated_at or datetime.utcnow()
         self.assigned_agent_id = assigned_agent_id
+        self.order_id = order_id
+        self.product_ids = product_ids or []
+        self.delivery_date = delivery_date
 
     def add_response(
         self,
@@ -89,6 +98,9 @@ class SupportCase:
 
     def close_case(self) -> None:
         """Close the support case"""
+        # Allow closing regardless of agent responses
+        # Customers may still want to close cases even after agent responses
+        # Agents can reopen if needed
         self.status = CaseStatus.CLOSED
         self.updated_at = datetime.utcnow()
 
@@ -148,6 +160,83 @@ class SupportCase:
     def is_closed(self) -> bool:
         """Check if the support case is closed"""
         return self.status == CaseStatus.CLOSED
+
+    def add_comment(
+        self,
+        author_id: str,
+        author_type: str,
+        content: str,
+        comment_type: CommentType,
+        attachments: Optional[List[str]] = None,
+        is_internal: bool = False
+    ) -> Comment:
+        """Add a comment to the support case"""
+        self._ensure_case_not_closed("add comments to")
+        
+        comment = Comment(
+            comment_id=str(uuid4()),
+            case_number=self.case_number,
+            author_id=author_id,
+            author_type=author_type,
+            content=content,
+            comment_type=comment_type,
+            attachments=attachments or [],
+            is_internal=is_internal
+        )
+        
+        self.comments.append(comment)
+        self.updated_at = datetime.utcnow()
+        
+        return comment
+
+    def add_customer_comment(self, customer_id: str, content: str, attachments: Optional[List[str]] = None) -> Comment:
+        """Add a customer comment to the support case"""
+        return self.add_comment(
+            author_id=customer_id,
+            author_type="customer",
+            content=content,
+            comment_type=CommentType.CUSTOMER_COMMENT,
+            attachments=attachments
+        )
+
+    def add_agent_response(self, agent_id: str, content: str, attachments: Optional[List[str]] = None) -> Comment:
+        """Add an agent response to the support case"""
+        return self.add_comment(
+            author_id=agent_id,
+            author_type="agent",
+            content=content,
+            comment_type=CommentType.AGENT_RESPONSE,
+            attachments=attachments
+        )
+
+    def add_refund_feedback(
+        self, 
+        refund_service_id: str, 
+        content: str, 
+        attachments: Optional[List[str]] = None,
+        is_internal: bool = False
+    ) -> Comment:
+        """Add refund feedback from refund service"""
+        return self.add_comment(
+            author_id=refund_service_id,
+            author_type="refund_service",
+            content=content,
+            comment_type=CommentType.REFUND_FEEDBACK,
+            attachments=attachments,
+            is_internal=is_internal
+        )
+
+    def get_comments_for_customer(self) -> List[Comment]:
+        """Get comments that should be visible to customers"""
+        return [comment for comment in self.comments if comment.can_customer_see()]
+
+    def get_agent_responses(self) -> List[Comment]:
+        """Get all agent responses"""
+        return [comment for comment in self.comments if comment.is_agent_response()]
+
+    def get_refund_feedbacks(self) -> List[Comment]:
+        """Get all refund feedbacks"""
+        return [comment for comment in self.comments if comment.is_refund_feedback()]
 
     def can_be_edited(self) -> bool:
         """Check if the support case can be edited"""

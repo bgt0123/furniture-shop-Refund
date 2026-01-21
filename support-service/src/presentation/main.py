@@ -16,7 +16,9 @@ logger = get_logger(__name__)
 
 # Initialize database
 from infrastructure.database.database_config import init_database
+from infrastructure.database.migrations import migrate_schema
 init_database()
+migrate_schema()
 
 app = FastAPI(
     title="Support Service",

@@ -1,0 +1,1154 @@
+{
+  "customers": [
+    {
+      "id": "customer_001",
+      "name": "John Smith",
+      "email": "john.smith@email.com",
+      "phone": "+1-555-0101"
+    },
+    {
+      "id": "customer_002",
+      "name": "Sarah Johnson",
+      "email": "sarah.johnson@email.com",
+      "phone": "+1-555-0102"
+    },
+    {
+      "id": "customer_003",
+      "name": "Michael Brown",
+      "email": "michael.brown@email.com",
+      "phone": "+1-555-0103"
+    },
+    {
+      "id": "customer_004",
+      "name": "Emily Davis",
+      "email": "emily.davis@email.com",
+      "phone": "+1-555-0104"
+    },
+    {
+      "id": "customer_005",
+      "name": "David Wilson",
+      "email": "david.wilson@email.com",
+      "phone": "+1-555-0105"
+    }
+  ],
+  "products": [
+    {
+      "id": "FURN-001",
+      "name": "Modern Leather Sofa",
+      "category": "Living Room",
+      "price": 1299.99
+    },
+    {
+      "id": "FURN-002",
+      "name": "Dining Table Set",
+      "category": "Dining Room",
+      "price": 899.99
+    },
+    {
+      "id": "FURN-003",
+      "name": "Queen Size Bed Frame",
+      "category": "Bedroom",
+      "price": 599.99
+    },
+    {
+      "id": "FURN-004",
+      "name": "Office Desk",
+      "category": "Office",
+      "price": 399.99
+    },
+    {
+      "id": "FURN-005",
+      "name": "Coffee Table",
+      "category": "Living Room",
+      "price": 249.99
+    },
+    {
+      "id": "FURN-006",
+      "name": "Bookshelf",
+      "category": "Living Room",
+      "price": 199.99
+    },
+    {
+      "id": "FURN-007",
+      "name": "Leather Armchair",
+      "category": "Living Room",
+      "price": 499.99
+    },
+    {
+      "id": "FURN-008",
+      "name": "Dining Chairs Set",
+      "category": "Dining Room",
+      "price": 399.99
+    },
+    {
+      "id": "FURN-009",
+      "name": "Nightstand",
+      "category": "Bedroom",
+      "price": 149.99
+    },
+    {
+      "id": "FURN-010",
+      "name": "TV Stand",
+      "category": "Living Room",
+      "price": 349.99
+    }
+  ],
+  "orders": [
+    {
+      "id": "ORD-1000",
+      "customer": {
+        "id": "customer_003",
+        "name": "Michael Brown",
+        "email": "michael.brown@email.com",
+        "phone": "+1-555-0103"
+      },
+      "products": [
+        {
+          "id": "FURN-007",
+          "name": "Leather Armchair",
+          "category": "Living Room",
+          "price": 499.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        }
+      ],
+      "order_date": "2025-12-11",
+      "delivery_date": "2026-01-01",
+      "total": 2149.95,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1001",
+      "customer": {
+        "id": "customer_001",
+        "name": "John Smith",
+        "email": "john.smith@email.com",
+        "phone": "+1-555-0101"
+      },
+      "products": [
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        }
+      ],
+      "order_date": "2025-12-18",
+      "delivery_date": "2025-12-25",
+      "total": 3749.96,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1002",
+      "customer": {
+        "id": "customer_001",
+        "name": "John Smith",
+        "email": "john.smith@email.com",
+        "phone": "+1-555-0101"
+      },
+      "products": [
+        {
+          "id": "FURN-008",
+          "name": "Dining Chairs Set",
+          "category": "Dining Room",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-007",
+          "name": "Leather Armchair",
+          "category": "Living Room",
+          "price": 499.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        }
+      ],
+      "order_date": "2025-12-18",
+      "delivery_date": "2026-01-07",
+      "total": 1599.95,
+      "status": "processing"
+    },
+    {
+      "id": "ORD-1003",
+      "customer": {
+        "id": "customer_001",
+        "name": "John Smith",
+        "email": "john.smith@email.com",
+        "phone": "+1-555-0101"
+      },
+      "products": [
+        {
+          "id": "FURN-010",
+          "name": "TV Stand",
+          "category": "Living Room",
+          "price": 349.99
+        },
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-008",
+          "name": "Dining Chairs Set",
+          "category": "Dining Room",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-009",
+          "name": "Nightstand",
+          "category": "Bedroom",
+          "price": 149.99
+        }
+      ],
+      "order_date": "2025-12-01",
+      "delivery_date": "2025-12-16",
+      "total": 2199.95,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1004",
+      "customer": {
+        "id": "customer_003",
+        "name": "Michael Brown",
+        "email": "michael.brown@email.com",
+        "phone": "+1-555-0103"
+      },
+      "products": [
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        }
+      ],
+      "order_date": "2026-01-07",
+      "delivery_date": "2026-01-14",
+      "total": 2549.96,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1005",
+      "customer": {
+        "id": "customer_001",
+        "name": "John Smith",
+        "email": "john.smith@email.com",
+        "phone": "+1-555-0101"
+      },
+      "products": [
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-009",
+          "name": "Nightstand",
+          "category": "Bedroom",
+          "price": 149.99
+        }
+      ],
+      "order_date": "2026-01-16",
+      "delivery_date": "2026-01-31",
+      "total": 2749.96,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1006",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        }
+      ],
+      "order_date": "2025-12-17",
+      "delivery_date": "2026-01-01",
+      "total": 399.99,
+      "status": "in_transit"
+    },
+    {
+      "id": "ORD-1007",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        }
+      ],
+      "order_date": "2025-10-30",
+      "delivery_date": "2025-11-13",
+      "total": 2899.96,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1008",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-010",
+          "name": "TV Stand",
+          "category": "Living Room",
+          "price": 349.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        }
+      ],
+      "order_date": "2025-12-29",
+      "delivery_date": "2026-01-06",
+      "total": 549.98,
+      "status": "processing"
+    },
+    {
+      "id": "ORD-1009",
+      "customer": {
+        "id": "customer_001",
+        "name": "John Smith",
+        "email": "john.smith@email.com",
+        "phone": "+1-555-0101"
+      },
+      "products": [
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        }
+      ],
+      "order_date": "2026-01-08",
+      "delivery_date": "2026-01-28",
+      "total": 249.99,
+      "status": "in_transit"
+    },
+    {
+      "id": "ORD-1010",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        }
+      ],
+      "order_date": "2026-01-01",
+      "delivery_date": "2026-01-08",
+      "total": 2699.96,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1011",
+      "customer": {
+        "id": "customer_005",
+        "name": "David Wilson",
+        "email": "david.wilson@email.com",
+        "phone": "+1-555-0105"
+      },
+      "products": [
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        }
+      ],
+      "order_date": "2026-01-03",
+      "delivery_date": "2026-01-10",
+      "total": 2399.96,
+      "status": "in_transit"
+    },
+    {
+      "id": "ORD-1012",
+      "customer": {
+        "id": "customer_003",
+        "name": "Michael Brown",
+        "email": "michael.brown@email.com",
+        "phone": "+1-555-0103"
+      },
+      "products": [
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        }
+      ],
+      "order_date": "2025-11-16",
+      "delivery_date": "2025-12-06",
+      "total": 1999.97,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1013",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-008",
+          "name": "Dining Chairs Set",
+          "category": "Dining Room",
+          "price": 399.99
+        }
+      ],
+      "order_date": "2025-11-22",
+      "delivery_date": "2025-12-04",
+      "total": 3899.96,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1014",
+      "customer": {
+        "id": "customer_005",
+        "name": "David Wilson",
+        "email": "david.wilson@email.com",
+        "phone": "+1-555-0105"
+      },
+      "products": [
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        }
+      ],
+      "order_date": "2025-10-25",
+      "delivery_date": "2025-11-14",
+      "total": 1499.98,
+      "status": "processing"
+    },
+    {
+      "id": "ORD-1015",
+      "customer": {
+        "id": "customer_005",
+        "name": "David Wilson",
+        "email": "david.wilson@email.com",
+        "phone": "+1-555-0105"
+      },
+      "products": [
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        },
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        }
+      ],
+      "order_date": "2025-11-06",
+      "delivery_date": "2025-11-24",
+      "total": 1999.95,
+      "status": "in_transit"
+    },
+    {
+      "id": "ORD-1016",
+      "customer": {
+        "id": "customer_005",
+        "name": "David Wilson",
+        "email": "david.wilson@email.com",
+        "phone": "+1-555-0105"
+      },
+      "products": [
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        }
+      ],
+      "order_date": "2026-01-07",
+      "delivery_date": "2026-01-28",
+      "total": 249.99,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1017",
+      "customer": {
+        "id": "customer_005",
+        "name": "David Wilson",
+        "email": "david.wilson@email.com",
+        "phone": "+1-555-0105"
+      },
+      "products": [
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        }
+      ],
+      "order_date": "2025-12-23",
+      "delivery_date": "2026-01-04",
+      "total": 1299.98,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1018",
+      "customer": {
+        "id": "customer_003",
+        "name": "Michael Brown",
+        "email": "michael.brown@email.com",
+        "phone": "+1-555-0103"
+      },
+      "products": [
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        }
+      ],
+      "order_date": "2026-01-16",
+      "delivery_date": "2026-01-28",
+      "total": 3299.96,
+      "status": "in_transit"
+    },
+    {
+      "id": "ORD-1019",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        }
+      ],
+      "order_date": "2025-11-17",
+      "delivery_date": "2025-11-24",
+      "total": 3899.95,
+      "status": "processing"
+    },
+    {
+      "id": "ORD-1020",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-007",
+          "name": "Leather Armchair",
+          "category": "Living Room",
+          "price": 499.99
+        }
+      ],
+      "order_date": "2026-01-12",
+      "delivery_date": "2026-01-30",
+      "total": 3299.96,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1021",
+      "customer": {
+        "id": "customer_003",
+        "name": "Michael Brown",
+        "email": "michael.brown@email.com",
+        "phone": "+1-555-0103"
+      },
+      "products": [
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        }
+      ],
+      "order_date": "2025-12-29",
+      "delivery_date": "2026-01-10",
+      "total": 1599.97,
+      "status": "processing"
+    },
+    {
+      "id": "ORD-1022",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        }
+      ],
+      "order_date": "2025-11-10",
+      "delivery_date": "2025-11-22",
+      "total": 2399.9700000000003,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1023",
+      "customer": {
+        "id": "customer_002",
+        "name": "Sarah Johnson",
+        "email": "sarah.johnson@email.com",
+        "phone": "+1-555-0102"
+      },
+      "products": [
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        },
+        {
+          "id": "FURN-009",
+          "name": "Nightstand",
+          "category": "Bedroom",
+          "price": 149.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        }
+      ],
+      "order_date": "2026-01-02",
+      "delivery_date": "2026-01-21",
+      "total": 2749.9700000000003,
+      "status": "processing"
+    },
+    {
+      "id": "ORD-1024",
+      "customer": {
+        "id": "customer_004",
+        "name": "Emily Davis",
+        "email": "emily.davis@email.com",
+        "phone": "+1-555-0104"
+      },
+      "products": [
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        },
+        {
+          "id": "FURN-005",
+          "name": "Coffee Table",
+          "category": "Living Room",
+          "price": 249.99
+        }
+      ],
+      "order_date": "2025-11-21",
+      "delivery_date": "2025-11-28",
+      "total": 1499.95,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1025",
+      "customer": {
+        "id": "customer_003",
+        "name": "Michael Brown",
+        "email": "michael.brown@email.com",
+        "phone": "+1-555-0103"
+      },
+      "products": [
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        },
+        {
+          "id": "FURN-001",
+          "name": "Modern Leather Sofa",
+          "category": "Living Room",
+          "price": 1299.99
+        }
+      ],
+      "order_date": "2025-12-16",
+      "delivery_date": "2026-01-01",
+      "total": 2299.96,
+      "status": "processing"
+    },
+    {
+      "id": "ORD-1026",
+      "customer": {
+        "id": "customer_003",
+        "name": "Michael Brown",
+        "email": "michael.brown@email.com",
+        "phone": "+1-555-0103"
+      },
+      "products": [
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        }
+      ],
+      "order_date": "2025-11-22",
+      "delivery_date": "2025-12-12",
+      "total": 1099.98,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1027",
+      "customer": {
+        "id": "customer_005",
+        "name": "David Wilson",
+        "email": "david.wilson@email.com",
+        "phone": "+1-555-0105"
+      },
+      "products": [
+        {
+          "id": "FURN-008",
+          "name": "Dining Chairs Set",
+          "category": "Dining Room",
+          "price": 399.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        },
+        {
+          "id": "FURN-003",
+          "name": "Queen Size Bed Frame",
+          "category": "Bedroom",
+          "price": 599.99
+        },
+        {
+          "id": "FURN-006",
+          "name": "Bookshelf",
+          "category": "Living Room",
+          "price": 199.99
+        }
+      ],
+      "order_date": "2026-01-19",
+      "delivery_date": "2026-02-07",
+      "total": 2699.95,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1028",
+      "customer": {
+        "id": "customer_003",
+        "name": "Michael Brown",
+        "email": "michael.brown@email.com",
+        "phone": "+1-555-0103"
+      },
+      "products": [
+        {
+          "id": "FURN-004",
+          "name": "Office Desk",
+          "category": "Office",
+          "price": 399.99
+        }
+      ],
+      "order_date": "2025-12-07",
+      "delivery_date": "2025-12-17",
+      "total": 399.99,
+      "status": "delivered"
+    },
+    {
+      "id": "ORD-1029",
+      "customer": {
+        "id": "customer_002",
+        "name": "Sarah Johnson",
+        "email": "sarah.johnson@email.com",
+        "phone": "+1-555-0102"
+      },
+      "products": [
+        {
+          "id": "FURN-010",
+          "name": "TV Stand",
+          "category": "Living Room",
+          "price": 349.99
+        },
+        {
+          "id": "FURN-002",
+          "name": "Dining Table Set",
+          "category": "Dining Room",
+          "price": 899.99
+        }
+      ],
+      "order_date": "2025-10-29",
+      "delivery_date": "2025-11-19",
+      "total": 1249.98,
+      "status": "delivered"
+    }
+  ]
+}

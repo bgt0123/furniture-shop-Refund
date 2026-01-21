@@ -8,8 +8,10 @@ from ..config import get_config
 from .schema import (
     CREATE_SUPPORT_CASES_TABLE,
     CREATE_SUPPORT_RESPONSES_TABLE,
+    CREATE_SUPPORT_COMMENTS_TABLE,
     CREATE_SUPPORT_CASES_INDEXES,
-    CREATE_SUPPORT_RESPONSES_INDEXES
+    CREATE_SUPPORT_RESPONSES_INDEXES,
+    CREATE_SUPPORT_COMMENTS_INDEXES
 )
 
 def get_database_path() -> str:
@@ -42,9 +44,10 @@ def init_database() -> None:
         # Create tables
         conn.execute(CREATE_SUPPORT_CASES_TABLE)
         conn.execute(CREATE_SUPPORT_RESPONSES_TABLE)
+        conn.execute(CREATE_SUPPORT_COMMENTS_TABLE)
         
         # Create indexes
-        for index_sql in CREATE_SUPPORT_CASES_INDEXES + CREATE_SUPPORT_RESPONSES_INDEXES:
+        for index_sql in CREATE_SUPPORT_CASES_INDEXES + CREATE_SUPPORT_RESPONSES_INDEXES + CREATE_SUPPORT_COMMENTS_INDEXES:
             conn.execute(index_sql)
         
         conn.commit()

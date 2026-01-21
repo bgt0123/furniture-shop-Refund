@@ -7,6 +7,7 @@ from domain.events.assign_agent import AssignAgent
 from domain.events.close_case import CloseCase
 from domain.events.update_case_type import UpdateCaseType
 from domain.events.reopen_case import ReopenCase
+from domain.events.add_comment import AddComment
 
 
 class Dependencies:
@@ -16,6 +17,7 @@ class Dependencies:
         self.support_case_repository = SupportCaseRepository()
         self.create_support_case = CreateSupportCase(self.support_case_repository)
         self.add_response = AddResponse(self.support_case_repository)
+        self.add_comment = AddComment(self.support_case_repository)
         self.assign_agent = AssignAgent(self.support_case_repository)
         self.close_case = CloseCase(self.support_case_repository)
         self.update_case_type = UpdateCaseType(self.support_case_repository)

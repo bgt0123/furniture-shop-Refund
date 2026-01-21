@@ -3,8 +3,6 @@ from typing import List, Optional
 from enum import Enum
 from uuid import uuid4
 
-from .value_objects.money import Money
-
 
 class ResponseType(Enum):
     """Represents the type of refund response"""

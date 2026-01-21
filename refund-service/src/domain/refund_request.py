@@ -24,7 +24,8 @@ class RefundRequest:
         decision_reason: Optional[str] = None,
         decision_date: Optional[datetime] = None,
         decision_agent_id: Optional[str] = None,
-        created_at: Optional[datetime] = None
+        created_at: Optional[datetime] = None,
+        is_eligible_for_refund: bool = True
     ):
         self.refund_request_id = refund_request_id
         self.product_ids = product_ids
@@ -35,6 +36,7 @@ class RefundRequest:
         self.decision_date = decision_date
         self.decision_agent_id = decision_agent_id
         self.created_at = created_at or datetime.utcnow()
+        self.is_eligible_for_refund = is_eligible_for_refund
 
     @property
     def has_required_data(self) -> bool:

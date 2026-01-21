@@ -1,4 +1,3 @@
-"""RefundCase repository implementation"""
 
 import sqlite3
 from typing import List, Optional
@@ -48,16 +47,16 @@ class RefundCaseRepository:
             
             if row:
                 print(f"Found refund case {refund_case_id}")
+                print(f"Row data: {row}")
                 # Return a simple object with the required attributes
-                class RefundCase:
+                class SimpleRefundCase:
                     def __init__(self, data):
                         for key, value in data.items():
                             setattr(self, key, value)
-                
-                return RefundCase(dict(row))
-            
-            print(f"Refund case {refund_case_id} not found")
-            return None
+                return SimpleRefundCase(dict(row))
+            else:
+                print(f"Refund case {refund_case_id} not found")
+                return None
         finally:
             conn.close()
 
@@ -76,54 +75,60 @@ class RefundCaseRepository:
             
             cases = []
             for row in rows:
-                class RefundCase:
+                class SimpleRefundCase:
                     def __init__(self, data):
                         for key, value in data.items():
                             setattr(self, key, value)
-                cases.append(RefundCase(dict(row)))
-            
-            # Demo data for testing purposes
-            if len(cases) == 0 and customer_id == "cust-123":
-                print(f"Creating demo refund cases for customer {customer_id}")
-                
-                # Create demo cases RC-001 and RC-002 linked to SC-001 and SC-002
-                import sqlite3
-                from datetime import datetime
-                
-                demo_cases = [
-                    {
-                        "refund_case_id": "RC-001",
-                        "case_number": "SC-001", 
-                        "customer_id": "cust-123",
-                        "order_id": "ORD-001",
-                        "status": "pending",
-                        "created_at": "2025-01-18T12:00:00",
-                        "updated_at": "2025-01-18T12:00:00"
-                    },
-                    {
-                        "refund_case_id": "RC-002", 
-                        "case_number": "SC-002",
-                        "customer_id": "cust-123",
-                        "order_id": "ORD-002",
-                        "status": "approved",
-                        "created_at": "2025-01-19T10:00:00",
-                        "updated_at": "2025-01-19T11:00:00"
-                    }
-                ]
-                
-                for demo_case in demo_cases:
-                    class RefundCase:
-                        def __init__(self, data):
-                            for key, value in data.items():
-                                setattr(self, key, value)
-                    cases.append(RefundCase(demo_case))
+                cases.append(SimpleRefundCase(dict(row)))
             
             return cases
         finally:
             conn.close()
 
-    def delete(self, refund_case_id: str) -> bool:
-        """Delete a refund case"""
+    def find_all(self) -> List:
+        """Find all refund cases"""
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM refund_cases")
+            rows = cursor.fetchall()
+            
+            print(f"Found {len(rows)} total refund cases")
+            
+            cases = []
+            for row in rows:
+                class SimpleRefundCase:
+                    def __init__(self, data):
+                        for key, value in data.items():
+                            setattr(self, key, value)
+                cases.append(SimpleRefundCase(dict(row)))
+            
+            return cases
+        finally:
+            conn.close()
+
+    def update_status(self, refund_case_id: str, new_status: str) -> bool:
+        """Update the status of a refund case"""
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE refund_cases SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE refund_case_id = ?",
+                (new_status, refund_case_id)
+            )
+            conn.commit()
+            
+            if cursor.rowcount > 0:
+                print(f"Successfully updated refund case {refund_case_id} status to {new_status}")
+                return True
+            else:
+                print(f"Failed to update refund case {refund_case_id} - not found")
+                return False
+        finally:
+            conn.close()
+
+    def delete_by_case_id(self, refund_case_id: str) -> bool:
+        """Delete a refund case by ID"""
         conn = get_connection()
         try:
             cursor = conn.cursor()
@@ -131,8 +136,8 @@ class RefundCaseRepository:
                 "DELETE FROM refund_cases WHERE refund_case_id = ?",
                 (refund_case_id,)
             )
-            deleted = cursor.rowcount > 0
             conn.commit()
+            deleted = cursor.rowcount > 0
             
             if deleted:
                 print(f"Deleted refund case {refund_case_id}")

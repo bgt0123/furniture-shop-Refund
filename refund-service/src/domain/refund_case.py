@@ -45,10 +45,12 @@ class RefundCase:
         self,
         product_ids: List[str],
         request_reason: str,
-        evidence_photos: Optional[List[str]] = None
+        evidence_photos: Optional[List[str]] = None,
+        delivery_date: Optional[str] = None
     ) -> RefundRequest:
         """Create and add a refund request to this case"""
         from .refund_request import RefundRequest
+        from .services.eligibility_service import EligibilityService
         
         if self.refund_request:
             raise ValueError("Refund case already has a refund request")
@@ -61,6 +63,14 @@ class RefundCase:
             status=RefundRequestStatus.PENDING
         )
         
+        # Check eligibility
+        is_defective = "defect" in request_reason.lower() or "damage" in request_reason.lower()
+        is_eligible_for_refund = EligibilityService.is_eligible_for_refund(
+            refund_request, delivery_date or "", is_defective
+        )
+        
+        refund_request.is_eligible_for_refund = is_eligible_for_refund
+        
         self.refund_request = refund_request
         self.status = RefundStatus.PENDING
         self.updated_at = datetime.utcnow()
@@ -71,6 +81,14 @@ class RefundCase:
             actor=self.customer_id,
             notes="Customer submitted refund request"
         ))
+        
+        # Add eligibility status to timeline
+        if not refund_request.is_eligible_for_refund:
+            self.timeline.append(CaseTimeline(
+                status="refund_request_not_eligible",
+                actor="system",
+                notes="Refund request not eligible based on business rules"
+            ))
         
         return refund_request
 
@@ -136,6 +154,8 @@ class RefundCase:
             return False
         
         return True
+
+    # submit_feedback method removed
 
     def __str__(self) -> str:
         return f"RefundCase {self.refund_case_id} ({self.status.value})"

@@ -10,6 +10,12 @@ class SupportCaseRepository:
     
     def save(self, support_case) -> None:
         """Save a support case to the database"""
+        import sys
+        print(f"DEBUG: Starting save for case {support_case.case_number}", file=sys.stderr)
+        print(f"DEBUG: Case has comments attribute: {hasattr(support_case, 'comments')}", file=sys.stderr)
+        if hasattr(support_case, 'comments'):
+            print(f"DEBUG: Number of comments: {len(support_case.comments) if support_case.comments else 'None'}", file=sys.stderr)
+        
         conn = get_connection()
         try:
             cursor = conn.cursor()
@@ -17,8 +23,9 @@ class SupportCaseRepository:
                 """
                 INSERT OR REPLACE INTO support_cases 
                 (case_number, customer_id, case_type, subject, description, status, 
-                 refund_request_id, assigned_agent_id, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 refund_request_id, assigned_agent_id, created_at, updated_at,
+                 order_id, product_ids, delivery_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     support_case.case_number,
@@ -30,11 +37,47 @@ class SupportCaseRepository:
                     support_case.refund_request_id,
                     support_case.assigned_agent_id,
                     support_case.created_at.isoformat(),
-                    support_case.updated_at.isoformat()
+                    support_case.updated_at.isoformat(),
+                    support_case.order_id,
+                    ",".join(support_case.product_ids) if support_case.product_ids else None,
+                    support_case.delivery_date.isoformat() if support_case.delivery_date else None
                 )
             )
+            
+            # Save comments
+            print(f"DEBUG: Checking comments to save...", file=sys.stderr)
+            if hasattr(support_case, 'comments'):
+                print(f"DEBUG: Case has comments attribute", file=sys.stderr)
+                if support_case.comments:
+                    print(f"Saving {len(support_case.comments)} comments for case {support_case.case_number}", file=sys.stderr)
+                    # First delete existing comments for this case
+                    cursor.execute("DELETE FROM support_comments WHERE case_number = ?", (support_case.case_number,))
+                    
+                    # Then insert all current comments
+                    for i, comment in enumerate(support_case.comments):
+                        print(f"  Saving comment {i}: id={comment.comment_id}", file=sys.stderr)
+                        cursor.execute(
+                        """
+                        INSERT INTO support_comments 
+                        (comment_id, case_number, author_id, author_type, content, 
+                         comment_type, attachments, is_internal, timestamp)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            comment.comment_id,
+                            comment.case_number,
+                            comment.author_id,
+                            comment.author_type,
+                            comment.content,
+                            comment.comment_type.value if hasattr(comment.comment_type, 'value') else comment.comment_type,
+                            ",".join(comment.attachments) if comment.attachments else None,
+                            comment.is_internal,
+                            comment.timestamp.isoformat()
+                        )
+                    )
+            
             conn.commit()
-            print(f"Saved support case {support_case.case_number}")
+            print(f"Saved support case {support_case.case_number} with {len(getattr(support_case, 'comments', []))} comments")
         finally:
             conn.close()
 
@@ -49,73 +92,81 @@ class SupportCaseRepository:
             )
             row = cursor.fetchone()
             
-            if row:
-                print(f"Found support case {case_number}")
+            if not row:
+                return None
+            
+            # Import domain objects
+            from domain.support_case import SupportCase, CaseType, CaseStatus
+            from domain.comment import Comment, CommentType
+            from datetime import datetime
+            
+            data = dict(row)
+            
+            # Convert string enums to proper Enum objects
+            case_type = CaseType(data["case_type"]) if data["case_type"] in ["question", "refund"] else CaseType.QUESTION
+            status = CaseStatus(data["status"]) if data["status"] in ["open", "in_progress", "closed"] else CaseStatus.OPEN
+            
+            # Convert string dates to datetime objects
+            created_at = datetime.fromisoformat(data["created_at"]) if data["created_at"] else datetime.utcnow()
+            updated_at = datetime.fromisoformat(data["updated_at"]) if data["updated_at"] else datetime.utcnow()
+            
+            # Parse product_ids and delivery_date
+            product_ids = []
+            if data["product_ids"]:
+                product_ids = data["product_ids"].split(",") if data["product_ids"] else []
+            
+            delivery_date = None
+            if data["delivery_date"]:
+                delivery_date = datetime.fromisoformat(data["delivery_date"])
+            
+            # Load comments
+            cursor.execute(
+                "SELECT * FROM support_comments WHERE case_number = ? ORDER BY timestamp",
+                (case_number,)
+            )
+            comment_rows = cursor.fetchall()
+            comments = []
+            
+            for comment_row in comment_rows:
+                comment_data = dict(comment_row)
+                comment_type = CommentType(comment_data["comment_type"]) if comment_data["comment_type"] in ["customer_comment", "agent_response", "refund_feedback"] else CommentType.CUSTOMER_COMMENT
+                timestamp = datetime.fromisoformat(comment_data["timestamp"]) if comment_data["timestamp"] else datetime.utcnow()
+                attachments = []
+                if comment_data["attachments"]:
+                    attachments = comment_data["attachments"].split(",") if comment_data["attachments"] else []
                 
-                # Import domain objects
-                from domain.support_case import SupportCase, CaseType, CaseStatus
-                from datetime import datetime
-                
-                data = dict(row)
-                
-                # Convert string enums to proper Enum objects
-                case_type = CaseType(data["case_type"]) if data["case_type"] in ["question", "refund"] else CaseType.QUESTION
-                status = CaseStatus(data["status"]) if data["status"] in ["open", "in_progress", "closed"] else CaseStatus.OPEN
-                
-                # Convert string dates to datetime objects
-                created_at = datetime.fromisoformat(data["created_at"]) if data["created_at"] else datetime.utcnow()
-                updated_at = datetime.fromisoformat(data["updated_at"]) if data["updated_at"] else datetime.utcnow()
-                
-                return SupportCase(
-                    case_number=data["case_number"],
-                    customer_id=data["customer_id"],
-                    case_type=case_type,
-                    subject=data["subject"],
-                    description=data["description"],
-                    refund_request_id=data["refund_request_id"],
-                    status=status,
-                    created_at=created_at,
-                    updated_at=updated_at,
-                    assigned_agent_id=data["assigned_agent_id"]
+                comment = Comment(
+                    comment_id=comment_data["comment_id"],
+                    case_number=comment_data["case_number"],
+                    author_id=comment_data["author_id"],
+                    author_type=comment_data["author_type"],
+                    content=comment_data["content"],
+                    comment_type=comment_type,
+                    attachments=attachments,
+                    timestamp=timestamp,
+                    is_internal=comment_data["is_internal"]
                 )
+                comments.append(comment)
             
-            # Demo data for testing purposes - create fake case if SC-001 or SC-002 is requested
-            if case_number in ["SC-001", "SC-002"]:
-                print(f"Creating demo support case {case_number}")
-                from domain.support_case import SupportCase, CaseType, CaseStatus
-                from datetime import datetime
-                
-                if case_number == "SC-001":
-                    demo_support_case = SupportCase(
-                        case_number="SC-001",
-                        customer_id="cust-123",
-                        case_type=CaseType.REFUND,
-                        subject="Refund Request for Defective Product",
-                        description="Customer is requesting refund for defective furniture received",
-                        refund_request_id="RC-001",
-                        status=CaseStatus.OPEN,
-                        assigned_agent_id="agent-001"
-                    )
-                    demo_support_case.created_at = datetime(2025, 1, 18, 12, 0, 0)
-                    demo_support_case.updated_at = datetime(2025, 1, 18, 12, 0, 0)
-                else:  # SC-002
-                    demo_support_case = SupportCase(
-                        case_number="SC-002",
-                        customer_id="cust-123",
-                        case_type=CaseType.REFUND,
-                        subject="Refund Approved for Customer",
-                        description="Refund request has been approved and processed",
-                        refund_request_id="RC-002",
-                        status=CaseStatus.CLOSED,
-                        assigned_agent_id="agent-002"
-                    )
-                    demo_support_case.created_at = datetime(2025, 1, 19, 10, 0, 0)
-                    demo_support_case.updated_at = datetime(2025, 1, 19, 11, 0, 0)
-                
-                return demo_support_case
+            support_case = SupportCase(
+                case_number=data["case_number"],
+                customer_id=data["customer_id"],
+                case_type=case_type,
+                subject=data["subject"],
+                description=data["description"],
+                refund_request_id=data["refund_request_id"],
+                status=status,
+                created_at=created_at,
+                updated_at=updated_at,
+                assigned_agent_id=data["assigned_agent_id"],
+                order_id=data["order_id"],
+                product_ids=product_ids,
+                delivery_date=delivery_date,
+                comments=comments
+            )
             
-            print(f"Support case {case_number} not found")
-            return None
+            return support_case
+            
         finally:
             conn.close()
 
@@ -134,6 +185,7 @@ class SupportCaseRepository:
             
             # Import domain objects
             from domain.support_case import SupportCase, CaseType, CaseStatus
+            from domain.comment import Comment, CommentType
             from datetime import datetime
             
             cases = []
@@ -148,6 +200,44 @@ class SupportCaseRepository:
                 created_at = datetime.fromisoformat(data["created_at"]) if data["created_at"] else datetime.utcnow()
                 updated_at = datetime.fromisoformat(data["updated_at"]) if data["updated_at"] else datetime.utcnow()
                 
+                # Parse product_ids and delivery_date
+                product_ids = []
+                if data["product_ids"]:
+                    product_ids = data["product_ids"].split(",") if data["product_ids"] else []
+                
+                delivery_date = None
+                if data["delivery_date"]:
+                    delivery_date = datetime.fromisoformat(data["delivery_date"])
+                
+                # Load comments for this case
+                cursor.execute(
+                    "SELECT * FROM support_comments WHERE case_number = ? ORDER BY timestamp",
+                    (data["case_number"],)
+                )
+                comment_rows = cursor.fetchall()
+                comments = []
+                
+                for comment_row in comment_rows:
+                    comment_data = dict(comment_row)
+                    comment_type = CommentType(comment_data["comment_type"]) if comment_data["comment_type"] in ["customer_comment", "agent_response", "refund_feedback"] else CommentType.CUSTOMER_COMMENT
+                    timestamp = datetime.fromisoformat(comment_data["timestamp"]) if comment_data["timestamp"] else datetime.utcnow()
+                    attachments = []
+                    if comment_data["attachments"]:
+                        attachments = comment_data["attachments"].split(",") if comment_data["attachments"] else []
+                    
+                    comment = Comment(
+                        comment_id=comment_data["comment_id"],
+                        case_number=comment_data["case_number"],
+                        author_id=comment_data["author_id"],
+                        author_type=comment_data["author_type"],
+                        content=comment_data["content"],
+                        comment_type=comment_type,
+                        attachments=attachments,
+                        timestamp=timestamp,
+                        is_internal=comment_data["is_internal"]
+                    )
+                    comments.append(comment)
+                
                 case = SupportCase(
                     case_number=data["case_number"],
                     customer_id=data["customer_id"],
@@ -158,7 +248,11 @@ class SupportCaseRepository:
                     status=status,
                     created_at=created_at,
                     updated_at=updated_at,
-                    assigned_agent_id=data["assigned_agent_id"]
+                    assigned_agent_id=data["assigned_agent_id"],
+                    order_id=data["order_id"],
+                    product_ids=product_ids,
+                    delivery_date=delivery_date,
+                    comments=comments
                 )
                 cases.append(case)
             
@@ -166,6 +260,58 @@ class SupportCaseRepository:
         finally:
             conn.close()
 
+    def find_all(self) -> List:
+        """Find all support cases"""
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM support_cases")
+            rows = cursor.fetchall()
+            
+            print(f"Found {len(rows)} total support cases")
+            
+            # Import domain objects
+            from domain.support_case import SupportCase, CaseType, CaseStatus
+            from domain.comment import Comment, CommentType
+            from datetime import datetime
+            
+            cases = []
+            for row in rows:
+                data = dict(row)
+                
+                # Convert string enums to proper Enum objects
+                try:
+                    case_type = CaseType(data.get('case_type'))
+                except:
+                    case_type = CaseType.QUESTION
+                
+                try:
+                    status = CaseStatus(data.get('status'))
+                except:
+                    status = CaseStatus.OPEN
+                
+                # Create SupportCase object
+                support_case = SupportCase(
+                    case_number=data.get('case_number'),
+                    customer_id=data.get('customer_id'),
+                    case_type=case_type,
+                    subject=data.get('subject'),
+                    description=data.get('description'),
+                    status=status,
+                    refund_request_id=data.get('refund_request_id'),
+                    assigned_agent_id=data.get('assigned_agent_id'),
+                    order_id=data.get('order_id'),
+                    product_ids=data.get('product_ids'),
+                    delivery_date=data.get('delivery_date'),
+                    created_at=datetime.fromisoformat(data.get('created_at')),
+                    updated_at=datetime.fromisoformat(data.get('updated_at'))
+                )
+                
+                cases.append(support_case)
+            
+            return cases
+        finally:
+            conn.close()
     def delete(self, case_number: str) -> bool:
         """Delete a support case"""
         conn = get_connection()

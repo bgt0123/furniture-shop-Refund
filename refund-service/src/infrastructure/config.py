@@ -12,7 +12,7 @@ class Config:
         self.environment = os.getenv("ENVIRONMENT", "development").lower()
         
         # Database
-        self.refund_db_path = os.getenv("REFUND_DB_PATH", "/app/data/refund.db")
+        self.refund_db_path = os.getenv("REFUND_DB_PATH", "data/refund.db")
         
         # Service
         self.service_port = int(os.getenv("REFUND_SERVICE_PORT", "8001"))

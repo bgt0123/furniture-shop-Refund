@@ -535,42 +535,30 @@ main {
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
-.detail-page .btn-primary:hover,
-.support-dashboard .btn-primary:hover {
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+/* Refund Feedback Dashboard */
+.refund-feedback-dashboard .feedback-item {
+  transition: all 0.2s ease;
+  border-radius: 12px;
+  border-left-width: 4px;
 }
 
-.detail-page .btn-secondary,
-.support-dashboard .btn-secondary {
-  background: linear-gradient(135deg, #6b7280, #4b5563);
-  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+.refund-feedback-dashboard .feedback-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.detail-page .btn-secondary:hover,
-.support-dashboard .btn-secondary:hover {
-  box-shadow: 0 6px 16px rgba(107, 114, 128, 0.4);
+.refund-feedback-dashboard .info-card {
+  border-radius: 12px;
+  margin-top: 1rem;
 }
 
-.detail-page .btn-warning,
-.support-dashboard .btn-warning {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+/* Ensure proper spacing */
+.refund-feedback-dashboard .header-section {
+  margin-bottom: 2rem;
 }
 
-.detail-page .btn-warning:hover,
-.support-dashboard .btn-warning:hover {
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
-}
-
-.detail-page .btn-danger,
-.support-dashboard .btn-danger {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-}
-
-.detail-page .btn-danger:hover,
-.support-dashboard .btn-danger:hover {
-  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+.refund-feedback-dashboard .grid {
+  gap: 1.5rem;
 }
 
 .detail-page .back-link {
@@ -627,6 +615,17 @@ main {
 
 .support-dashboard .btn-danger {
   background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  color: white;
+}
+
+.btn-success:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
 /* Refund Case Detail Specific */

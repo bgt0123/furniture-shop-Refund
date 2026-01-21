@@ -14,6 +14,7 @@ interface RefundCaseDetail {
   product_ids: string[];
   evidence_photos?: string[];
   support_case_details?: SupportCase;
+  feedback_entries?: any[];
 }
 
 interface SupportCase {
@@ -85,6 +86,8 @@ const RefundCaseDetail: React.FC = () => {
       return 'Unknown date';
     }
   };
+
+  // refreshCaseDetails function removed - using fetchCaseDetails directly
 
   if (loading) {
     return (
@@ -212,38 +215,43 @@ const RefundCaseDetail: React.FC = () => {
             </div>
           )}
 
-          {/* Associated Support Case */}
-          {refundCase.case_number && (
-            <div className="border-t pt-4 mt-6">
-              <h3 className="font-medium text-gray-700 mb-4">Associated Support Case</h3>
-              {supportCase ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-semibold text-blue-800">
-                        Support Case #{supportCase.case_number}
-                      </h4>
-                      <p className="text-blue-600 text-sm mb-1">
-                        Subject: {supportCase.subject}
-                      </p>
-                      <p className="text-blue-600 text-sm">
-                        Status: {supportCase.status}
-                      </p>
-                    </div>
-                    <Link 
-                      to={`/support-cases/${supportCase.case_number}`}
-                      className="btn-primary"
-                    >
-                      View Support Case
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-600">Support case details loading...</p>
-              )}
-            </div>
-          )}
-        </div>
+           {/* Associated Support Case */}
+           {refundCase.case_number && (
+             <div className="border-t pt-4 mt-6">
+               <h3 className="font-medium text-gray-700 mb-4">Associated Support Case</h3>
+               {supportCase ? (
+                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                   <div className="flex justify-between items-center">
+                     <div>
+                       <h4 className="font-semibold text-blue-800">
+                         Support Case #{supportCase.case_number}
+                       </h4>
+                       <p className="text-blue-600 text-sm mb-1">
+                         Subject: {supportCase.subject}
+                       </p>
+                       <p className="text-blue-600 text-sm">
+                         Status: {supportCase.status}
+                       </p>
+                     </div>
+                      <Link 
+                        to={{
+                          pathname: `/support-cases/${supportCase.case_number}`,
+                          search: `?role=agent`
+                        }}
+                        className="btn-primary"
+                      >
+                        View Support Case
+                      </Link>
+                   </div>
+                 </div>
+               ) : (
+                 <p className="text-gray-600">Support case details loading...</p>
+               )}
+             </div>
+           )}
+
+           {/* Feedback Section Removed */}
+         </div>
       </div>
     </div>
   );

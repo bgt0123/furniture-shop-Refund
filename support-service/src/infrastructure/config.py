@@ -12,7 +12,7 @@ class Config:
         self.environment = os.getenv("ENVIRONMENT", "development").lower()
         
         # Database
-        self.support_db_path = os.getenv("SUPPORT_DB_PATH", "/app/data/support.db")
+        self.support_db_path = os.getenv("SUPPORT_DB_PATH", "data/support.db")
         
         # Service
         self.service_port = int(os.getenv("SUPPORT_SERVICE_PORT", "8000"))
