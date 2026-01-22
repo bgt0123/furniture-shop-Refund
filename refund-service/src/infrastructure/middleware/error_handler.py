@@ -18,14 +18,18 @@ async def error_handler(request: Request, call_next):
         raise e
         
     except Exception as e:
-        # Log unexpected errors
+        # Log unexpected errors with full traceback
         logger.error(f"Unexpected error: {e}", exc_info=True)
+        logger.error(f"Full error details: {type(e).__name__}: {str(e)}")
+        
+        import traceback
+        logger.error(f"Full traceback:\n{traceback.format_exc()}")
         
         return JSONResponse(
             status_code=500,
             content={
                 "error": "Internal Server Error",
-                "message": "An unexpected error occurred",
+                "message": f"An unexpected error occurred: {type(e).__name__}: {str(e)}",
                 "request_id": str(request.scope.get("request_id", "unknown"))
             }
         )

@@ -376,7 +376,7 @@ interface SupportCase {
                
                const errorMessage = isSupportCaseNotFound
                 ? 'Support case created successfully, but refund service encountered timing issue. Please try creating refund request again later.'
-                : 'Support case created but refund request failed. Please create refund request manually.';
+                : '';
               
               setError(errorMessage);
             }

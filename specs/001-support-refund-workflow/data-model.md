@@ -16,8 +16,9 @@ This document defines the entities, aggregates, and relationships for the Suppor
 - subject: String
 - description: String
 - support_responses: List[SupportResponse] (message history)
-- status: Enum (Open, In Progress, Closed)
+- status: Enum (Open, In Progress
 - created_at: DateTime
+- attachments: List[String] (file references)
 - updated_at: DateTime
 - assigned_agent_id: String (nullable)
 
@@ -98,8 +99,8 @@ This document defines the entities, aggregates, and relationships for the Suppor
 - response_content: String (detailed explanation)
 - attachments: List[String] (file references for documentation)
 - timestamp: DateTime
-- refund_amount: Decimal (nullable, for approved refunds)
-- refund_method: Enum (money, voucher, replacement)
+- refund_amount: Money (nullable, for approved refunds)
+- refund_method: Enum (Money, Voucher, Replacement)
 
 **Rules**:
 - Responses must be linked to valid refund requests
@@ -107,6 +108,13 @@ This document defines the entities, aggregates, and relationships for the Suppor
 - Rejection responses must provide clear reasoning
 
 ## Value Objects
+
+### Money
+**Purpose**: Represents monetary values consistently
+
+**Attributes**:
+- amount: Decimal
+- currency: String (e.g., "EUR")
 
 ### CaseTimeline
 **Purpose**: Track status changes and updates

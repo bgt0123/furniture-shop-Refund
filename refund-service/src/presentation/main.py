@@ -10,8 +10,8 @@ from presentation.refund_cases import router as refund_cases_router
 # Load configuration
 config = get_config()
 
-# Setup logging
-setup_logging(config.log_level)
+# Setup logging with INFO level
+setup_logging("INFO")
 logger = get_logger(__name__)
 
 # Initialize database
@@ -33,8 +33,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add error handling middleware
-app.middleware("http")(error_handler)
+# Add error handling middleware - temporarily commented for debugging
+# app.middleware("http")(error_handler)
 
 # Include routers
 app.include_router(refund_cases_router)

@@ -1,9 +1,8 @@
-import sqlite3
 from datetime import datetime
-from typing import List, Optional
+
+from domain.refund_request import RefundRequest, RefundRequestStatus
+
 from ..database.database_config import get_connection
-from domain.refund_request import RefundRequest
-from domain.refund_request import RefundRequestStatus
 
 
 class RefundRequestRepository:
@@ -14,17 +13,18 @@ class RefundRequestRepository:
         conn = get_connection()
         try:
             cursor = conn.cursor()
-            
+
             # Convert refund request to dictionary
             data = refund_request.to_dict()
             
+
+
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO refund_requests 
-                (refund_request_id, support_case_number, customer_id, product_ids, request_reason, 
-                 evidence_photos, status, decision_reason, refund_amount,
-                 decision_date, decision_agent_id, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO refund_requests
+                (refund_request_id, support_case_number, customer_id, product_ids, request_reason,
+                 evidence_photos, status, order_id, created_at, refund_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     data["refund_request_id"],
@@ -34,19 +34,16 @@ class RefundRequestRepository:
                     data["request_reason"],
                     ",".join(data["evidence_photos"]),
                     data["status"],
-                    data["decision_reason"],
-                    str(data["refund_amount"]["amount"]) if data["refund_amount"] else None,
-                    data["decision_date"],
-                    data["decision_agent_id"],
-                    data["created_at"]
+                    data["order_id"] or None,  # Convert empty string or None to SQL NULL
+                    data["created_at"],
+                    data["refund_id"] or None  # Convert empty string or None to SQL NULL
                 )
             )
             conn.commit()
-            print(f"Saved refund request {refund_request.refund_request_id}")
         finally:
             conn.close()
 
-    def find_by_id(self, refund_request_id: str) -> Optional[RefundRequest]:
+    def find_by_id(self, refund_request_id: str) -> RefundRequest | None:
         """Find a refund request by ID"""
         conn = get_connection()
         try:
@@ -56,30 +53,30 @@ class RefundRequestRepository:
                 (refund_request_id,)
             )
             row = cursor.fetchone()
-            
+
             if row:
                 return self._row_to_refund_request(row)
             return None
         finally:
             conn.close()
 
-    def find_by_support_case_number(self, case_number: str) -> List[RefundRequest]:
+    def find_by_support_case_number(self, case_number: str) -> list[RefundRequest]:
         """Find all refund requests for a support case"""
         conn = get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT * FROM refund_requests WHERE refund_case_id = ?",
+                "SELECT * FROM refund_requests WHERE support_case_number = ?",
                 (case_number,)
             )
             rows = cursor.fetchall()
-            
+
             requests = [self._row_to_refund_request(row) for row in rows if row]
             return [req for req in requests if req is not None]
         finally:
             conn.close()
 
-    def find_by_customer_id(self, customer_id: str) -> List[RefundRequest]:
+    def find_by_customer_id(self, customer_id: str) -> list[RefundRequest]:
         """Find all refund requests for a customer"""
         conn = get_connection()
         try:
@@ -89,55 +86,65 @@ class RefundRequestRepository:
                 (customer_id,)
             )
             rows = cursor.fetchall()
-            
+
             requests = [self._row_to_refund_request(row) for row in rows if row]
             return [req for req in requests if req is not None]
         finally:
             conn.close()
 
-    def find_all(self) -> List[RefundRequest]:
+    def find_all(self) -> list[RefundRequest]:
         """Find all refund requests"""
         conn = get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM refund_requests")
             rows = cursor.fetchall()
-            
+
             requests = [self._row_to_refund_request(row) for row in rows if row]
             return [req for req in requests if req is not None]
         finally:
             conn.close()
 
-    def _row_to_refund_request(self, row) -> Optional[RefundRequest]:
+    def _map_db_status_to_enum(self, db_status: str) -> RefundRequestStatus:
+        """Map database status values to RefundRequestStatus enum"""
+        status_mapping = {
+            "pending": RefundRequestStatus.SUBMITTED,
+            "approved": RefundRequestStatus.APPROVED,
+            "rejected": RefundRequestStatus.REJECTED,
+            "under_review": RefundRequestStatus.UNDER_REVIEW,
+            "decision_made": RefundRequestStatus.DECISION_MADE,
+            "completed": RefundRequestStatus.COMPLETED,
+            "cancelled": RefundRequestStatus.CANCELLED
+        }
+        return status_mapping.get(db_status, RefundRequestStatus.SUBMITTED)
+
+    def _row_to_refund_request(self, row) -> RefundRequest | None:
         """Convert database row to RefundRequest object"""
         if not row:
             return None
-            
+
         # Convert row to dictionary
         data = dict(row)
         
-        # Parse structured data
-        refund_amount = None
-        if data.get("refund_amount"):
-            from domain.value_objects.money import Money
-            refund_amount = Money.from_dict({
-                "amount": float(data["refund_amount"]),
-                "currency": "USD"
-            })
-        
+
+
         # Parse dates from strings
-        decision_date = None
-        if data.get("decision_date"):
-            decision_date = datetime.fromisoformat(data["decision_date"])
-        
-        created_at = None  
+        created_at = None
         if data.get("created_at"):
             created_at = datetime.fromisoformat(data["created_at"])
         
+        # Handle decision_date for backward compatibility (if present)
+        decision_date = None
+        if data.get("decision_date"):
+            try:
+                decision_date = datetime.fromisoformat(data["decision_date"])
+            except ValueError:
+                pass
+
         # Extract from comma-separated strings
         product_ids = data.get("product_ids", "").split(",") if data.get("product_ids") else []
         evidence_photos = data.get("evidence_photos", "").split(",") if data.get("evidence_photos") else []
-        
+
         return RefundRequest(
             refund_request_id=data["refund_request_id"],
             support_case_number=data.get("support_case_number", "unknown-case"),
@@ -145,10 +152,9 @@ class RefundRequestRepository:
             product_ids=product_ids,
             request_reason=data["request_reason"],
             evidence_photos=evidence_photos,
-            status=RefundRequestStatus(data.get("status", "pending")),
-            decision_reason=data.get("decision_reason", ""),
-            refund_amount=refund_amount,
-            decision_date=decision_date,
-            decision_agent_id=data.get("decision_agent_id", "unknown-agent"),
-            created_at=created_at
+            status=self._map_db_status_to_enum(data.get("status", "pending")),
+            order_id=data.get("order_id"),
+            created_at=created_at,
+            updated_at=decision_date or created_at,  # Use decision_date if available, else created_at
+            refund_id=data.get("refund_id")
         )

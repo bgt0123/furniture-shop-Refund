@@ -61,7 +61,8 @@ class CreateRefundRequest:
             product_ids=product_ids,
             request_reason=request_reason,
             evidence_photos=evidence_photos or [],
-            status=RefundRequestStatus.PENDING
+            status=RefundRequestStatus.SUBMITTED,
+            order_id=order_id
         )
         
         # Save refund request to our repository

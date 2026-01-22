@@ -31,7 +31,6 @@ description: "Task list for Support and Refund Service Workflow implementation"
 - **Application layer**: `*/src/application/`
 - **Infrastructure layer**: `*/src/infrastructure/`
 - **Presentation layer**: `*/src/presentation/`
-- **Tests**: `*/tests/`
 
 ## Phase 1: Setup (Shared Infrastructure)
 
@@ -168,7 +167,7 @@ description: "Task list for Support and Refund Service Workflow implementation"
 - [x] T060 Code cleanup and refactoring across all services
 - [x] T061 [P] Performance optimization for API endpoints and database queries
 - [x] T063 [P] Add comprehensive logging and observability across services
-- [ ] T064 Implement API versioning and backward compatibility
+- [x] T064 Implement API versioning and backward compatibility
 - [x] T065 Run quickstart.md validation to ensure development setup instructions work
 - [x] T066 Add comprehensive error handling and user-friendly error messages
 - [x] T067 Implement input validation and sanitization across all endpoints

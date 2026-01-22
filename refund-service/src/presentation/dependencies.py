@@ -1,7 +1,9 @@
 """Dependency injection setup for refund service"""
 
 from infrastructure.repositories.refund_request_repository import RefundRequestRepository
+from infrastructure.repositories.refund_response_repository import RefundResponseRepository
 from domain.events.create_refund_request import CreateRefundRequest
+from domain.events.create_refund_response import CreateRefundResponse
 import httpx
 import os
 
@@ -11,6 +13,7 @@ class Dependencies:
     
     def __init__(self):
         self.refund_request_repository = RefundRequestRepository()
+        self.refund_response_repository = RefundResponseRepository()
         
         class SupportCaseRepository:
             """Repository that calls the actual Support Service API"""
@@ -86,6 +89,9 @@ class Dependencies:
         self.create_refund_request = CreateRefundRequest(
             self.refund_request_repository, 
             self.support_case_repository
+        )
+        self.create_refund_response = CreateRefundResponse(
+            self.refund_response_repository
         )
 
 

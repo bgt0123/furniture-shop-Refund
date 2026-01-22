@@ -11,7 +11,6 @@ from .schema import (
     CREATE_REFUND_CASES_TABLE,
     CREATE_REFUND_REQUESTS_TABLE,
     CREATE_REFUND_RESPONSES_TABLE,
-    CREATE_CASE_TIMELINE_TABLE,
     REFUND_SERVICE_INDEXES
 )
 
@@ -20,28 +19,24 @@ def get_database_path() -> str:
     config = get_config()
     return config.refund_db_path
 
-# Simple thread-local storage for connection pooling
-_local = threading.local()
-
 def get_connection() -> sqlite3.Connection:
-    """Get database connection with proper configuration (connection pool enabled)"""
+    """Get database connection with proper configuration"""
     db_path = get_database_path()
     
     # Ensure directory exists
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     
-    # Use thread-local connection to avoid opening new connections per thread
-    if not hasattr(_local, 'connection') or _local.connection is None:
-        _local.connection = sqlite3.connect(db_path)
-        _local.connection.row_factory = sqlite3.Row  # Return rows as dictionaries
-        
-        # Enable foreign key constraints and performance optimizations
-        _local.connection.execute("PRAGMA foreign_keys = ON")
-        _local.connection.execute("PRAGMA journal_mode = WAL")  # Better concurrency
-        _local.connection.execute("PRAGMA synchronous = NORMAL")  # Balance safety/performance
-        _local.connection.execute("PRAGMA cache_size = -64000")  # 64MB cache
-        
-    return _local.connection
+    # Create a new connection for each request
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row  # Return rows as dictionaries
+    
+    # Enable foreign key constraints and performance optimizations
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")  # Better concurrency
+    conn.execute("PRAGMA synchronous = NORMAL")  # Balance safety/performance
+    conn.execute("PRAGMA cache_size = -64000")  # 64MB cache
+    
+    return conn
 
 @contextmanager
 def transaction():
@@ -57,12 +52,23 @@ def transaction():
 
 def init_database() -> None:
     """Initialize database with schema and indexes"""
-    conn = get_connection()
+    # Create a new connection for initialization
+    db_path = get_database_path()
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     
     try:
         # Create tables with debug logging
+        print("Creating refund_cases table...")
+        conn.execute(CREATE_REFUND_CASES_TABLE)
+        
         print("Creating refund_requests table...")
         conn.execute(CREATE_REFUND_REQUESTS_TABLE)
+        
+        print("Creating refund_responses table...")
+        conn.execute(CREATE_REFUND_RESPONSES_TABLE)
         
         # Create indexes
         for index_sql in REFUND_SERVICE_INDEXES:

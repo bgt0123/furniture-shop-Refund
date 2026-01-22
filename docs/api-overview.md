@@ -15,7 +15,7 @@ This document provides comprehensive API documentation for the Furniture Shop Su
 - **Update Case**: `PUT /support-cases/{case_number}`
 - **Close Case**: `POST /support-cases/{case_number}/close`
 
-#### Responses API
+#### Support Case Responses API
 - **Add Response**: `POST /support-cases/{case_number}/responses`
 - **Get Responses**: `GET /support-cases/{case_number}/responses`
 
@@ -24,12 +24,14 @@ This document provides comprehensive API documentation for the Furniture Shop Su
 #### Refund Cases API
 - **Create Refund Request**: `POST /refund-cases/`
 - **Get All Refund Cases**: `GET /refund-cases/`
-- **Get Refund Case Details**: `GET /refund-cases/{refund_case_id}`
-- **Get Customer's Refund Cases**: `GET /refund-cases/customer/{customer_id}`
+- **Get Case by ID**: `GET /refund-cases/{refund_case_id}`
+- **Get Detailed Case**: `GET /refund-cases/{refund_case_id}/detailed`
+- **Get Customer's Cases**: `GET /refund-cases/customer/{customer_id}`
 
-#### Refund Decisions API
+#### Refund Decision & Evidence API
 - **Make Refund Decision**: `POST /refund-cases/{refund_case_id}/decisions`
-- **Get Decision Evidence**: `GET /refund-cases/{refund_case_id}/evidence`
+- **Get Evidence**: `GET /refund-cases/{refund_case_id}/evidence`
+- **Get Responses**: `GET /refund-cases/{refund_case_id}/responses`
 
 ## Authentication Requirements
 
@@ -46,11 +48,24 @@ This document provides comprehensive API documentation for the Furniture Shop Su
 {
   "case_number": "SC-18205F38",
   "customer_id": "cust-123",
+  "case_type": "Refund",
   "subject": "Defective product",
   "description": "Detailed description of the issue",
-  "case_type": "Refund",
   "status": "Open",
-  "refund_request_id": "RR-AB54A839",
+  "refund_request_ids": ["RR-AB54A839"],
+  "assigned_agent_id": "agent-001",
+  "order_id": "ORD-12345",
+  "product_ids": ["FURN-001", "FURN-002"],
+  "delivery_date": "2026-01-20",
+  "comments": [
+    {
+      "comment_id": "COM-001",
+      "author_id": "cust-123",
+      "author_type": "customer",
+      "content": "Initial issue report"
+    }
+  ],
+  "case_history": [],
   "created_at": "2026-01-21T14:36:31.769374",
   "updated_at": "2026-01-21T14:36:31.769374"
 }
@@ -65,9 +80,13 @@ This document provides comprehensive API documentation for the Furniture Shop Su
   "order_id": "ORD-12345",
   "product_ids": ["FURN-001", "FURN-002"],
   "status": "pending",
+  "request_reason": "Product arrived damaged",
+  "evidence_photos": ["damage_photo1.jpg"],
   "decision_reason": "Refund approved due to product defect",
+  "refund_amount": {"amount": 199.99, "currency": "USD"},
   "decision_date": "2026-01-21T16:58:10.892",
-  "decision_agent_id": "agent-001"
+  "decision_agent_id": "agent-001",
+  "created_at": "2026-01-21T14:36:31.769374"
 }
 ```
 
@@ -99,6 +118,19 @@ This document provides comprehensive API documentation for the Furniture Shop Su
 ## Versioning
 
 Current API Version: **v1**
+
+## Recent Changes
+
+### Service Health (January 2026)
+- **Refund Service**: Fixed startup errors related to database schema imports
+- **Both Services**: Enhanced database initialization with proper table creation
+- **Data Models**: Updated to reflect actual API structure
+- **Endpoints**: Added comprehensive endpoint listing based on current implementation
+
+### Key Fixes
+- Removed obsolete `CREATE_CASE_TIMELINE_TABLE` import from refund service
+- Fixed SQL query using `support_case_number` column instead of `refund_case_id`
+- Improved database initialization with table drops to ensure clean schema creation
 
 ## Testing
 

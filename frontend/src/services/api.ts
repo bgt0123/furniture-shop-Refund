@@ -122,12 +122,6 @@ export const supportApi = {
 
 
 
-  assignAgent: async (caseId: string, agentId: string) => {
-    return makeRequest(`${SUPPORT_SERVICE_BASE_URL}/support-cases/${caseId}/assign/${agentId}`, {
-      method: 'PUT'
-    });
-  },
-
   addResponse: async (caseId: string, responseData: any) => {
     return makeRequest(`${SUPPORT_SERVICE_BASE_URL}/support-cases/${caseId}/responses`, {
       method: 'POST',

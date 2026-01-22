@@ -9,8 +9,8 @@ const Home: React.FC = () => {
           🪑 Furniture Shop Support
         </h1>
         <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
-          Welcome to our customer support portal. Choose the dashboard that fits
-          your needs.
+          Welcome to the Furniture Shop Customer Portal powered by our microservices architecture. 
+          Choose the dashboard for your specific needs.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -21,19 +21,19 @@ const Home: React.FC = () => {
             <div className="icon mb-4 text-4xl">📋</div>
             <h2 className="text-2xl font-bold mb-2">Support Case Dashboard</h2>
             <p className="mb-4 opacity-90">
-              Create and manage support cases for product issues, questions, or
-              general inquiries
+              Comprehensive customer support management powered by Support Service (Port 8001). 
+              Handle general inquiries, product assistance, and initiate refund workflows.
             </p>
             <div className="features text-left space-y-2 text-sm opacity-80">
               <div className="flex items-center">
-                • Create new support cases
+                • Full support case lifecycle management
               </div>
               <div className="flex items-center">
-                • Track case status and updates
+                • Real-time status tracking and comments
               </div>
-              <div className="flex items-center">• Upload evidence photos</div>
+              <div className="flex items-center">• Direct refund case creation</div>
               <div className="flex items-center">
-                • Communicate with support agents
+                • Agent responses and timeline tracking
               </div>
             </div>
             <div className="mt-6 text-lg font-semibold">
@@ -48,15 +48,15 @@ const Home: React.FC = () => {
             <div className="icon mb-4 text-4xl">💸</div>
             <h2 className="text-2xl font-bold mb-2">Refund Case Dashboard</h2>
             <p className="mb-4 opacity-90">
-              Submit and track refund requests for damaged, defective, or
-              incorrect products
+              Specialized refund service (Port 8002). 
+              Process financial refunds with integrated support case workflows.
             </p>
             <div className="features text-left space-y-2 text-sm opacity-80">
-              <div className="flex items-center">• Edit refund requests</div>
-              <div className="flex items-center">• Upload damage evidence</div>
-              <div className="flex items-center">• Track refund status</div>
-              <div className="flex items-center">• Handles money and legal obligations</div>
-              <div className="flex items-center">• Receive refund decisions regarding their eligibility</div>
+              <div className="flex items-center">• Dedicated refund request lifecycle</div>
+              <div className="flex items-center">• Evidence upload and validation from support agent</div>
+              <div className="flex items-center">• Agent approval/rejection workflow</div>
+              <div className="flex items-center">• Integrated with support service APIs</div>
+              <div className="flex items-center">• Status persistence across services</div>
             </div>
             <div className="mt-6 text-lg font-semibold">
               Go to Refund Cases →

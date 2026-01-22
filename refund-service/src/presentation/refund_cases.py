@@ -44,8 +44,6 @@ async def create_refund_request(request: CreateRefundRequest):
     """Create a new refund request"""
     dependencies = get_dependencies()
     
-    print(f"🐛 DEBUG: Creating refund request for case {request.case_number}")
-    
     try:
         result = dependencies.create_refund_request.execute(
             support_case_number=request.case_number,
@@ -82,21 +80,34 @@ async def create_refund_request(request: CreateRefundRequest):
                 else:
                     created_at_str = str(created_at_obj)
             
+            # Handle updated_at conversion
+            updated_at_obj = getattr(saved_case, 'updated_at', None)
+            updated_at_str = "2025-01-18T12:00:00Z"
+            if updated_at_obj:
+                if hasattr(updated_at_obj, 'isoformat'):
+                    updated_at_str = updated_at_obj.isoformat()
+                else:
+                    updated_at_str = str(updated_at_obj)
+            
+            order_id_value = getattr(saved_case, 'order_id', None)
+            if order_id_value is None:
+                order_id_value = request.order_id or "ORD-unknown"
+            
             return RefundCaseResponse(
                 refund_case_id=refund_request_id,
                 case_number=getattr(saved_case, 'case_number', request.case_number),
                 customer_id=getattr(saved_case, 'customer_id', request.customer_id),
-                order_id=getattr(saved_case, 'order_id', request.order_id),
+                order_id=order_id_value,
                 status=status_str,
                 created_at=created_at_str,
-                updated_at=getattr(saved_case, 'updated_at', "2025-01-18T12:00:00Z")
+                updated_at=updated_at_str
             )
         else:
             return RefundCaseResponse(
                 refund_case_id=refund_request_id,
                 case_number=request.case_number,
                 customer_id=request.customer_id,
-                order_id=request.order_id,
+                order_id=request.order_id or "ORD-unknown",
                 status="pending",
                 created_at="2025-01-18T12:00:00Z",
                 updated_at="2025-01-18T12:00:00Z"
@@ -124,56 +135,81 @@ async def get_refund_cases_info():
     }
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @router.get("/", response_model=List[RefundCaseResponse])
 async def get_all_refund_cases():
     """Get all refund cases (for agents)"""
-    dependencies = get_dependencies()
-    
-    # Get all refund cases
-    refund_cases = dependencies.refund_request_repository.find_all()
-    
-    # Convert repository results to response models
-    response_cases = []
-    for case in refund_cases:
-        # Extract values directly from RefundRequest object using getattr
-        # to avoid issues with to_dict() method
-        refund_case_id = getattr(case, 'refund_request_id', "RC-unknown")
-        support_case_number = getattr(case, 'support_case_number', "unknown")
-        customer_id = getattr(case, 'customer_id', "unknown-customer")
+    try:
+        dependencies = get_dependencies()
         
-        # Use first product as order_id
-        product_ids = getattr(case, 'product_ids', [])
-        order_id = product_ids[0] if product_ids else "ORD-unknown"
+        # Get all refund cases
+        refund_cases = dependencies.refund_request_repository.find_all()
+
         
-        # Handle status enum
-        status_val = getattr(case, 'status', None)
-        status_str = "pending"
-        if status_val:
-            if hasattr(status_val, 'value'):
-                status_str = status_val.value
+        # Convert repository results to response models
+        response_cases = []
+        for case in refund_cases:
+
+            # Extract values directly from RefundRequest object using getattr
+            # to avoid issues with to_dict() method
+            refund_case_id = getattr(case, 'refund_request_id', "RC-unknown")
+            support_case_number = getattr(case, 'support_case_number', "unknown")
+            customer_id = getattr(case, 'customer_id', "unknown-customer")
+            
+            # Use actual order_id from domain object
+            order_id = getattr(case, 'order_id', "ORD-unknown")
+            if order_id is None:
+                order_id = "ORD-unknown"
+            
+            # Handle status enum
+            status_val = getattr(case, 'status', None)
+            status_str = "pending"
+            if status_val:
+                # Check if it's a RefundRequestStatus enum
+                if hasattr(status_val, '__class__') and hasattr(status_val.__class__, '__name__') and status_val.__class__.__name__ == 'RefundRequestStatus':
+                    status_str = status_val.value  # Use the enum value directly
+                elif hasattr(status_val, 'value'):
+                    status_str = status_val.value
+                else:
+                    status_str = str(status_val)
+            
+            # Get created_at safely
+            created_at_val = getattr(case, 'created_at', None)
+            if created_at_val and hasattr(created_at_val, 'isoformat'):
+                created_at_str = created_at_val.isoformat()
             else:
-                status_str = str(status_val)
-        
-        # Get created_at safely
-        created_at_val = getattr(case, 'created_at', None)
-        if created_at_val and hasattr(created_at_val, 'isoformat'):
-            created_at_str = created_at_val.isoformat()
-        else:
-            created_at_str = str(created_at_val) if created_at_val else "2025-01-18T12:00:00Z"
-        
-        response_cases.append(
-            RefundCaseResponse(
-                refund_case_id=refund_case_id,
-                case_number=support_case_number,
-                customer_id=customer_id,
-                order_id=order_id,
-                status=status_str,
-                created_at=created_at_str,
-                updated_at="2025-01-18T12:00:00Z"
+                created_at_str = str(created_at_val) if created_at_val else "2025-01-18T12:00:00Z"
+            
+            # Get updated_at safely
+            updated_at_val = getattr(case, 'updated_at', None)
+            if updated_at_val and hasattr(updated_at_val, 'isoformat'):
+                updated_at_str = updated_at_val.isoformat()
+            elif updated_at_val:
+                updated_at_str = str(updated_at_val)
+            else:
+                updated_at_str = created_at_str  # Fallback to created_at
+            
+
+            response_cases.append(
+                RefundCaseResponse(
+                    refund_case_id=refund_case_id,
+                    case_number=support_case_number,
+                    customer_id=customer_id,
+                    order_id=order_id,
+                    status=status_str,
+                    created_at=created_at_str,
+                    updated_at=updated_at_str
+                )
             )
-        )
-    
-    return response_cases
+        
+
+        return response_cases
+    except Exception as e:
+        logger.error(f"Error in get_all_refund_cases: {e}", exc_info=True)
+        raise
 
 
 @router.get("/customer/{customer_id}", response_model=List[RefundCaseResponse])
@@ -210,7 +246,7 @@ async def get_customer_refund_cases(customer_id: str):
                 refund_case_id=refund_case_id if refund_case_id else f"RC-{customer_id}",
                 case_number=case_number if case_number else "SC-unknown",
                 customer_id=getattr(case, 'customer_id', customer_id),
-                order_id=getattr(case, 'order_id', "ORD-unknown"),
+                order_id=getattr(case, 'order_id', "ORD-unknown") or "ORD-unknown",
                 status=status_str,
                 created_at=getattr(case, 'created_at', "2025-01-18T12:00:00Z"),
                 updated_at=getattr(case, 'updated_at', "2025-01-18T12:00:00Z")
@@ -233,33 +269,43 @@ async def make_refund_decision(refund_request_id: str, request: RefundDecisionRe
         raise HTTPException(status_code=404, detail="Refund request not found")
     
     # Convert response type enum
-    from domain.refund_response import ResponseType
+    from domain.refund_response import ResponseType, RefundMethod
+    from domain.value_objects.money import Money
     try:
         response_type = ResponseType(request.response_type)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid response type: {request.response_type}")
     
-    # Create refund response
-    from domain.refund_response import RefundResponse, RefundMethod
-    from domain.value_objects.money import Money
-    
-    refund_amount = None
+    # Convert refund method
     refund_method = None
-    if request.refund_amount:
-        refund_amount = Money.from_dict({"amount": float(request.refund_amount), "currency": "USD"})
     if request.refund_method:
-        refund_method = RefundMethod(request.refund_method)
+        try:
+            refund_method = RefundMethod(request.refund_method)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid refund method: {request.refund_method}")
     
-    response = RefundResponse(
-        response_id=f"RESP-{refund_request_id}",
-        refund_request_id=refund_request_id,
-        agent_id=request.agent_id,
-        response_type=response_type,
-        response_content=request.response_content,
-        refund_amount=refund_amount,
-        refund_method=refund_method,
-        attachments=request.attachments or []
-    )
+    # Convert refund amount
+    refund_amount = None
+    if request.refund_amount:
+        try:
+            refund_amount = Money.from_dict({"amount": float(request.refund_amount), "currency": "USD"})
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid refund amount: {request.refund_amount}")
+    
+    # Create and save refund response
+    try:
+        response_result = dependencies.create_refund_response.execute(
+            refund_request_id=refund_request_id,
+            agent_id=request.agent_id,
+            response_type=response_type,
+            response_content=request.response_content,
+            refund_amount=refund_amount,
+            refund_method=refund_method,
+            attachments=request.attachments or []
+        )
+        response = response_result["refund_response"]
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     # Apply decision to refund request
     if response_type == ResponseType.APPROVAL:
@@ -392,7 +438,7 @@ async def get_refund_case(refund_case_id: str):
         "refund_case_id": refund_case_id_val if refund_case_id_val else f"RC-{refund_case_id}",
         "case_number": case_number if case_number else "SC-unknown",
         "customer_id": getattr(refund_case, 'customer_id', "unknown-customer"),
-        "order_id": getattr(refund_case, 'order_id', "ORD-unknown"),
+        "order_id": getattr(refund_case, 'order_id', "ORD-unknown") or "ORD-unknown",
         "status": getattr(refund_case, 'status', "pending"),
         "created_at": getattr(refund_case, 'created_at', "2025-01-18T12:00:00Z"),
         "updated_at": getattr(refund_case, 'updated_at', "2025-01-18T12:00:00Z")
@@ -437,7 +483,7 @@ async def get_refund_case_detailed(refund_case_id: str):
         "refund_case_id": refund_case_id_val if refund_case_id_val else f"RC-{refund_case_id}",
         "case_number": case_number if case_number else "SC-unknown",
         "customer_id": getattr(refund_case, 'customer_id', "unknown-customer"),
-        "order_id": getattr(refund_case, 'order_id', "ORD-unknown"),
+        "order_id": getattr(refund_case, 'order_id', "ORD-unknown") or "ORD-unknown",
         "status": status_str,
         "created_at": getattr(refund_case, 'created_at', "2025-01-18T12:00:00Z"),
         "updated_at": getattr(refund_case, 'updated_at', "2025-01-18T12:00:00Z"),
@@ -445,6 +491,36 @@ async def get_refund_case_detailed(refund_case_id: str):
         "product_ids": [],
         "evidence_photos": [],
         "support_case_details": None
+    }
+
+
+@router.get("/{refund_case_id}/responses")
+async def get_refund_responses(refund_case_id: str):
+    """Get all responses for a refund request"""
+    dependencies = get_dependencies()
+    
+    # Find refund responses
+    refund_responses = dependencies.refund_response_repository.find_by_refund_request_id(refund_case_id)
+    
+    # Convert to response models
+    responses = []
+    for response in refund_responses:
+        responses.append({
+            "response_id": response.response_id,
+            "refund_request_id": response.refund_request_id,
+            "agent_id": response.agent_id,
+            "response_type": response.response_type.value,
+            "response_content": response.response_content,
+            "refund_amount": response.refund_amount.to_dict() if response.refund_amount else None,
+            "refund_method": response.refund_method.value if response.refund_method else None,
+            "attachments": response.attachments,
+            "timestamp": response.timestamp.isoformat()
+        })
+    
+    return {
+        "refund_case_id": refund_case_id,
+        "responses": responses,
+        "total_responses": len(responses)
     }
 
 

@@ -44,7 +44,6 @@ class AddComment:
             raise ValueError(f"Support case {case_number} not found")
         
         # Add comment
-        print(f"DEBUG: Before adding comment, case has {len(support_case.comments) if support_case.comments else 0} comments")
         comment = support_case.add_comment(
             author_id=author_id,
             author_type=author_type,
@@ -53,7 +52,6 @@ class AddComment:
             attachments=attachments if attachments is not None else [],
             is_internal=is_internal
         )
-        print(f"DEBUG: After adding comment, case has {len(support_case.comments) if support_case.comments else 0} comments")
         
         # Save to repository
         self.support_case_repository.save(support_case)

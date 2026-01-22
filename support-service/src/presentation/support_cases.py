@@ -38,6 +38,7 @@ class SupportCaseResponse(BaseModel):
     product_ids: Optional[List[str]] = None
     delivery_date: Optional[str] = None
     comments: Optional[List[dict]] = None
+    case_history: Optional[List[dict]] = None
     created_at: str
     updated_at: str
 
@@ -109,20 +110,20 @@ async def create_support_case(request: CreateSupportCaseRequest):
 
 
 @router.get("/{case_number}", response_model=SupportCaseResponse)
-async def get_support_case(case_number: str):
-    """Get a support case by ID"""
+async def get_support_case(case_number: str, include_history: bool = False, user_role: str = "customer"):
+    """Get a support case by ID
+    
+    Args:
+        include_history: Include structured case history instead of raw comments
+        user_role: Role of user accessing the case ("customer" or "agent")
+    """
     try:
         dependencies = get_dependencies()
         
         # Find support case
         support_case = dependencies.support_case_repository.find_by_case_number(case_number)
         
-        print(f"DEBUG: Support case found: {support_case is not None}")
-        if support_case:
-            print(f"DEBUG: Case number: {support_case.case_number}")
-            print(f"DEBUG: Comments attribute exists: {hasattr(support_case, 'comments')}")
-            if hasattr(support_case, 'comments'):
-                print(f"DEBUG: Comments list: {support_case.comments}")
+
         
         if not support_case:
             raise HTTPException(
@@ -130,22 +131,9 @@ async def get_support_case(case_number: str):
                 detail=f"Support case {case_number} not found"
             )
         
-        # Format comments for response
-        comments_list = support_case.comments if support_case.comments is not None else []
-        print(f"DEBUG: Processing {len(comments_list)} comments")
-        formatted_comments = []
-        for i, comment in enumerate(comments_list):
-            print(f"DEBUG: Comment {i}: {comment}")
-            formatted_comments.append({
-                "comment_id": comment.comment_id,
-                "author_id": comment.author_id,
-                "author_type": comment.author_type,
-                "content": comment.content,
-                "comment_type": comment.comment_type.value,
-                "timestamp": comment.timestamp.isoformat(),
-                "attachments": comment.attachments,
-                "is_internal": comment.is_internal
-            })
+        # Use the new case history feature
+        include_history_param = include_history
+        case_data = support_case.to_dict(include_history=include_history_param, user_role=user_role)
         
         return SupportCaseResponse(
             case_number=support_case.case_number,
@@ -159,7 +147,8 @@ async def get_support_case(case_number: str):
             order_id=support_case.order_id,
             product_ids=support_case.product_ids,
             delivery_date=support_case.delivery_date.isoformat() if support_case.delivery_date else None,
-            comments=formatted_comments,
+            comments=case_data.get("comments"),
+            case_history=case_data.get("case_history"),
             created_at=support_case.created_at.isoformat(),
             updated_at=support_case.updated_at.isoformat()
         )
@@ -220,34 +209,7 @@ async def get_all_support_cases():
     ]
 
 
-# The add_response endpoint is deprecated - use add_comment instead
-
-
-@router.put("/{case_number}/assign/{agent_id}")
-async def assign_agent(case_number: str, agent_id: str):
-    """Assign an agent to a support case"""
-    dependencies = get_dependencies()
-    
-    try:
-        result = dependencies.assign_agent.execute(
-            case_number=case_number,
-            agent_id=agent_id
-        )
-        
-        support_case = result["support_case"]
-        
-        return {
-            "case_number": support_case.case_number,
-            "assigned_agent_id": support_case.assigned_agent_id,
-            "status": support_case.status.value,
-            "updated_at": support_case.updated_at.isoformat()
-        }
-        
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+# add_response endpoint has been removed - use add_comment instead
 
 
 class UpdateSupportCaseRequest(BaseModel):
@@ -461,24 +423,3 @@ async def add_comment(case_number: str, request: AddCommentRequest):
         )
 
 
-@router.delete("/{case_number}")
-async def delete_case(case_number: str):
-    """Delete a support case"""
-    dependencies = get_dependencies()
-    
-    try:
-        result = dependencies.delete_case.execute(case_number=case_number)
-        
-        support_case = result["support_case"]
-        
-        return {
-            "case_number": support_case.case_number,
-            "is_deleted": support_case.is_deleted,
-            "updated_at": support_case.updated_at.isoformat()
-        }
-        
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )

@@ -74,11 +74,7 @@ class SupportCase:
         self.status = CaseStatus.CLOSED
         self.updated_at = datetime.utcnow()
 
-    def delete_case(self) -> None:
-        """Mark support case as deleted"""
-        self._ensure_case_not_deleted("delete")
-        self.is_deleted = True
-        self.updated_at = datetime.utcnow()
+
 
     def _ensure_case_not_closed_or_deleted(self, operation: str) -> None:
         """Ensure case is not closed or deleted before performing an operation"""
@@ -202,9 +198,41 @@ class SupportCase:
             is_internal=is_internal
         )
 
-    def get_timeline_events(self) -> List[Comment]:
-        """Get all timeline events sorted by timestamp"""
-        return sorted(self.comments, key=lambda c: c.timestamp)
+    def get_case_history(self, user_role: str = "customer"):
+        """Get all case history events for the specified user role"""
+        from .value_objects.case_history import CaseHistory, TimelineEventType
+        history_events = []
+        
+        # Add case creation event
+        creation_event = CaseHistory.create_system_event(
+            event_type=TimelineEventType.CASE_CREATED,
+            content=f"Support case #{self.case_number} created",
+            case_number=self.case_number,
+            metadata={"customer_id": self.customer_id, "case_type": self.case_type.value}
+        )
+        history_events.append(creation_event)
+        
+        # Add comments as history events
+        for comment in self.comments:
+            history_event = CaseHistory.from_comment(comment)
+            
+            # Filter by visibility based on user role
+            if user_role == "customer" and history_event.is_visible_to_customer():
+                history_events.append(history_event)
+            elif user_role == "agent" and history_event.is_visible_to_agent():
+                history_events.append(history_event)
+        
+        # Add case closure event if closed
+        if self.status == CaseStatus.CLOSED:
+            closure_event = CaseHistory.create_system_event(
+                event_type=TimelineEventType.CASE_CLOSED,
+                content=f"Support case #{self.case_number} closed",
+                case_number=self.case_number
+            )
+            history_events.append(closure_event)
+        
+        # Sort by timestamp
+        return sorted(history_events, key=lambda e: e.timestamp)
 
     def get_visible_comments(self) -> List[Comment]:
         """Get comments that should be visible in case timeline"""
@@ -214,16 +242,20 @@ class SupportCase:
         """Merge existing comment system into this domain model"""
         self.comments.extend(existing_comments)
 
-    def to_dict(self) -> dict:
-        """Convert support case to dictionary for serialization"""
-        return {
+    def to_dict(self, include_history: bool = False, user_role: str = "customer") -> dict:
+        """Convert support case to dictionary for serialization
+        
+        Args:
+            include_history: Whether to include structured case history instead of raw comments
+            user_role: Role of user requesting the data ("customer" or "agent")
+        """
+        base_data = {
             "case_number": self.case_number,
             "customer_id": self.customer_id,
             "case_type": self.case_type.value,
             "subject": self.subject,
             "description": self.description,
             "refund_request_ids": self.refund_request_ids,
-            "comments": [c.to_dict() for c in self.comments],
             "status": self.status.value,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
@@ -233,6 +265,18 @@ class SupportCase:
             "delivery_date": self.delivery_date.isoformat() if self.delivery_date else None,
             "is_deleted": self.is_deleted
         }
+        
+        if include_history:
+            # Include structured case history
+            from .value_objects.case_history import CaseHistory
+            base_data["case_history"] = [
+                event.to_dict() for event in self.get_case_history(user_role)
+            ]
+        else:
+            # Backward compatibility: include raw comments
+            base_data["comments"] = [c.to_dict() for c in self.comments]
+            
+        return base_data
 
     def __str__(self) -> str:
         return f"SupportCase {self.case_number} ({self.status.value})"

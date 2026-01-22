@@ -20,12 +20,10 @@ CREATE TABLE IF NOT EXISTS refund_requests (
     product_ids TEXT NOT NULL, -- comma-separated product IDs
     request_reason TEXT NOT NULL,
     evidence_photos TEXT, -- comma-separated file paths
-    status TEXT NOT NULL CHECK(status IN ('pending', 'approved', 'rejected')),
-    decision_reason TEXT,
-    refund_amount TEXT,
-    decision_date TIMESTAMP,
-    decision_agent_id TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    status TEXT NOT NULL CHECK(status IN ('pending', 'approved', 'rejected', 'decision_made', 'completed', 'cancelled')),
+    order_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    refund_id TEXT
 );
 """
 
@@ -44,17 +42,7 @@ CREATE TABLE IF NOT EXISTS refund_responses (
 );
 """
 
-CREATE_CASE_TIMELINE_TABLE = """
-CREATE TABLE IF NOT EXISTS case_timeline (
-    timeline_id TEXT PRIMARY KEY,
-    refund_case_id TEXT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status TEXT,
-    actor TEXT,
-    notes TEXT,
-    FOREIGN KEY (refund_case_id) REFERENCES refund_cases(refund_case_id)
-);
-"""
+# Case timeline table removed - using refund_responses for audit trail instead
 
 # Indexes for performance
 REFUND_SERVICE_INDEXES = [
