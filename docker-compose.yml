@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  support-service:
+    build: ./support-service
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=sqlite:///./support.db
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+    volumes:
+      - ./support-service/data:/app/data
+
+  refund-service:
+    build: ./refund-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=sqlite:///./refund.db
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+      - SUPPORT_SERVICE_URL=http://support-service:8001
+    volumes:
+      - ./refund-service/data:/app/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"

@@ -1,0 +1,144 @@
+openapi: 3.0.0
+info:
+  title: Refund Service API
+  version: 1.0.0
+  description: API for processing refund decisions and financial operations
+
+paths:
+  # Refund Decision Endpoints
+  /api/v1/refund-requests/{refund_request_id}/approve:
+    post:
+      summary: Approve refund request
+      parameters:
+        - name: refund_request_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundDecision'
+      responses:
+        '200':
+          description: Refund approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundDecisionResult'
+
+  /api/v1/refund-requests/{refund_request_id}/reject:
+    post:
+      summary: Reject refund request
+      parameters:
+        - name: refund_request_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundDecision'
+      responses:
+        '200':
+          description: Refund rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundDecisionResult'
+
+  /api/v1/refund-requests/{refund_request_id}/request-info:
+    post:
+      summary: Request additional information
+      parameters:
+        - name: refund_request_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InfoRequest'
+      responses:
+        '200':
+          description: Information request submitted
+
+  # Refund Processing
+  /api/v1/refunds/{refund_id}/process:
+    post:
+      summary: Process approved refund
+      parameters:
+        - name: refund_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundProcessing'
+      responses:
+        '200':
+          description: Refund processed successfully
+
+components:
+  schemas:
+    RefundDecision:
+      type: object
+      required:
+        - agent_id
+        - decision_reason
+      properties:
+        agent_id:
+          type: string
+        decision_reason:
+          type: string
+        refund_method:
+          type: string
+          enum: ["money", "voucher", "replacement"]
+
+    RefundDecisionResult:
+      type: object
+      properties:
+        refund_request_id:
+          type: string
+        decision:
+          type: string
+          enum: ["approved", "rejected"]
+        agent_id:
+          type: string
+        processed_at:
+          type: string
+          format: date-time
+
+    InfoRequest:
+      type: object
+      required:
+        - agent_id
+        - requested_info
+      properties:
+        agent_id:
+          type: string
+        requested_info:
+          type: string
+
+    RefundProcessing:
+      type: object
+      required:
+        - processor_id
+      properties:
+        processor_id:
+          type: string
+        processing_method:
+          type: string
+          enum: ["instant", "bank_transfer", "voucher_issuance"]

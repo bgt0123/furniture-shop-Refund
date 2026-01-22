@@ -1,0 +1,707 @@
+{
+  "customers": [
+    {
+      "id": "customer_001",
+      "name": "John Smith",
+      "email": "john.smith@email.com"
+    },
+    {
+      "id": "customer_002",
+      "name": "Sarah Johnson",
+      "email": "sarah.johnson@email.com"
+    },
+    {
+      "id": "customer_003",
+      "name": "Michael Brown",
+      "email": "michael.brown@email.com"
+    },
+    {
+      "id": "customer_004",
+      "name": "Emily Davis",
+      "email": "emily.davis@email.com"
+    },
+    {
+      "id": "customer_005",
+      "name": "David Wilson",
+      "email": "david.wilson@email.com"
+    }
+  ],
+  "products": [
+    {
+      "id": "FURN-001",
+      "name": "Modern Leather Sofa",
+      "category": "Living Room"
+    },
+    {
+      "id": "FURN-002",
+      "name": "Dining Table Set",
+      "category": "Dining Room"
+    },
+    {
+      "id": "FURN-003",
+      "name": "Queen Size Bed Frame",
+      "category": "Bedroom"
+    },
+    {
+      "id": "FURN-004",
+      "name": "Office Desk",
+      "category": "Office"
+    },
+    {
+      "id": "FURN-005",
+      "name": "Coffee Table",
+      "category": "Living Room"
+    },
+    {
+      "id": "FURN-006",
+      "name": "Bookshelf",
+      "category": "Living Room"
+    },
+    {
+      "id": "FURN-007",
+      "name": "Leather Armchair",
+      "category": "Living Room"
+    },
+    {
+      "id": "FURN-008",
+      "name": "Dining Chairs Set",
+      "category": "Dining Room"
+    },
+    {
+      "id": "FURN-009",
+      "name": "Nightstand",
+      "category": "Bedroom"
+    },
+    {
+      "id": "FURN-010",
+      "name": "TV Stand",
+      "category": "Living Room"
+    }
+  ],
+  "customerOrders": {
+    "customer_003": [
+      {
+        "orderId": "ORD-1000",
+        "products": [
+          {
+            "id": "FURN-007",
+            "name": "Leather Armchair"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          }
+        ],
+        "deliveryDate": "2026-01-01",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1004",
+        "products": [
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          }
+        ],
+        "deliveryDate": "2026-01-14",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1012",
+        "products": [
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          }
+        ],
+        "deliveryDate": "2025-12-06",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1018",
+        "products": [
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          }
+        ],
+        "deliveryDate": "2026-01-28",
+        "status": "in_transit"
+      },
+      {
+        "orderId": "ORD-1021",
+        "products": [
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          }
+        ],
+        "deliveryDate": "2026-01-10",
+        "status": "processing"
+      },
+      {
+        "orderId": "ORD-1025",
+        "products": [
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          }
+        ],
+        "deliveryDate": "2026-01-01",
+        "status": "processing"
+      },
+      {
+        "orderId": "ORD-1026",
+        "products": [
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          }
+        ],
+        "deliveryDate": "2025-12-12",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1028",
+        "products": [
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          }
+        ],
+        "deliveryDate": "2025-12-17",
+        "status": "delivered"
+      }
+    ],
+    "customer_001": [
+      {
+        "orderId": "ORD-1001",
+        "products": [
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          }
+        ],
+        "deliveryDate": "2025-12-25",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1002",
+        "products": [
+          {
+            "id": "FURN-008",
+            "name": "Dining Chairs Set"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-007",
+            "name": "Leather Armchair"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          }
+        ],
+        "deliveryDate": "2026-01-07",
+        "status": "processing"
+      },
+      {
+        "orderId": "ORD-1003",
+        "products": [
+          {
+            "id": "FURN-010",
+            "name": "TV Stand"
+          },
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-008",
+            "name": "Dining Chairs Set"
+          },
+          {
+            "id": "FURN-009",
+            "name": "Nightstand"
+          }
+        ],
+        "deliveryDate": "2025-12-16",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1005",
+        "products": [
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-009",
+            "name": "Nightstand"
+          }
+        ],
+        "deliveryDate": "2026-01-31",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1009",
+        "products": [
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          }
+        ],
+        "deliveryDate": "2026-01-28",
+        "status": "in_transit"
+      }
+    ],
+    "customer_004": [
+      {
+        "orderId": "ORD-1006",
+        "products": [
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          }
+        ],
+        "deliveryDate": "2026-01-01",
+        "status": "in_transit"
+      },
+      {
+        "orderId": "ORD-1007",
+        "products": [
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          }
+        ],
+        "deliveryDate": "2025-11-13",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1008",
+        "products": [
+          {
+            "id": "FURN-010",
+            "name": "TV Stand"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          }
+        ],
+        "deliveryDate": "2026-01-06",
+        "status": "processing"
+      },
+      {
+        "orderId": "ORD-1010",
+        "products": [
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          }
+        ],
+        "deliveryDate": "2026-01-08",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1013",
+        "products": [
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-008",
+            "name": "Dining Chairs Set"
+          }
+        ],
+        "deliveryDate": "2025-12-04",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1019",
+        "products": [
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          }
+        ],
+        "deliveryDate": "2025-11-24",
+        "status": "processing"
+      },
+      {
+        "orderId": "ORD-1020",
+        "products": [
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-007",
+            "name": "Leather Armchair"
+          }
+        ],
+        "deliveryDate": "2026-01-30",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1022",
+        "products": [
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          }
+        ],
+        "deliveryDate": "2025-11-22",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1024",
+        "products": [
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          }
+        ],
+        "deliveryDate": "2025-11-28",
+        "status": "delivered"
+      }
+    ],
+    "customer_005": [
+      {
+        "orderId": "ORD-1011",
+        "products": [
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          }
+        ],
+        "deliveryDate": "2026-01-10",
+        "status": "in_transit"
+      },
+      {
+        "orderId": "ORD-1014",
+        "products": [
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          }
+        ],
+        "deliveryDate": "2025-11-14",
+        "status": "processing"
+      },
+      {
+        "orderId": "ORD-1015",
+        "products": [
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          },
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          }
+        ],
+        "deliveryDate": "2025-11-24",
+        "status": "in_transit"
+      },
+      {
+        "orderId": "ORD-1016",
+        "products": [
+          {
+            "id": "FURN-005",
+            "name": "Coffee Table"
+          }
+        ],
+        "deliveryDate": "2026-01-28",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1017",
+        "products": [
+          {
+            "id": "FURN-004",
+            "name": "Office Desk"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          }
+        ],
+        "deliveryDate": "2026-01-04",
+        "status": "delivered"
+      },
+      {
+        "orderId": "ORD-1027",
+        "products": [
+          {
+            "id": "FURN-008",
+            "name": "Dining Chairs Set"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          },
+          {
+            "id": "FURN-003",
+            "name": "Queen Size Bed Frame"
+          },
+          {
+            "id": "FURN-006",
+            "name": "Bookshelf"
+          }
+        ],
+        "deliveryDate": "2026-02-07",
+        "status": "delivered"
+      }
+    ],
+    "customer_002": [
+      {
+        "orderId": "ORD-1023",
+        "products": [
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          },
+          {
+            "id": "FURN-009",
+            "name": "Nightstand"
+          },
+          {
+            "id": "FURN-001",
+            "name": "Modern Leather Sofa"
+          }
+        ],
+        "deliveryDate": "2026-01-21",
+        "status": "processing"
+      },
+      {
+        "orderId": "ORD-1029",
+        "products": [
+          {
+            "id": "FURN-010",
+            "name": "TV Stand"
+          },
+          {
+            "id": "FURN-002",
+            "name": "Dining Table Set"
+          }
+        ],
+        "deliveryDate": "2025-11-19",
+        "status": "delivered"
+      }
+    ]
+  }
+}

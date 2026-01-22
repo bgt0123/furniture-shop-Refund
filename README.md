@@ -131,3 +131,88 @@ If a concept is complex in the business, it SHOULD be complex in the model.
 conda create --name hsrtw25 python=3.12
 conda activate hsrtw25
 ```
+
+---
+
+# Furniture Shop - Support and Refund Services
+
+This project implements the Support Service and Refund Service for the Furniture Shop application.
+
+## Architecture
+
+- **Support Service**: Handles customer support cases, evidence submission, and agent assignment
+- **Refund Service**: Manages refund eligibility validation, decisions, and processing
+- **Frontend**: Customer and agent dashboard interfaces
+
+## Quick Start
+
+### Prerequisites
+- Python 3.12+
+- Node.js 18+ 
+- Redis
+- Docker (optional)
+
+### Setup
+```bash
+# Install dependencies
+python scripts/dev-setup.py
+
+# Or manually:
+cd support-service && pip install -r requirements.txt
+cd refund-service && pip install -r requirements.txt
+cd frontend && npm install
+
+# Start services
+redis-server
+cd support-service && uvicorn src.presentation.main:app --port 8001
+cd refund-service && uvicorn src.presentation.main:app --port 8002
+cd frontend && npm run dev
+```
+
+Or with Docker:
+```bash
+docker-compose up --build
+```
+
+## Development
+
+### Testing
+```bash
+# Backend tests
+cd support-service && pytest
+cd refund-service && pytest
+
+# Frontend tests
+cd frontend && npm test
+```
+
+### Code Quality
+```bash
+# Python linting and formatting
+ruff check .
+ruff format .
+
+# TypeScript linting and formatting
+cd frontend && npm run lint
+cd frontend && npm run format
+```
+
+## API Endpoints
+
+### Support Service (Port 8001)
+- `GET /api/v1/support-cases` - List customer cases
+- `POST /api/v1/support-cases` - Create new support case
+- `GET /api/v1/support-cases/{case_number}` - Get case details
+
+### Refund Service (Port 8002)
+- `POST /api/v1/support-cases/{case_number}/create-refund` - Create refund request
+- `POST /api/v1/refund-requests/{id}/approve` - Approve refund
+- `POST /api/v1/refund-requests/{id}/reject` - Reject refund
+
+## Technology Stack
+
+- **Backend**: Python 3.12+, FastAPI, SQLite, Redis
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **Database**: SQLite (support.db, refund.db)
+- **Caching**: Redis
+- **Containerization**: Docker
