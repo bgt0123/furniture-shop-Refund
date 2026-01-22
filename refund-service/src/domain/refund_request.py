@@ -3,9 +3,9 @@ from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
-from .refund_decision import RefundDecision
 from .refund_response import RefundResponse
 from .value_objects.money import Money
+from .value_objects.refund_decision import RefundDecision
 
 
 class RefundRequestStatus(Enum):
@@ -102,11 +102,9 @@ class RefundRequest:
 
     def add_decision(
         self,
-        decision: 'RefundDecision'
+        decision: RefundDecision
     ) -> None:
         """Add a refund decision to this request"""
-        if decision.refund_request_id != self.refund_request_id:
-            raise ValueError("Decision does not belong to this refund request")
         self.decisions.append(decision)
 
     @property
@@ -117,11 +115,12 @@ class RefundRequest:
         return sorted(self.responses, key=lambda r: r.timestamp)[-1]
 
     @property
-    def latest_decision(self) -> Optional['RefundDecision']:
+    def latest_decision(self) -> Optional[RefundDecision]:
         """Get the latest decision for this refund request"""
         if not self.decisions:
             return None
-        return sorted(self.decisions, key=lambda d: d.decision_date)[-1]
+        # For value object, just return the last one added (no timestamp)
+        return self.decisions[-1]
 
     @property
     def is_resolved(self) -> bool:

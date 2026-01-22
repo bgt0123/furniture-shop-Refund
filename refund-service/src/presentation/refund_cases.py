@@ -1,8 +1,8 @@
 """API routes for Refund Requests"""
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Body
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 from uuid import uuid4
 
 from .dependencies import get_dependencies
@@ -30,20 +30,14 @@ class RefundCaseResponse(BaseModel):
     updated_at: str
 
 
-class RefundDecisionRequest(BaseModel):
-    agent_id: str
-    response_type: str  # "approval", "rejection", "request_additional_evidence"
-    response_content: str
-    refund_amount: Optional[str] = None
-    refund_method: Optional[str] = None
-    attachments: Optional[List[str]] = None
+# Removed RefundDecisionRequest class - using dict directly
 
 
 class RefundDecisionActionRequest(BaseModel):
     """Request for taking a refund decision action"""
     agent_id: str
-    decision_type: str  # "approval", "rejection", "request_additional_evidence"
-    decision_content: str
+    decision: str  # "accepted", "rejected", "need_more_input"
+    reason: str
     refund_amount: Optional[str] = None
     refund_method: Optional[str] = None
 
@@ -265,8 +259,52 @@ async def get_customer_refund_cases(customer_id: str):
     return response_cases
 
 
+class LegacyRefundDecisionRequest(BaseModel):
+    """Temporary model for backward compatibility"""
+    agent_id: str
+    response_type: str
+    response_content: str
+    refund_amount: Optional[str] = None
+    refund_method: Optional[str] = None
+    attachments: Optional[List[str]] = None
+
+# Create explicit endpoint for backward compatibility
+@router.post("/{refund_request_id}/decisions-legacy", response_model=dict)
+async def make_refund_decision_legacy(refund_request_id: str, request: LegacyRefundDecisionRequest):
+    """Make a decision on a refund request using legacy DDD aggregates"""
+    print(f"Ⓡ Legacy decision requested for refund request {refund_request_id}")
+    
+    dependencies = get_dependencies()
+    
+    # Find the refund request
+    refund_request = dependencies.refund_request_repository.find_by_id(refund_request_id)
+    if not refund_request:
+        raise HTTPException(status_code=404, detail="Refund request not found")
+    
+    # Convert decision from legacy format to new format
+    decision_text = request.response_type
+    reason_text = request.response_content
+    agent_id = request.agent_id
+    refund_amount = request.refund_amount
+    refund_method = request.refund_method
+    attachments = request.attachments
+    
+    # Ensure they are not None after validation
+    assert decision_text is not None, "decision_text should not be None after validation"
+    assert reason_text is not None, "reason_text should not be None after validation"
+    assert agent_id is not None, "agent_id should not be None after validation"
+
+class NewRefundDecisionRequest(BaseModel):
+    """New request model with updated field names"""
+    agent_id: str
+    decision: str
+    reason: str
+    refund_amount: Optional[str] = None
+    refund_method: Optional[str] = None
+    attachments: Optional[List[str]] = None
+
 @router.post("/{refund_request_id}/decisions")
-async def make_refund_decision(refund_request_id: str, request: RefundDecisionRequest):
+async def make_refund_decision(refund_request_id: str, request: NewRefundDecisionRequest):
     """Make a decision on a refund request using DDD aggregates"""
     print(f"Ⓡ Decision requested for refund request {refund_request_id}")
     
@@ -277,54 +315,61 @@ async def make_refund_decision(refund_request_id: str, request: RefundDecisionRe
     if not refund_request:
         raise HTTPException(status_code=404, detail="Refund request not found")
     
-    # Convert response type enum
-    from domain.refund_response import ResponseType, RefundMethod
-    from domain.value_objects.money import Money
-    try:
-        response_type = ResponseType(request.response_type)
-    except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid response type: {request.response_type}")
+    decision_text = request.decision
+    reason_text = request.reason
+    agent_id = request.agent_id
+    refund_amount = request.refund_amount
+    refund_method = request.refund_method
+    attachments = request.attachments
+    assert agent_id is not None, "agent_id should not be None after validation"
     
     # Convert refund method
-    refund_method = None
-    if request.refund_method:
+    from domain.refund_response import RefundMethod
+    from domain.value_objects.money import Money
+    refund_method_obj = None
+    if refund_method:
         try:
-            refund_method = RefundMethod(request.refund_method)
+            refund_method_obj = RefundMethod(refund_method)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid refund method: {request.refund_method}")
+            raise HTTPException(status_code=400, detail=f"Invalid refund method: {refund_method}")
     
     # Convert refund amount
-    refund_amount = None
-    if request.refund_amount:
+    refund_amount_obj = None
+    if refund_amount:
         try:
-            refund_amount = Money.from_dict({"amount": float(request.refund_amount), "currency": "USD"})
+            refund_amount_obj = Money.from_dict({"amount": float(refund_amount), "currency": "USD"})
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid refund amount: {request.refund_amount}")
+            raise HTTPException(status_code=400, detail=f"Invalid refund amount: {refund_amount}")
     
     # Create and save refund response
     try:
+        from domain.value_objects.refund_decision import RefundDecision
+        
+        # Create the refund decision value object
+        refund_decision = RefundDecision.from_string(decision_text, reason_text)
+        
         response_result = dependencies.create_refund_response.execute(
             refund_request_id=refund_request_id,
-            agent_id=request.agent_id,
-            response_type=response_type,
-            response_content=request.response_content,
-            refund_amount=refund_amount,
-            refund_method=refund_method,
-            attachments=request.attachments or []
+            agent_id=agent_id,
+            decision=refund_decision,
+            response_content=reason_text,
+            refund_amount=refund_amount_obj,
+            refund_method=refund_method_obj,
+            attachments=attachments or []
         )
         response = response_result["refund_response"]
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
     # Apply decision to refund request
-    if response_type == ResponseType.APPROVAL:
-        if not refund_amount:
-            raise HTTPException(status_code=400, detail="Refund amount is required for approvals")
-        refund_request.approve(request.agent_id, request.response_content, refund_amount)
-    elif response_type == ResponseType.REJECTION:
-        refund_request.reject(request.agent_id, request.response_content)
-    elif response_type == ResponseType.REQUEST_ADDITIONAL_EVIDENCE:
-        refund_request.request_additional_evidence(request.agent_id, request.response_content)
+    if refund_decision.decision.name == "ACCEPTED":
+        if not refund_amount_obj:
+            raise HTTPException(status_code=400, detail="Refund amount is required for accepted decisions")
+        refund_request.approve(agent_id, reason_text, refund_amount_obj)
+    elif refund_decision.decision.name == "REJECTED":
+        refund_request.reject(agent_id, reason_text)
+    elif refund_decision.decision.name == "NEED_MORE_INPUT":
+        refund_request.request_additional_evidence(agent_id, reason_text)
     
     # Save updated refund request
     dependencies.refund_request_repository.save(refund_request)
@@ -335,10 +380,11 @@ async def make_refund_decision(refund_request_id: str, request: RefundDecisionRe
     print(f"✅ Successfully processed refund decision for {refund_request_id}")
     return {
         "refund_request_id": refund_request_id,
-        "agent_id": request.agent_id,
-        "response_type": request.response_type,
+        "agent_id": agent_id,
+        "decision": refund_decision.decision.value,
+        "reason": reason_text,
         "new_status": refund_request.status.value,
-        "refund_amount": request.refund_amount,
+        "refund_amount": refund_amount,
         "timestamp": response.timestamp.isoformat()
     }
 
@@ -356,22 +402,25 @@ async def take_refund_decision(refund_case_id: str, request: RefundDecisionActio
             refund_amount = Money.from_dict({"amount": float(request.refund_amount), "currency": "USD"})
         
         # Execute the refund decision taken event
+        from domain.value_objects.refund_decision import RefundDecision
+        refund_decision = RefundDecision.from_string(request.decision, request.reason)
+        
         result = dependencies.refund_decision_taken.execute(
             refund_request_id=refund_case_id,
             agent_id=request.agent_id,
-            decision_type=request.decision_type,
-            decision_content=request.decision_content,
+            decision=refund_decision,
             refund_amount=refund_amount,
             refund_method=request.refund_method
         )
         
-        print(f"✅ Refund decision taken for {refund_case_id}: {request.decision_type}")
+        print(f"✅ Refund decision taken for {refund_case_id}: {request.decision}")
         
         return {
             "decision_id": result["decision_id"],
             "refund_request_id": result["refund_request_id"],
             "agent_id": result["agent_id"],
-            "decision_type": result["decision_type"],
+            "decision": result["decision"],
+            "reason": result["reason"],
             "new_status": result["new_status"],
             "timestamp": result["timestamp"]
         }
@@ -558,7 +607,7 @@ async def get_refund_responses(refund_case_id: str):
             "response_id": response.response_id,
             "refund_request_id": response.refund_request_id,
             "agent_id": response.agent_id,
-            "response_type": response.response_type.value,
+            "decision": response.decision.to_dict(),
             "response_content": response.response_content,
             "refund_amount": response.refund_amount.to_dict() if response.refund_amount else None,
             "refund_method": response.refund_method.value if response.refund_method else None,

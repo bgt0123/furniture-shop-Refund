@@ -117,17 +117,19 @@ const RefundCaseDashboard: React.FC = () => {
       
       if (!selectedRefundCase) return;
 
-      // Map frontend decision types to backend response types
-      const responseTypeMap = {
-        'approval': 'approval',
-        'rejection': 'rejection',
-        'request_additional_evidence': 'request_additional_evidence'
-      };
 
+
+      // Map legacy decision types to new decision types
+      const decisionMap = {
+        'approval': 'accepted',
+        'rejection': 'rejected',
+        'request_additional_evidence': 'need_more_input'
+      };
+      
       await refundApi.makeRefundDecision(selectedRefundCase.refund_case_id, {
         agent_id: currentUser.id,
-        response_type: responseTypeMap[decision.response_type],
-        response_content: decision.response_content,
+        decision: decisionMap[decision.response_type],
+        reason: decision.response_content,
         ...(decision.response_type === 'approval' && {
           refund_amount: decision.refund_amount,
           refund_method: decision.refund_method

@@ -30,10 +30,6 @@ This document provides an overview of the backend API services for the Furniture
 #### Comments & Interactions
 - **POST** `/support-cases/{case_number}/comments` - Add a comment to a support case
 
-#### Evidence Management
-- **POST** `/support-cases/{case_number}/upload-evidence` - Upload evidence files
-- **GET** `/support-cases/{case_number}/evidence` - Get evidence files
-
 #### Health & Status
 - **GET** `/` - Service status
 - **GET** `/health` - Health check
@@ -49,12 +45,7 @@ This document provides an overview of the backend API services for the Furniture
 
 #### Refund Processing
 - **POST** `/refund-cases/{refund_case_id}/decisions` - Make refund decision (approve/reject)
-- **POST** `/refund-cases/{refund_case_id}/take-decision` - Take direct refund decision using RefundDecisionTaken event
 - **GET** `/refund-cases/{refund_case_id}/responses` - Get refund responses/decisions
-
-#### Evidence Management
-- **POST** `/refund-cases/{refund_case_id}/upload-evidence` - Upload evidence files
-- **GET** `/refund-cases/{refund_case_id}/evidence` - Get evidence files
 
 #### Service Information
 - **GET** `/refund-cases/info` - API information
@@ -84,7 +75,7 @@ This document provides an overview of the backend API services for the Furniture
 }
 ```
 
-### Refund Request
+### Refund
 ```json
 {
   "refund_case_id": "string",
@@ -126,20 +117,10 @@ This document provides an overview of the backend API services for the Furniture
 
 ### Refund Decision Workflow
 1. Agent reviews refund request (GET `/refund-cases/{id}/detailed`)
-2. Agent makes decision using either:
-   - POST `/refund-cases/{id}/decisions` - Creates comprehensive response with refund calculation
-   - POST `/refund-cases/{id}/take-decision` - Direct decision without refund calculation
+2. Agent makes decision (POST `/refund-cases/{id}/decisions`)
 3. Refund service updates status
 4. Support service notified via comment system
 5. Support case timeline updated
-
-### Domain Events
-Available domain events in the refund service:
-- **CreateRefundRequest** - Event for creating refund requests
-- **CreateRefundResponse** - Event for handling refund responses
-- **RefundCreated** - Event for creating refund entities
-- **RefundDecisionTaken** - Event for taking refund decisions (simpler alternative to CreateRefundResponse)
-- **RefundProcessingStarted** - Event for starting refund processing
 
 ## Error Handling
 

@@ -4,7 +4,8 @@ import sqlite3
 from datetime import datetime
 from typing import List, Optional
 from ..database.database_config import get_connection
-from domain.refund_response import RefundResponse, ResponseType, RefundMethod
+from domain.refund_response import RefundResponse, RefundMethod
+from domain.value_objects.refund_decision import RefundDecision
 from domain.value_objects.money import Money
 
 
@@ -20,15 +21,16 @@ class RefundResponseRepository:
             cursor.execute(
                 """
                 INSERT OR REPLACE INTO refund_responses 
-                (response_id, refund_request_id, agent_id, response_type, response_content,
+                (response_id, refund_request_id, agent_id, decision_type, decision_reason, response_content,
                  attachments, refund_amount, refund_method, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     refund_response.response_id,
                     refund_response.refund_request_id,
                     refund_response.agent_id,
-                    refund_response.response_type.value,
+                    refund_response.decision.decision.value,
+                    refund_response.decision.reason,
                     refund_response.response_content,
                     ",".join(refund_response.attachments) if refund_response.attachments else None,
                     str(refund_response.refund_amount.amount) if refund_response.refund_amount else None,
@@ -117,11 +119,17 @@ class RefundResponseRepository:
         if data.get("timestamp"):
             timestamp = datetime.fromisoformat(data["timestamp"])
         
+        # Handle legacy data
+        decision_type = data.get("decision_type", data.get("response_type", ""))
+        decision_reason = data.get("decision_reason", data.get("response_content", ""))
+        
+        decision = RefundDecision.from_string(decision_type, decision_reason)
+        
         return RefundResponse(
             response_id=data["response_id"],
             refund_request_id=data["refund_request_id"],
             agent_id=data["agent_id"],
-            response_type=ResponseType(data["response_type"]),
+            decision=decision,
             response_content=data["response_content"],
             refund_amount=refund_amount,
             attachments=attachments,
