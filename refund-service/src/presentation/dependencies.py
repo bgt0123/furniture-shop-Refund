@@ -4,6 +4,7 @@ from infrastructure.repositories.refund_request_repository import RefundRequestR
 from infrastructure.repositories.refund_response_repository import RefundResponseRepository
 from domain.events.create_refund_request import CreateRefundRequest
 from domain.events.create_refund_response import CreateRefundResponse
+from domain.events.refund_decision_taken import RefundDecisionTaken
 import httpx
 import os
 
@@ -92,6 +93,9 @@ class Dependencies:
         )
         self.create_refund_response = CreateRefundResponse(
             self.refund_response_repository
+        )
+        self.refund_decision_taken = RefundDecisionTaken(
+            self.refund_request_repository
         )
 
 

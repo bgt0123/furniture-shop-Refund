@@ -53,9 +53,7 @@ class RefundCreated:
             method=method
         )
         
-        # Set agent who processed the refund
-        refund.agent_id = agent_id
-        
+        # Note: agent_id is handled in refund response/decision tracking, not in Refund aggregate
         # Save refund to repository
         self.refund_repository.save(refund)
         

@@ -39,6 +39,15 @@ class RefundDecisionRequest(BaseModel):
     attachments: Optional[List[str]] = None
 
 
+class RefundDecisionActionRequest(BaseModel):
+    """Request for taking a refund decision action"""
+    agent_id: str
+    decision_type: str  # "approval", "rejection", "request_additional_evidence"
+    decision_content: str
+    refund_amount: Optional[str] = None
+    refund_method: Optional[str] = None
+
+
 @router.post("/", response_model=RefundCaseResponse)
 async def create_refund_request(request: CreateRefundRequest):
     """Create a new refund request"""
@@ -332,6 +341,46 @@ async def make_refund_decision(refund_request_id: str, request: RefundDecisionRe
         "refund_amount": request.refund_amount,
         "timestamp": response.timestamp.isoformat()
     }
+
+
+@router.post("/{refund_case_id}/take-decision", response_model=dict)
+async def take_refund_decision(refund_case_id: str, request: RefundDecisionActionRequest):
+    """Take a direct refund decision using the RefundDecisionTaken event"""
+    dependencies = get_dependencies()
+    
+    try:
+        # Convert refund amount to Money object if provided
+        from domain.value_objects.money import Money
+        refund_amount = None
+        if request.refund_amount:
+            refund_amount = Money.from_dict({"amount": float(request.refund_amount), "currency": "USD"})
+        
+        # Execute the refund decision taken event
+        result = dependencies.refund_decision_taken.execute(
+            refund_request_id=refund_case_id,
+            agent_id=request.agent_id,
+            decision_type=request.decision_type,
+            decision_content=request.decision_content,
+            refund_amount=refund_amount,
+            refund_method=request.refund_method
+        )
+        
+        print(f"✅ Refund decision taken for {refund_case_id}: {request.decision_type}")
+        
+        return {
+            "decision_id": result["decision_id"],
+            "refund_request_id": result["refund_request_id"],
+            "agent_id": result["agent_id"],
+            "decision_type": result["decision_type"],
+            "new_status": result["new_status"],
+            "timestamp": result["timestamp"]
+        }
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 async def update_support_case_with_refund_request(case_number: str, refund_case_id: str):
