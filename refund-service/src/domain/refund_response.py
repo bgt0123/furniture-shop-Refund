@@ -3,13 +3,10 @@ from typing import List, Optional
 from enum import Enum
 from uuid import uuid4
 from .value_objects.money import Money
+from .value_objects.refund_decision import RefundDecision, RefundDecisionValue
 
 
-class ResponseType(Enum):
-    """Represents the type of refund response"""
-    APPROVAL = "approval"
-    REJECTION = "rejection"
-    REQUEST_ADDITIONAL_EVIDENCE = "request_additional_evidence"
+
 
 
 class RefundMethod(Enum):
@@ -27,22 +24,22 @@ class RefundResponse:
         response_id: str,
         refund_request_id: str,
         agent_id: str,
-        response_type: ResponseType,
+        decision: RefundDecision,
         response_content: str,
         refund_amount: Optional[Money] = None,
         attachments: Optional[List[str]] = None,
         refund_method: Optional[RefundMethod] = None,
         timestamp: Optional[datetime] = None
     ):
-        if response_type == ResponseType.APPROVAL and refund_amount is None:
-            raise ValueError("Approval responses must include refund amount")
-        if response_type == ResponseType.APPROVAL and refund_method is None:
-            raise ValueError("Approval responses must include refund method")
+        if decision.decision == RefundDecisionValue.ACCEPTED and refund_amount is None:
+            raise ValueError("Accepted responses must include refund amount")
+        if decision.decision == RefundDecisionValue.ACCEPTED and refund_method is None:
+            raise ValueError("Accepted responses must include refund method")
             
         self.response_id = response_id
         self.refund_request_id = refund_request_id
         self.agent_id = agent_id
-        self.response_type = response_type
+        self.decision = decision
         self.response_content = response_content
         self.refund_amount = refund_amount
         self.attachments = attachments or []
@@ -52,12 +49,12 @@ class RefundResponse:
     @property
     def is_approval(self) -> bool:
         """Check if this response is an approval"""
-        return self.response_type == ResponseType.APPROVAL
+        return self.decision.decision == RefundDecisionValue.ACCEPTED
 
     @property
     def is_rejection(self) -> bool:
         """Check if this response is a rejection"""
-        return self.response_type == ResponseType.REJECTION
+        return self.decision.decision == RefundDecisionValue.REJECTED
 
     def get_refund_amount_display(self) -> str:
         """Get formatted refund amount for display"""
@@ -69,7 +66,7 @@ class RefundResponse:
             "response_id": self.response_id,
             "refund_request_id": self.refund_request_id,
             "agent_id": self.agent_id,
-            "response_type": self.response_type.value,
+            "decision": self.decision.to_dict(),
             "response_content": self.response_content,
             "refund_amount": self.refund_amount.to_dict() if self.refund_amount else None,
             "attachments": self.attachments,
@@ -86,12 +83,20 @@ class RefundResponse:
         refund_method = None
         if data.get("refund_method"):
             refund_method = RefundMethod(data["refund_method"])
+        
+        # Handle legacy data format
+        decision_data = data.get("decision")
+        if decision_data:
+            decision = RefundDecision.from_string(decision_data.get("decision"))
+        else:
+            # Fallback for legacy response_type format
+            decision = RefundDecision.from_string(data["response_type"])
             
         return cls(
             response_id=data["response_id"],
             refund_request_id=data["refund_request_id"],
             agent_id=data["agent_id"],
-            response_type=ResponseType(data["response_type"]),
+            decision=decision,
             response_content=data["response_content"],
             refund_amount=refund_amount,
             attachments=data.get("attachments", []),
@@ -100,7 +105,7 @@ class RefundResponse:
         )
 
     def __str__(self) -> str:
-        return f"RefundResponse {self.response_id} ({self.response_type.value})"
+        return f"RefundResponse {self.response_id} ({self.decision.display()})"
 
     def __repr__(self) -> str:
-        return f"<RefundResponse {self.response_id} type={self.response_type.value} amount={self.refund_amount}>"
+        return f"<RefundResponse {self.response_id} decision={self.decision} amount={self.refund_amount}>"
